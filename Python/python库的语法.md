@@ -334,3 +334,60 @@ w.to_file(filename)	将词云输出为图像文件	.png或.jpg格式
 
 
 
+## os标准库
+
+提供通用的,基本的操作系统交互功能
+
+#### 路径操作
+
+os.path 字库以 path 为入口,操作和处理文件, path 包括目录或包含文件名的路径
+
+```
+import os.path
+import os.path as op
+```
+
+##### 方法
+
+```
+os.path.abspath(path) 返回 path 在当前系统中的绝对路径
+os.path.normpath(path) 归一化 path 的表示形式,统一用 \\ 分割路径
+os.path.relpath(path) 返回当前 python 程序与调用的文件之间的相对路径
+
+os.path.dirname(path) 返回 path 中的目录名称
+os.path.basename(path) 返回 path 中的文件名称
+os.path.join(path, *paths) 组合 path 与 paths,返回路径字符串
+
+os.path.exists(path) 判断 path 对应的目录或文件是否存在
+os.path.isfile(path) 判断 path 的文件是否存在
+os.path.isdir(path) 判断 path 的目录是否存在
+
+os.path.getatime(path) 返回上一次的访问时间
+os.path.getmtime(path) 返回上一次的修改时间
+os.path.getctime(path) 返回创建时间
+```
+
+
+
+#### 进程管理
+
+执行程序或命令,返回调用信息
+
+```
+os.system(path)
+```
+
+
+
+#### 环境参数
+
+```
+os.chdir(path) 修改当前程序操作的路径
+os.getcwd() 返回程序的当前路径
+
+os.getligin() 登录用户的名称
+os.cpu_count() CPU数量
+
+os.urandon(n) 返回 n 字节长度的随机字符串,一般用于加解密运算
+```
+

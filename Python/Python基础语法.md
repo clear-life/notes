@@ -937,6 +937,34 @@ len(d)			返回d中元素的个数
 
 
 
-test
+### 其余
 
-test
+#### python社区
+
+* PyPI:Python Package Index
+
+  ```
+  pypi.org
+  ```
+
+#### pip
+
+`pip -h` 帮助信息
+
+`pip install <package>`安装库
+
+`pip install -U <package>` 更新库
+
+`pip uninstall <package>`卸载库
+
+`pip download <package>`下载但不安装库
+
+`pip show <package>`列出库的详细信息
+
+`pip search <keyword>`搜索库,在库的介绍/名称中出现关键字
+
+`pip list`列出已安装库
+
+#### 文件安装方法
+
+下载好文件后,需要编译后才能安装
