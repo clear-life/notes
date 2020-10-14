@@ -92,6 +92,13 @@ sudo apt-get update && sudo apt-get install cmake libopenmpi-dev python3-dev zli
    conda remove --name <env_name> --all
    ```
 
+7. 取消/设置自动激活`base`环境
+
+   ```
+   conda config --set auto_activate_base false
+   conda config --set auto_activate_base true
+   ```
+
 #### 管理包
 
 1. ##### 查找可以安装的包版本
@@ -159,3 +166,50 @@ sudo apt-get update && sudo apt-get install cmake libopenmpi-dev python3-dev zli
    //更新多个指定包
    ```
 
+### pip
+
+`pip install/uninstall <package>` 安装与卸载
+
+`pip list` 列出库
+
+
+
+#### apt
+
+`/var/cache/apt/archives`安装包缓存目录
+
+`sudo apt autoclean`自动清理软件/包
+
+`sudo apt autoremove`自动删除软件/包
+
+
+
+#### 取消每次命令行前的base
+
+```
+conda config --set auto_activate_base false
+```
+
+
+
+#### conda提速
+
+##### 配置源位置/镜像
+
+```
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+```
+
+
+
+#### pip提速
+
+##### 配置源位置/镜像
+
+```
+升级pip
+pip install pip -U
+
+配置全局镜像
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
