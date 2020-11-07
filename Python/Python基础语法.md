@@ -277,9 +277,10 @@ x**y	幂运算,x的y次幂	例:当y为0.5时是开平方运算
   * `str.center(width[,fillchar])`字符串str居中,宽度为width,两侧填充为fillchar
   * `str.strip(chars)`在str两侧去掉chars中列出的字符   `strip剥夺,条`
     * `"= python= ".strip(" =np")`结果为`"ytho"`
+    * `str.rstrip(chars)`在str右侧去掉chars中的字符
   * `str.join(iter)`给iter变量的相邻两个元素间添加一个str
-    * `",".join("12345")`结果为`"1,2,3,4,5"`
-
+  * `",".join("12345")`结果为`"1,2,3,4,5"`
+  
 * 字符串类型的格式化
 
   * `<模板字符串>.format(<逗号分隔的参数>)`
