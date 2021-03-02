@@ -166,7 +166,15 @@ sudo apt remove unity-webapps-common
 sudo dpkg -i <package.deb>		-i/--install
 ```
 
-谷歌浏览器
+
+
+
+
+### 2.安装常用软件
+
+
+
+#### 谷歌浏览器
 
 ```
 sudo apt install libappindicator1 libindicator7
@@ -174,7 +182,9 @@ sudo dpkg -i google-chrome-stable_current_amd64.deb
 sudo apt -f install
 ```
 
-输入法
+
+
+### 输入法
 
 `fcitx`是一个以`GPL`方式发布的输入法平台,支持多种输入法
 
@@ -193,8 +203,27 @@ sudo dpkg -i sogoupinyin_*_amd64
 sudo apt -f install
 ```
 
+重启后点击右上角键盘标志
+
 `configure Current Input Method`-添加搜狗输入法
 
 `Trigger Input Method`触发输入法
 
 `Scroll between Input Method`设置输入法切换
+
+
+
+#### vim
+
+```
+sudo apt install vim
+```
+
+
+
+#### git
+
+```
+sudo apt install git
+```
+

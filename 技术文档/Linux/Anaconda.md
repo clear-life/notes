@@ -212,4 +212,5 @@ pip install pip -U
 
 配置全局镜像
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+https:pypi.python.orgsimple
 ```
