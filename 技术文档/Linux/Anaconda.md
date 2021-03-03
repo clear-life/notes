@@ -172,7 +172,7 @@ sudo apt-get update && sudo apt-get install cmake libopenmpi-dev python3-dev zli
 
 `pip list` 列出库
 
-
+`pip install pip -U`升级pip
 
 #### apt
 
@@ -211,6 +211,18 @@ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/f
 pip install pip -U
 
 配置全局镜像
-pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/  
+https://pypi.tuna.tsinghua.edu.cn/simple 清华
+https://mirrors.aliyun.com/pypi/simple/  阿里
+http://mirrors.cloud.tencent.com/pypi/simple 腾讯
 https:pypi.python.orgsimple
 ```
+
+
+
+#### 离线安装
+
+```
+pip install 离线安装包的路径
+```
+
