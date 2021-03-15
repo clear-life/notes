@@ -183,3 +183,88 @@ python -m spinup.run plot data/installtest/installtest_s0
 3. 任何其他的函数
 4. 与算法兼容的 `MLP actor-critic`实现, 其中策略和价值函数都由简单的 `MLP` 来表示
 
+
+
+## Running Experiments
+
+
+
+学习 DRL 的最好方法是通过运行算法并观察再不同任务下的表现. spinningup 代码库使小规模(本地)实验很容易实现, 有两种方式启动运行算法: 命令行 和 脚本. 
+
+
+
+### 命令行启动
+
+spinning up 附带 `spinup/run.py` , 可以让算法从命令行以任何形式的超参数启动. 还可以作为一个封装器来观察训练过程的策略和绘制图谱.
+
+
+
+#### 启动命令
+
+```
+python -m spinup.run [algo name] [experiment flags]
+
+例:
+python -m spinup.run ppo --env Walker2d-v2 --exp_name walker
+
+python -m spinup.run ppo --exp_name ppo_ant --env Ant-v2 --clip_ratio 0.1 0.2
+    --hid[h] [32,32] [64,32] --act torch.nn.Tanh --seed 0 10 20 --dt
+    --data_dir path/to/data
+默认情况下是 pytorch 版本的算法, 用 ppo_tf1 代替 ppo 就会用 tensorflow 版本的算法
+
+clip_ratio, hid, act 是设置超参数的标志, 可以为超参数设置多个值来运行多个实验
+hid 设置神经网络的隐藏层大小 
+act 设置神经网络的激活函数
+seed 设置随机数生成器的种子,对 RL 算法的性能影响很大
+dt 确保保存目录名中有时间戳
+data_dir 设置保存的目录
+```
+
+
+
+##### 选择 pytorch 或 tensorflow
+
+```
+python -m spinup.run [algo]_pytorch / [algo]_tf1
+如果没有后缀,则会从 spinup/user_config.py 中查找默认版本
+```
+
+
+
+##### 设置超参数
+
+```
+--kwarg
+python -m spinup.run [algo name] --help
+值会通过 eval() 函数传递
+字典参数:
+--key dict(v1=value_1, v2=value_2)
+--key:v1 value_1 --key:v2 value_2
+```
+
+
+
+##### 同时启动多个实验
+
+```
+给参数提供多个值来启动多个实验,每一个可能的组合都会启动实验,非并行启动多个实验
+python -m spinup.run ppo --env Walker2d-v2 --exp_name walker --seed 0 10 20
+```
+
+
+
+##### 特殊标志
+
+```
+--env , --env_name 环境
+--hid, --ac_kwargs:hidden_sizes 隐藏层大小
+--act, --ac_kwargs:activation 激活函数
+
+实验配置标志,非超参数
+
+```
+
+
+
+### 脚本启动
+
