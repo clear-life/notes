@@ -391,8 +391,67 @@ model.pt 训练好的模型文件
 #### tensorflow 保存目录信息
 
 ```
-variables/
-model_info.pkl
-saved_model.pb
+variables/	包含 Tensorflow Saver 输出的目录
+model_info.pkl 	包含解压模型信息的目录
+saved_model.pb	协议缓冲区, 保存模型
 ```
 
+
+
+### 保存目录路径
+
+```
+spinningup/data/
+```
+
+
+
+### 加载运行已训练的策略
+
+
+
+#### 如果环境保存成功
+
+```
+python -m spinup.run test_policy path/to/output_directory
+
+flags:
+-l L, --len=L, default=0 	回合长度
+-n N, --episodes=N, default=100		回合数
+-nr, --norender	不图形化展示
+-i I, --itr=I, default=-1	保存快照的时机
+-d, --deterministic	仅用于 SAC
+```
+
+
+
+#### 环境未找到错误
+
+```
+Traceback (most recent call last):
+  File "spinup/utils/test_policy.py", line 153, in <module>
+    run_policy(env, get_action, args.len, args.episodes, not(args.norender))
+  File "spinup/utils/test_policy.py", line 114, in run_policy
+    "and we can't run the agent in it. :( nn Check out the readthedocs " +
+AssertionError: Environment not found!
+
+ It looks like the environment wasn't saved, and we can't run the agent in it. :(
+
+ Check out the readthedocs page on Experiment Outputs for how to handle this situation.
+```
+
+
+
+#### 使用已训练的值函数
+
+* PyTorch
+
+  ```
+  用 torch.load 加载模型文件, 查看算法文档, 看 ActorCritic 对象有哪些模块
+  ```
+
+* Tensorflow
+
+  ```
+  用 restore_tf_graph 加载计算图, 查看算法文档, 看保存了哪些函数
+  ```
