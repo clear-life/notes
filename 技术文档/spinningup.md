@@ -222,7 +222,7 @@ data_dir 设置保存的目录
 
 
 
-##### 选择 pytorch 或 tensorflow
+#### 选择 pytorch 或 tensorflow
 
 ```
 python -m spinup.run [algo]_pytorch / [algo]_tf1
@@ -231,7 +231,7 @@ python -m spinup.run [algo]_pytorch / [algo]_tf1
 
 
 
-##### 设置超参数
+#### 设置超参数
 
 ```
 --kwarg
@@ -244,7 +244,7 @@ python -m spinup.run [algo name] --help
 
 
 
-##### 同时启动多个实验
+#### 同时启动多个实验
 
 ```
 给参数提供多个值来启动多个实验,每一个可能的组合都会启动实验,非并行启动多个实验
@@ -253,7 +253,7 @@ python -m spinup.run ppo --env Walker2d-v2 --exp_name walker --seed 0 10 20
 
 
 
-##### 特殊标志
+#### 特殊标志
 
 ```
 --env , --env_name 环境
@@ -261,10 +261,138 @@ python -m spinup.run ppo --env Walker2d-v2 --exp_name walker --seed 0 10 20
 --act, --ac_kwargs:activation 激活函数
 
 实验配置标志,非超参数
+--cpu, --num_cpu 设置 cpu 数目, --num_cpu auto 自动设置 cpu 数目
+--exp_name 实验名称
+--data_dir 设置保存目录
+--datestamp 设置保存目录中的时间和日期
+```
 
+
+
+#### 结果保存
+
+```
+data_dir/[outer_prefix]exp_name[suffix]/[inner_prefix]exp_name[suffix]_s[seed]
+
+文件名后缀确定
+参数
+python -m spinup.run ddpg_tf1 --env Hopper-v2 --hid[h] [300] [128,128] --act tf.nn.tanh tf.nn.relu
+
+文件名后缀
+_h128-128_ac-actrelu
+_h128-128_ac-acttanh
+_h300_ac-actrelu
+_h300_ac-acttanh
+```
+
+
+
+#### 算法路径
+
+```
+spinup/algos/BACKEND/ALGO_NAME/ALGO_NAME.py
 ```
 
 
 
 ### 脚本启动
+
+
+
+每一个算法都是 python 函数, 可以直接从 spinup 包中导入
+
+```
+>>> from spinup import ppo_pytorch as ppo
+
+查阅算法的文档页面可以找到参数的详细说明
+```
+
+
+
+#### 使用 ExperimentGrid
+
+spinningup 提供了一个工具叫 experimentgrid 用多个可能的超参数来运行相同的算法
+
+
+
+```
+ from spinup.utils.run_utils import ExperimentGrid
+ from spinup import ppo_pytorch
+ import torch
+
+ if __name__ == '__main__':
+     import argparse
+     parser = argparse.ArgumentParser()
+     parser.add_argument('--cpu', type=int, default=4)
+     parser.add_argument('--num_runs', type=int, default=3)
+     args = parser.parse_args()
+
+     eg = ExperimentGrid(name='ppo-pyt-bench')
+     eg.add('env_name', 'CartPole-v0', '', True)
+     eg.add('seed', [10*i for i in range(args.num_runs)])
+     eg.add('epochs', 10)
+     eg.add('steps_per_epoch', 4000)
+     eg.add('ac_kwargs:hidden_sizes', [(32,), (64,64)], 'hid')
+     eg.add('ac_kwargs:activation', [torch.nn.Tanh, torch.nn.ReLU], '')
+     eg.run(ppo_pytorch, num_cpu=args.cpu)
+     
+     
+     
+添加参数
+eg.add(param_name, values, shorthand, in_name)
+
+添加参数之后
+eg.run(thunk, **run_kwargs)
+
+配置作为 python 的 kwargs 传递给函数 thunk 来运行实验
+```
+
+
+
+## 实验输出
+
+
+
+本节内容
+
+* 算法实现后的输出
+* 存储格式 和 组织格式
+* 存储位置
+* 加载并运行策略
+
+```
+目前没法从已经训练了一部分后的智能体中恢复训练
+```
+
+
+
+### 算法输出
+
+算法都会保存 超参数设置, 学习进度, 已训练的智能体, 值函数 和 一个环境的副本. 输出目录包括
+
+```
+pyt_save/ 仅 pytorch 实现. 一个用于恢复已训练智能体和值函数的目录
+tf1_save/ 仅 tensorflow 实现. 一个用于恢复已训练智能体和值函数的目录
+config.json 仅用来保存配置记录, 不能从该文件启动算法. 一个保存尽可能多参数信息的字典, 如果配置信息不能转化为 JSON 格式, 就会被日志记录
+progress.txt 制表符分开的值文件
+vars.pkl 一个包含算法状态的 pickle 文件, 包含环境副本
+```
+
+
+
+#### pytorch 保存目录信息
+
+```
+model.pt 训练好的模型文件
+```
+
+
+
+#### tensorflow 保存目录信息
+
+```
+variables/
+model_info.pkl
+saved_model.pb
+```
 
