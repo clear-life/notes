@@ -1,4 +1,4 @@
-# spinningup
+# User Documentation
 
 
 
@@ -349,7 +349,7 @@ eg.run(thunk, **run_kwargs)
 
 
 
-## 实验输出
+## Experiment Outputs
 
 
 
@@ -454,4 +454,36 @@ AssertionError: Environment not found!
 
   ```
   用 restore_tf_graph 加载计算图, 查看算法文档, 看保存了哪些函数
+  ```
+
+
+
+## Plotting Results
+
+运行 spinningup 自带的绘图工具
+
+```
+python -m spinup.run plot [path/to/output_directory ...] [--legend [LEGEND ...]]
+    [--xaxis XAXIS] [--value [VALUE ...]] [--count] [--smooth S]
+    [--select [SEL ...]] [--exclude [EXC ...]]
+```
+
+
+
+* 位置参数
+
+  ```
+  logdir 日志目录
+  ```
+
+* 可选参数
+
+  ```
+  -l, --legend=[LEGEND ...]	绘图说明
+  -x, --xaxis=XAXIS, default='TotalEnvInteracts'	确定 x 轴
+  -y, --value=[VALUE ...], default='Performance'	确定 y 轴
+  --count	观看所有实验的结果曲线
+  -s, --smooth=S, default=1	平进化窗口的宽度
+  --select=[SEL ...]	只显示某些曲线
+  --exclude=[EXC ...]	只显示不包含某些日志的曲线
   ```
