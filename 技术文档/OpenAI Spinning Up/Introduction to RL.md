@@ -6,7 +6,7 @@
 
 
 
-### 关键概念和术语
+### Part 1: 关键概念和术语
 
 ![](../../image/agent-env.png)
 
@@ -101,9 +101,56 @@ diagonal Gaussian policies 对角高斯策略
 
 
 
-## RL 算法种类
+## Part 2: RL 算法种类
+
+![](../../image/RL算法分类.png)
 
 
 
-## 策略优化
+### Model-Free vs Model-Based RL
+
+RL 算法的一个重要分类标准就是智能体能否获取环境模型, 即能否获取一个可以预测状态迁移和奖励的函数
+
+
+
+### RL 算法要学习什么
+
+RL 算法的另一个分类标准就是学习什么, 包括
+
+* 策略
+* 价值函数
+* 环境模型
+
+#### Model-Free RL 要学习什么
+
+##### 策略优化
+
+优化策略 π , on-policy
+
+##### Q-learning
+
+优化动作价值函数 Q(s, a), off-policy
+$$
+a(s)=\arg \max _{a} Q_{\theta}(s, a)
+$$
+
+##### Trade-offs Between Policy Optimization and Q-Learning
+
+在策略优化与动作价值函数之间权衡
+
+##### Interpolating Between Policy Optimization and Q-Learning
+
+穿插使用策略优化与动作价值函数
+
+#### Model-Based RL 要学习什么
+
+##### 纯动态规划
+
+每一步用动态规划来执行计划中的第一个动作
+
+##### 专家迭代
+
+
+
+## Part 3: 策略优化
 
