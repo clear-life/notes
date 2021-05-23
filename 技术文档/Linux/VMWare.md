@@ -4,18 +4,22 @@
 
 ### 1.下载
 
-去官网下载
+搜索 VMware Workstation 去官网下载
 
 ### 2.安装
 
-不加入体验计划
+* 修改安装路径, 允许添加环境变量
+
+* 不自动更新, 不加入体验计划
 
 ### 3.激活
 
-在网上找到批量激活码永久激活
+任选激活码激活
 
 ```
-CG392-4PX5J-H816Z-HYZNG-PQRG2
+ZF3R0-FHED2-M80TY-8QYGC-NPKYF
+YF390-0HF8P-M81RQ-2DXQE-M2UT6
+ZF71R-DMX85-08DQY-8YMNC-PPHV8
 ```
 
 
