@@ -190,9 +190,9 @@
 
 ### 方法信息
 
-`Ctrl + Q`					符号文档
+`Ctrl + Q`					函数名
 
-`Ctrl + Shift + I`	符号定义
+`Ctrl + Shift + I`	函数完整定义
 
 
 
@@ -207,4 +207,38 @@
 `Ctrl + Shift + F`显示标识符的所有调用处
 
 
+
+## 导航
+
+
+
+### 随处搜素
+
+`Shift + Shift`		搜索所有
+
+`Ctrl + N`					查找类
+
+
+
+### 查找和替換
+
+`Ctrl + Shift + F`	查找	 	`Alt + W`	完整词
+
+`Ctrl + Shift + R`	替换
+
+
+
+### 声明和用法
+
+`Ctrl + B`		声明
+
+`Alt + F`		  用法
+
+
+
+### 文件结构
+
+`Ctrl + F12`		文件结构
+
+`Alt + 7`			 文件结构窗口
 
