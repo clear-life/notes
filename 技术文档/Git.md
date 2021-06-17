@@ -12,12 +12,6 @@
 
 仓库级配置：`.git/config`
 
-查看所有的配置文件
-
-```
-git config --list --show-origin
-```
-
 
 
 #### 用户信息
@@ -33,6 +27,7 @@ git config --global user.email johndoe@example.com
 
 ```
 git config --list
+git config --list --show-origin		查看所有的配置文件
 ```
 
 
@@ -57,28 +52,16 @@ git config --list
 
 #### 将已有目录转化为Git仓库
 
-进入目录后,执行
-
 ```
-git init
+git init	创建 .git 配置文件目录
 ```
 
-会创建一个`.git` 子目录,包含所有的必须文件
-
-
-
-追踪文件
-
 ```
-git add 
+git add 	添加文件
 ```
 
-
-
-提交仓库
-
 ```
-git commit -m "..."
+git commit -m "..."		提交
 ```
 
 
