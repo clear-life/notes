@@ -33,13 +33,17 @@ VSCode 仅仅是一个文本编辑器, 所有功能都要通过插件来扩展
 
 3. 添加 bin 目录环境变量
 
+#### 安装 C/C++ 扩展
+
+C/C++ ms-vscode.cpptools
+
 #### 配置 C/C++ 环境
 
 1. 配置**编译器**(`c_cpp_properties.json`)
 
    Ctrl + Shift + P  命令面板
 
-   Edit Configurations(UI): 编译器路径 + IntelliSense 模式 (gcc-x64)
+   Edit Configurations(UI): 编译器路径(g++) + IntelliSense 模式 (gcc-x64)
 
 2. 配置**编译**设置(`tasks.json`)
 
@@ -54,5 +58,5 @@ VSCode 仅仅是一个文本编辑器, 所有功能都要通过插件来扩展
    工具栏: Debug  --> Start Debugging
 
    C++(GDB/LLDB)
-
->>>>>>> 1146d0f0a96c32b58e212c62322d0b9f90f99ebb
+   
+   g++
