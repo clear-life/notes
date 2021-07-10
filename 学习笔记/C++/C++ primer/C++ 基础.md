@@ -224,3 +224,114 @@ decltype(a) d;		d 是 int 类型
 decltype((a)) e; 	e 是 int & 类型, 因为 a 加了小括号
 ```
 
+
+
+
+
+## 第 3 章	string , vector 和数组
+
+### 3.1 using 声明
+
+```
+using namespace::name;
+
+使用 name 直接访问 namespace::name
+```
+
+
+
+### 3.2 string
+
+```
+标准库类型 string
+#include <string>
+using std::string;
+```
+
+#### 3.2.1 初始化
+
+* `=` : 拷贝初始化
+* 其余: 直接初始化
+
+```
+string s;
+string s = s1, 			s(s1);
+string s = "string", 	s("string");
+string s(10,'c');
+```
+
+#### 3.2.2 操作
+
+```
+getline(is, s)	is 输入流 	s string 类型		返回 is	
+s.size()		返回 string::size_type 类型
+s1 = s2			s2 复制覆盖 s1 中
+s1 == s2		s1 与 s2 字符串是否完全一样
+字符串拼接	+ 运算符两侧至少有一个 string 
+```
+
+
+
+#### 3.2.3 string 中的字符
+
+```
+范围 for 语句
+for(declaration : expression)
+	statement
+	
+declaration 定义循环变量
+expression 序列对象
+
+改变 string 中字符, 循环变量定义为引用类型
+for(auto &c : s)
+	c = 'a';
+```
+
+**下标运算符 `[]`**
+
+输入: `string::size_type`类型
+
+输出: 字符的引用
+
+### 3.3 vector
+
+对象的集合, **容器**, 类模板
+
+```
+#include <vector>
+using std::vector;
+
+实例化
+vector<int> a;
+```
+
+#### 3.3.1 初始化
+
+```
+vector<T> v;
+vector<T> v1 = v,	v1(v);			v 的副本初始化 v1
+vector<T> v1(n),	v1(n, value);	n 个 value 初始化
+vector<T> v1 = {a, b, c...},		v1{a, b, c...};		列表初始化
+```
+
+#### 3.3.2 添加元素
+
+vector 的 push_back() 成员函数
+
+```
+vector<int> a;
+a.push_back(0);		把 0 加入 a 的后面
+vector 高效增长模型: 动态表(CLRS 摊还分析)
+
+注: 不能用范围 for 循环向遍历序列中添加元素
+```
+
+#### 3.3.3 vector 操作
+
+```
+v.empty()
+v.size()	返回 vector::size_type 类型
+v.push_back(t)
+v[n]		返回引用
+```
+
