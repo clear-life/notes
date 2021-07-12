@@ -335,3 +335,75 @@ v.push_back(t)
 v[n]		返回引用
 ```
 
+
+
+### 3.4 迭代器介绍
+
+迭代器: 容器的指针
+
+注:
+
+1. 所有容器都能用迭代器
+2. 少数容器能用下标运算符 `[]`
+3. `string` 不是容器, 但支持迭代器
+4. `vector` 支持下标运算符
+
+#### 3.4.1 使用迭代器
+
+**begin 和 end**
+
+1. `begin` 指向首元素, `end` 指向尾元素的下一位置
+2. 若容器为空, 则 `begin` 与 `end` 相等, 都是尾后迭代器
+
+```
+vector<int> v;
+auto b = v.begin(), e = v.end();
+```
+
+**迭代器运算符**
+
+```
+*iterator	返回所指元素引用
+iterator->men	等价于 (*iterator).men
+++iterator --iterator
+==  !=		判断是否相等
+
+迭代器的循环中不用 < 进行判断, 而是用 == 和 != 进行判断
+因为所有容器都定义 == 和 != 运算符, 大多数未定义 < 运算符
+```
+
+**迭代器类型**
+
+迭代器类型: `iterator` 和 `const_iterator`
+
+```
+vector<int>::iterator it;		vector<int> 类型迭代器
+vector<int>::const_iterator it;	it 只能读元素, 不能写元素
+
+string::iterator it;			string 类型迭代器
+string::const_iterator it;		it 只能读字符, 不能写字符
+```
+
+* 非常量对象
+  begin 和 end 返回 iterator 类型迭代器
+
+* 常量对象
+  begin 和 end 返回 const_iterator 类型迭代器
+
+* 限制
+  * 不能在范围 `for` 循环中向 vector 添加元素
+  * 改变 vector 对象容量的操作会使得迭代器失效
+  * 上述限制跟动态表有关
+
+#### 3.4.2 迭代器运算
+
+```
+vector 和 string 支持的运算
+
+有效位置:容器内元素和尾元素的下一元素
+iter + n	iter - n	移动 n 个位置
+iter += n	iter -= n
+iter1 - iter2	计算迭代器之间的距离, 返回 difference_type 有符号整数类型
+> >= < <= 	关系运算符, 比较位置关系
+```
+
