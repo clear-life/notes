@@ -601,7 +601,7 @@ int (*p)[4] = a;	p 指向 4 元素 int 数组, 初始化为 a, 即 p 指向 a �
 
 
 
-## 第 四 章 	表达式
+## 第 4 章 	表达式
 
 ### 4.1 基础
 
@@ -766,4 +766,181 @@ sizeof 不会实际求值, 直接获取对象类型所占空间大小
 * `cast-name` 指定转换类型
 * `type` 指定转换的目标类型
 * `expression` 为要转换的值
+
+
+
+## 第 5 章 语句
+
+**复合语句**
+
+* `{}` 是一个复合语句, 不需要加 `;` 
+* 迭代与条件等语句只跟一条语句, 常需要跟复合语句, 这就是这些语句经常要用 `{}` 的原因
+
+**悬垂 `else`**
+
+`else` 与最近尚未匹配的 `if` 匹配, 消除二义性
+
+
+
+### 5.3 条件语句
+
+#### 5.3.2 switch 语句
+
+```
+switch(整形常量表达式)
+{
+	case int_value1: [break;]
+	case int_value2: [break;]
+	case int_value3: [break;]
+	default:
+}
+```
+
+**switch 内部的变量定义**
+
+跳转语句不能跳过**带初始值**的**变量定义**
+
+```
+switch(整型常量表达式)
+{
+	case 0:
+		int a;
+		int b = 0;
+	case 1:
+		// a, b 均在作用域内
+		// 但 a 是正确用法, b 是错误用法, 因为 b 经过了初始化
+}
+
+switch(1)
+{
+    case 0:
+    	int a;
+    cout << "case 0" << endl;
+    	break;
+    case 1:
+    	a = 1;
+    	cout << "a = " << a << endl;
+    	cout << "case 1" << endl;
+}
+输出: 
+a = 1
+case 1
+```
+
+
+
+### 5.4 迭代语句
+
+#### 5.4.2 传统 for 语句
+
+```
+for(init-statement; condition; expression)
+	statement
+```
+
+* `init-statement` 只能有一条声明语句, 但可以定义多个对象
+
+* 循环情况
+
+  ```
+  第一轮
+  1. init-statement
+  2. condition
+  3. statement
+  
+  第二轮
+  1. expression
+  2. condition
+  3. statement
+  
+  第三轮
+  1. expression
+  2. condition
+  3. statement
+  
+  ......
+  
+  第 n 轮(最后一轮)
+  1. expression
+  2. condition
+  3. statement
+  
+  第 n + 1 轮
+  1. expression
+  2. condition
+  ```
+
+  ```
+  1. init-statement
+  2. condition
+  
+  第一轮迭代(#1 statement)
+  
+  1. expression
+  2. condition
+  
+  第二轮迭代(#2 statement)
+  
+  1. expression
+  2. condition
+  
+  ......
+  
+  第 n 轮迭代(#n statement) 最后一轮
+  
+  1. expression
+  2. condition
+  
+  
+  
+
+
+
+#### 5.4.3 范围 for 语句
+
+遍历序列元素, 序列能返回迭代器 `begin` 和 `end` 成员
+
+```
+for(declaration: expression)
+	statement
+```
+
+```
+vector<int> a;
+for(int i : a)
+{
+	i = ...
+}
+```
+
+* 每次迭代后, `i` 被**重新定义**并**初始化为序列的下一个值**
+  即 **迭代后** `i` 所占**内存空间被销毁**, **重新分配内存空间**给 `i` , 并**初始化为下一个元素的值**
+
+**等价形式**
+
+```
+vector<int> a;
+for(auto beg = a.begin(), end = a.end(); beg != end; ++beg)
+{
+	......
+}
+```
+
+* 在 `for` 循环内增删元素会使得 `end` 的值无效, 判断条件出错
+
+
+
+### 5.5 跳转语句
+
+#### 5.5.1 break 语句
+
+`break` 语句作用于最近的循环或 `switch` 语句
+
+#### 5.5.2 continue
+
+对 `for` 循环来说, `continue` 中断 `statement`, 继续 `expression` , `condition` 和下一次迭代
+
+
+
+### 5.6 try 语句块和异常处理
 
