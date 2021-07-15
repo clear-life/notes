@@ -944,3 +944,93 @@ for(auto beg = a.begin(), end = a.end(); beg != end; ++beg)
 
 ### 5.6 try 语句块和异常处理
 
+**异常处理** 
+
+* `throw` 表达式	
+
+  检测异常
+
+* `try` 语句块	    
+
+  异常处理
+
+  * 关键字 `try` + 多个 `catch` 子句
+  * 紧跟 `try` 的代码抛出异常, `catch` 子句处理异常
+
+* 异常类
+
+  在 `throw` 与 `catch` 中传递异常的信息
+
+#### 5.6.1 throw 表达式
+
+`throw` + 表达式 + `;`
+
+表达式类型即为异常类型
+
+```
+if(a != 1)
+	throw runtime_error("Error!");
+	
+//若程序执行到这里, 说明没有抛出异常
+cout << "Normal" << endl;
+
+
+若 a != 1 则抛出一个异常, 该异常是 runtime_error 类型的对象,
+然后中断当前函数, 跳过后面的代码, 将程序控制权交给异常处理代码
+
+runtime_error 是标准库异常类型的一种, 定义在头文件 stdexcept 中, 
+用 string 对象初始化
+```
+
+
+
+#### 5.6.2 try 语句块
+
+```
+try
+{
+	正常程序代码
+	若失败, 则抛出异常
+	throw 表达式 ;
+}
+catch(异常声明)
+{
+	异常处理
+}
+catch(异常声明)
+{
+	异常处理
+}...
+```
+
+* `catch` 语句块只执行一个
+
+```
+try
+{
+	throw runtime_error("Error!");
+}
+catch (runtime_error err)
+{
+	cout << err.what() << endl;
+}
+```
+
+* `err` 就是抛出的异常的变量名
+* `what` 成员函数为初始化时 `string` 对象的副本
+
+**寻找异常处理代码**
+
+* 与函数调用相反, 函数调用是**由外向内**调用的, 直到不能继续调用为止
+* 寻找异常处理是**由内向外**的, 由内层 `try` 语句块 到外层 `try` 语句块依次查找
+* 最终会找到标准库函数 `terminate`
+
+#### 5.6.3 标准异常
+
+标准库中的异常类
+
+* `exception` 头文件中的异常类 `exception`
+  * 只报告异常发生, 不提供额外信息
+* `stdexcept` 头文件
+* `new` 头文件定义了 `bad_cast` 异常类型
+* `type_info` 头文件定义了 `bad_cast` 异常类型
