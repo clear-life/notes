@@ -800,6 +800,35 @@ sizeof 不会实际求值, 直接获取对象类型所占空间大小
 * `type` 指定转换的目标类型
 * `expression` 为要转换的值
 
+**const_cast**
+
+只修改底层 `const` 的 `const` 属性, 不改变类型
+
+`const_cast` 的类型必须是指针或引用
+
+1. 去掉 `const` 性质
+
+   ```
+   const int * p;
+   // p 是底层 const
+   int *p1 = const_cast<int *>(p)
+   1. 把 p 类型由 const int * 转换为 int * 初始化 p1
+   2. 通过 p1 修改 p 所指对象是合法的, 但 *p1 不是可修改的左值
+
+2. 添加 `const` 属性
+
+   ```
+   int *p;
+   // p 为非常量对象
+   const int *p1 = const_cast<const int *>(p);
+
+3. 只调节类型限定符, 不改变基础类型
+
+   ```
+   const char *p;
+   string &s = const_cast<string&>(p);
+   // 错误, const_cast 转换不改变表达式类型
+
 
 
 ## 第 5 章 语句
