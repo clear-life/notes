@@ -191,7 +191,40 @@ const int *const b = &a;
 
 #### 2.4.3 顶层 const 与 底层const
 
+* 顶层 `const` : 对象本身是 `const`
 
+* 底层 `const` : 指向或引用的对象是 `const`
+
+  ```
+  int a = 0;
+  int *const p = &a;	
+  // p 为 const 对象(顶层 const ), 可以被 &a 初始化, 但之后不能被赋值
+  
+  const int b = a;	
+  // b 为 const 对象(顶层 const )
+  
+  const int *p = &b;
+  1. p 为指向 const 对象的指针(底层 const ), 不能通过 p 来修改 b 的值 
+  2. 允许修改 p 的值, 但不能通过 p 来修改 b 的值 
+  3. 给 p 赋值的类型必须为 const int *, 不能是 int *
+  
+  const int &r = b;
+  // r 引用 const 对象(底层 const), 不能通过 r 来修改 b
+
+* 底层 `const` 赋值必须类型一致
+
+  ```
+  int *p;
+  const int *p1;
+  const int *p2;
+  p2 = p1;
+  // p1 和 p2 都是底层 const, 可以相互赋值
+  
+  p = p1;
+  //错误, p 为 int * 类型, p1 为 const int * 类型
+  不能把 p1 赋值给 p
+
+* 顶层 `const` 可以类型不一致
 
 ### 2.5 处理类型
 
