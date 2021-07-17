@@ -1264,5 +1264,6 @@ void fun(int (*p)[10])
 
 **initializer_list 形参**
 
-头文件: `<initializer_list>`
+* 头文件: `<initializer_list>`
+* `initializer_list` 对象中的元素永远
 
