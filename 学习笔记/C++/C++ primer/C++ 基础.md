@@ -1243,7 +1243,7 @@ void fun(int (&r)[10]);
 
 ```C++
 void fun(int p[][10]);
-void fun(int (*p)[10])
+void fun(int (*p)[10]);
 //两个声明等价, p 实际上是指向 10 元素 int 数组对象的指针
 //除了第一维之外, 所有维度大小都是数组类型的一部分, 都不能省略
 ```
@@ -1264,6 +1264,26 @@ void fun(int (*p)[10])
 
 **initializer_list 形参**
 
-* 头文件: `<initializer_list>`
-* `initializer_list` 对象中的元素永远
+* 头文件: `<initializer_list>`, 模板类型
+
+* `initializer_list` 对象中的元素永远是常量
+
+  ```C++
+  void fun(initializer_list<int> list)
+  {
+      for(auto beg = list.begin(); beg != list.end(); ++beg)
+          cout << *beg << endl;
+  }
+  
+  if(a > b)
+      fun({1, 2});
+  else
+      fun({1, 2, 3});
+  ```
+
+* 有 **initializer_list** 形参的函数也可以拥有其他形参
+
+  ```C++
+  void fun(string s, initializer_list<int> list);
+  fun("Hello", {1, 2, 3});
 
