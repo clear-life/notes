@@ -1402,3 +1402,80 @@ decltype(a) *fun(int i);
 2. decltype(a) 的结果是 int [10] 类型
 3. decltype(a) * 是 int (*)[10] 类型
 ```
+
+
+
+### 6.4 函数重载
+
+**同一作用域内**, **函数名相同**,  **形参列表不同**, 返回类型可相同可不同
+
+```C++
+void fun(int a);
+double fun(double a);
+void fun(string a);
+```
+
+> `main` 函数不能重载
+
+**重载和 `const` 形参**
+
+* 顶层 `const` 不能用于区分重载函数
+
+  ```C++
+  void fun(int a);
+  void fun(const int a);
+  // 二者声明等价, 编译器无法根据形参类型的不同区分重载函数
+  //二者都可以接收常量和非常量实参
+
+* 底层 `const` 可以用于区分重载函数
+
+  ```C++
+  void fun(int &a);			//常量和非常量实参都可以接收
+  void fun(const int &a);		//只能接收常量对象, 且为精确匹配
+  
+  void fun(int *p);			//常量和非常量实参都可以接收
+  void fun(const int *P);		//只能接收常量对象, 且为精确匹配
+
+**`const_cast` 和重载**
+
+`const_cast` 在函数重载中用于改变常量属性
+
+```C++
+const int &fun(const int &a, const int &b)
+{
+    return a < b ? a : b;	//返回 a 和 b 中值较小的引用
+}
+/*
+输入: 非常量或常量 a 和 b的常量引用
+输入: a 或 b 的常量引用
+缺点: 不能在 a 和 b 是非常量时, 返回 a 或 b 的非常量引用
+*/
+
+// 优化: 使用 const_cast 类型转换进行一次中转, 使得能做到:
+// a 和 b 是非常量, 返回非常量引用, 但又希望能做到在函数内不能修改 a 和 b 的值, 即函数内有 const 属性
+
+// 方法: 使用 const_cast 类型转换进行中转, 先加上 const 属性, 然后进行操作, 返回时再去掉 const 属性
+int &fun(int &a, int &b)
+{
+    auto &r = fun(const_cast<const int &>(a), const_cast<const int &>(b));
+    // 先把 a 和 b 加上 const 属性, 然后调用 fun 的 const 版本, 返回 const int & 类型给 r
+    
+    return const_cast<int &>(r);
+    // 然后去掉 r 的 const 属性, 返回 int & 类型 
+}
+// 类型变换过程如下:
+// int &   ->   const int &   ->   处理   ->   int &   ->   返回
+```
+
+
+
+#### 6.4.1 重载与作用域
+
+**内层**作用域声明的**名字**会**隐藏****外层**作用域的**同名实体**
+
+```C++
+void fun(double a);
+{
+	void fun(int a);	//隐藏外层的 void fun(double a);
+}
+```
