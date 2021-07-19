@@ -1779,3 +1779,5 @@ bool fun2(int, int);
 // 根据形参的取值, get_fun 返回指向 fun1 或 fun2 的指针
 decltype(fun1) *get_fun(int);
 ```
+
+#
