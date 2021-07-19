@@ -1686,3 +1686,4 @@ void fun(char );
 
 void (*p)(int) = fun;	//精确匹配
 ```
+
