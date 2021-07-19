@@ -230,11 +230,15 @@ const int *const b = &a;
 
 #### 2.5.1 类型别名
 
-**tydef** 与 **using**
+**`typedef`** 与 **`using`**
 
 ```C++
-tydef int integer;
+typedef int integer;
 using integer = int;
+
+// a 是 int [10] 的类型别名
+typedef int a[10];		
+using a = int [10];
 ```
 
 #### 2.5.3 decltype 类型指示符
@@ -1669,7 +1673,7 @@ p = &fun;
 
 2. 函数指针也可用解引用符使用
 
-   ```
+   ```C++
    int a = (*p)(1, 2);	
    int a = fun(1, 2);
    //二者等价, 因为 p 指向 fun 函数
@@ -1687,3 +1691,91 @@ void fun(char );
 void (*p)(int) = fun;	//精确匹配
 ```
 
+**函数指针形参**
+
+和数组一样, 形参不能是函数类型, 但可以是**指向函数的指针类型**
+
+```C++
+void fun(int a, int b, int p(char, char));		// p 是函数类型, 会自动转化为指向该函数类型的指针
+void fun(int a, int b, int (*p)(char, char));	// 等价声明, 显式声明 p 为指向函数的指针
+
+
+int p(char, char);
+fun(1, 2, p);		//自动将 p 转换成指针
+```
+
+**类型别名与 `decltype`**
+
+```c++
+bool fun(int, int);
+	
+typedef bool fun1(int, int);	// fun1 是 bool (int, int) 函数类型的类型别名
+typedef decltype(fun) fun2;		// fun2 是 fun 的函数类型的类型别名, 即 bool (int, int) 函数类型的类型别名
+
+bool fun(int, int);
+	
+typedef bool (*p1)(int, int);	// p1 是 bool (*)(int, int) 的类型别名
+typedef decltype(fun) *p2;		// p2 是 指向 fun 类型的指针, 即指向 bool (int, int) 类型的指针, 即 bool (*)(int, int) 的类型别名
+```
+
+> `decltype` 参数为函数时不会将函数转换为指针类型, 而是返回函数类型
+>
+> ```C++
+> bool fun(int, int);
+> decltype(fun);		//返回 bool (int, int) 类型
+
+**返回指向函数的指针**
+
+* 和数组一样, 不能返回函数类型, 但可以返回函数指针类型
+* 但**必须把返回类型显式写为函数指针类型**, 编译器**不会自动把函数转换为指针类型返回**
+
+**使用 `using` 类型别名**
+
+```C++
+using fun1 = bool (int, int);		// fun1 是 bool (int, int) 的类型别名
+using fun2 = bool (*)(int, int);	// fun2 是 bool (*)(int, int) 的类型别名
+```
+
+必须**显式指定**返回类型为**函数指针**类型
+
+```C++
+fun1 fun(int);	// 错误, fun1 为函数类型, 返回类型不能是函数类型
+fun2 fun(int);	// 正确, fun2 是函数指针类型, 允许函数返回函数指针
+fun1 *fun(int);	// 正确, 显式指定返回类型是指向函数的指针
+
+fun2 fun(int);
+/*
+输入: int
+输出: bool (*)(int, int)
+*/
+
+// 与 fun2 fun(int) 等价的声明一
+bool (*fun(int))(int, int);
+/*
+由外到内的顺序读声明语句, 先把 (*fun(int)) 看作函数名
+bool (*tmp)(int, int) 表明 (*tmp) 的类型为 bool (int, int), 即 tmp 的类型为 bool (*)(int, int)
+则 bool (*fun(int))(int, int) 表明 fun(int) 为 bool(*)(int, int) 类型
+则 fun 函数的返回类型为 bool(*)(int, int)
+总结:
+bool (*fun(int))(int, int);
+函数名: fun
+输入: int
+输出: bool(*)(int, int)
+*/
+
+// 与 fun2 fun(int) 等价的声明二
+auto fun(int) -> bool (*)(int, int);
+//函数名: fun
+//输入: int
+//输出: bool(*)(int, int)
+```
+
+将 `auto` 和 `decltype` 用于函数指针类型
+
+```C++
+bool fun1(int, int);
+bool fun2(int, int);
+
+// 根据形参的取值, get_fun 返回指向 fun1 或 fun2 的指针
+decltype(fun1) *get_fun(int);
+```
