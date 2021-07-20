@@ -1877,3 +1877,154 @@ struct Book
 
 > **常量对象**, 常量对象的**引用和指针**都只能调用**常量成员函数**
 
+**类作用域和成员函数**
+
+**编译器处理类**的步骤
+
+1. 编译**成员的声明**
+2. 编译**成员的函数体**
+
+> 因此, 成员函数体可以**不用在意成员出现次序**地使用成员
+
+**返回 `this`对象的函数**
+
+成员函数类似某个运算符时, 应该**尽量模仿该运算符**
+
+```C++
+struct Book
+{
+   	Book& conbine(Book* const this, const Book&);	// 显式写出 this 形参, 语法上是错误的, 但理解意思就行
+    int price = 0;    
+}
+
+// 函数外定义成员函数
+Book& Book :: conbine(Book* const this, const Book& b)
+{
+    this -> price = this -> price + b.price;
+    return *this;
+}
+
+// 调用成员函数
+Book a, b;
+a.combine(b);	// b 的 price 加到 a 的 price 上
+// 1. a 的地址传给 this, b 的地址传给 b
+// 2. 结果相加后, 返回 *this 即 a 的引用
+```
+
+#### 7.1.3 定义类相关的非成员函数
+
+类的非成员函数
+
+1. 概念上是类的接口的一部分
+2. 实际上不属于类, 只是与类有关的普通函数
+3. 一般与类的声明在同一头文件
+
+**定义 `read` , `print` 和 `add` 函数**
+
+1.  `IO` 类不能背拷贝, 所以要用引用
+2. 输出函数尽可能对格式的控制, 把格式控制交给用户
+3. 拷贝类的对象就是拷贝对象的数据成员
+
+```C++
+struct Book 
+{
+    std::string book_id = "-";
+    int price = 0;
+};
+
+// 类外定义非成员函数
+istream &read(istream &is, Book &b)
+{
+    is >> b.book_id >> b.price;
+    return is;
+}
+ostream &print(ostream &os, const Book &b)
+{
+    os << b.book_id << " " << b.price;
+    return os; 
+}
+Book add(const Book &a, const Book &b)
+{
+    Book sum = a;
+    sum.combine(b);	//b 加到 sum 上并返回 sum 的引用
+    return sum;		//返回值, 拷贝 sum 的数据成员
+}
+```
+
+#### 7.1.4 构造函数
+
+1. 无返回类型
+2. 函数名与类型相同
+3. 无视 `const` 对象的 `const` 属性, 相当于初始化过程
+
+**默认构造函数(编译器合成)**
+
+1. 先用类内初始值初始化成员
+2. 再用默认初始化
+
+**默认构造函数有不能正确处理的情况**
+
+一般需要自己定义默认构造函数, 原因:
+
+1. 一旦定义构造函数, 则编译器不会生成默认构造函数
+2. 内置类型和复合类型**默认初始化值是未定义**的
+3. 有些类不能被合成默认构造函数
+
+```C++
+struct Book
+{
+    Book() = default;
+    Book(const std::string &s): book_id(s) {}
+    Book(const int p): price(p) {}
+    Book(const std::string &s, const int p): book_id(s), price(p) {} 
+    Book(std::istream &);
+    int price = 0;
+    std::string book_id = "-";
+};
+
+```
+
+程序解释:
+
+1. `Book() = default;` 表示要求编译器合成默认构造函数
+
+2. 构造函数初始值里列表
+
+   ```C++
+   Book(const std::string &s, const int p): book_id(s), price(p) {} 
+   1. 注意  : 与 ,
+   2. 没有在初始值列表里的成员将先类内初始值初始化, 再默认初始化
+
+**类外定义构造函数**
+
+```C++
+Book::Book(std::istream &is)
+{
+	read(is, *this);	//从 is 入读信息到 this 指向的对象中
+}
+//没有在初始值列表里初始化的成员将先类内初始化再默认初始化
+//price 和 book_id 执行类内初始化
+```
+
+#### 7.1.5 拷贝, 赋值和析构
+
+* 拷贝: 初始化变量, 值传递
+* 赋值: 赋值运算符
+* 析构: 销毁对象
+* 自己不定义时, 编译器合成默认
+
+**某些类不能依赖合成的版本**
+
+当需要分配类对象之外的资源时, 合成版本往往会失效
+
+1. 管理动态内存的类不能依赖合成版本
+2. 需要动态内存的类应该使用 `vector` 和 `string` 管理内存空间
+
+### 7.2 访问控制与封装
+
+封装
+
+1. 访问说明符确定访问权限, 实现封装
+2. `public`: 所有都可访问, 完全公开
+3. `private`: 不能被外界访问, 私密
+
