@@ -1780,4 +1780,100 @@ bool fun2(int, int);
 decltype(fun1) *get_fun(int);
 ```
 
-#
+## 第 7 章 类
+
+思想: **数据抽象**和**封装**
+
+* 数据抽象: **接口**和**实现**分离
+  * 接口: **用户能实现的操作**
+  * 实现: **数据成员**, 负责接**口实现的函数**(成员和非成员函数), **私有成员函数**
+
+抽象数据类型: 实现数据抽象和封装
+
+### 7.1 定义抽象数据类型
+
+成员函数
+
+* **声明必须在类的内部**
+* **定义**在**类内类外都可**, 类内是隐式 `inline` 函数
+
+非成员函数
+
+* 接口组成的一部分
+* 定义和声明都在类外
+
+```C++
+struct Book
+{
+    std::string isbn() const { return book_id; }
+    Book& conbine(const Book&);
+    
+    std::string book_id;
+    int price = 0;
+}
+```
+
+**成员函数默认隐藏形参 `this`**
+
+* 所有成员函数都有 `this` 形参
+
+* `this` 形参类型为**指向该类对象的常量指针**, 即 `Bool* const` 类型
+
+* 当调用成员函数时, 编译器把调用该成员函数的**对象地址**传递给 `this` 形参
+
+  ```C++
+  struct Book
+  {
+     	std::string isbn(Book* const this) const { return this -> book_id; }	//使用 this 调用对象的成员
+      Book& conbine(Book* const this, const Book&);
+      
+      std::string book_id;
+      int price = 0; 
+  }
+
+**`const` 成员函数/常量成员函数**
+
+1. 成员函数 `isbn() const` 后面的 `const` 表明这是一个 `const` 成员函数
+
+2. `const` 修饰 `this` 指针的常量属性, 即**指向常量类对象的常量指针**
+
+   `this` 类型由 `Book *const` 类型变为 `const Bool *const` 类型
+
+3. 使用 `const this` 指针的好处
+
+   既可以接受常量对象的调用, 也可以接受非常量对象的调用
+
+   ```C++
+   struct Book
+   {
+       std::string isbn() { return book_id; }
+       std::string book_id = "-";
+   } 
+   Book a;
+   a.isbn();
+   // 正确, a 是非常量对象, 可以调用普通成员函数
+   
+   const Book b;
+   b.isbn();
+   // 错误, b 是产量对象, 类型为 const Book, 传入参数为 const Book * 
+   // 而 this 类型为 Book *const 
+   // 二者类型不匹配, 不能把 const Book * (底层 const)传递给 Book *const (顶层 const)
+   
+   // 若 this 指针是 const Book *const 类型, 则二者都可传入
+   std::string isbn() const { return book_id; }
+   Book a;
+   a.isbn();
+   // 正确, Book * 传递给 const Book *const
+   
+   const Book b;
+   b.isbn();
+   // 正确, const Book * 传递给 const Book *const
+   ```
+
+4. 等价声明
+
+   ```C++
+   std::string isbn(const Book *const this) { return this -> book_id; }
+
+> **常量对象**, 常量对象的**引用和指针**都只能调用**常量成员函数**
+
