@@ -2027,4 +2027,62 @@ Book::Book(std::istream &is)
 1. 访问说明符确定访问权限, 实现封装
 2. `public`: 所有都可访问, 完全公开
 3. `private`: 不能被外界访问, 私密
+4. 访问说明符有效范围: 直到下一个访问说明符或类的尾部
 
+```C++
+class Book
+{
+public:
+	Book() = default;
+    Book(const std::string &s, const int a) : book_id(s), price(a) {}
+private:
+    std::string book_id = "-";
+    int price = 0;
+};
+```
+
+**`class` 和 `struct` 关键字**
+
+`struct`: 第一个访问说明符之前的成员为 `public`
+
+`class`: 第一个访问说明符之前的成员为 `private`
+
+#### 7.2.1 友元
+
+类可以给其他类或函数访问非公有成员, 方法是设为**友元**
+
+1. 在类内对函数或类做友元声明
+2. 友元声明不是函数声明
+3. 友元不是类的成员, 也不受所在区域访问控制级别的约束
+
+```C++
+class Book
+{
+    //友元声明
+    friend Book add(const Book&, const Book&);
+    friend std::istream &read(std::istream &, Book&);
+    friend std::ostream &print(std::ostream &, const Book&);
+    
+public:
+	Book() = default;
+   	Book(const std::string &s, const int a) : book_id(s), price(a) {}
+private:
+    std::string book_id = "-";
+    int price = 0;
+};
+
+//函数声明
+Book add(const Book&, const Book&);
+std::istream &read(std::istream &, Book&);
+std::ostream &print(std::ostream &, const Book&);
+```
+
+**封装优点**
+
+1. 用户不会破坏对象的成员
+2. 类的实现细节可以随时改变, 只需保证接口不变
+
+**友元的声明**
+
+1. 友元的声明仅仅是指定了访问权限, 不是函数声明
+2. 通常把友元(函数和类)的声明与类本身放在同一头文件中
