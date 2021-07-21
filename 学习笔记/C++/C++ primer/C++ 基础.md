@@ -1795,7 +1795,8 @@ decltype(fun1) *get_fun(int);
 成员函数
 
 * **声明必须在类的内部**
-* **定义**在**类内类外都可**, 类内是隐式 `inline` 函数
+* **定义**在**类内类外都可**, 类内是隐式 `inline` 函数, 类外需显式声明 `inline`
+* `inline` 成员函数一般与类定义在同一头文件中
 
 非成员函数
 
@@ -1831,7 +1832,7 @@ struct Book
       int price = 0; 
   }
 
-**`const` 成员函数/常量成员函数**
+** `const` 成员函数/常量成员函数**
 
 1. 成员函数 `isbn() const` 后面的 `const` 表明这是一个 `const` 成员函数
 
@@ -2095,3 +2096,56 @@ std::ostream &print(std::ostream &, const Book&);
 
 **类型成员**
 
+1. 自定义某种类型在类里的别名
+2. **成员为某种类型**
+3. 类型成员必须**先定义后使用**, 所以一般放在类开头位置
+
+```C++
+class Screen
+{
+public:
+    typedef std :: string :: size_type pos;
+    // 等价用法
+    using pos = std :: string :: size_type;
+private:
+    pos cursor = 0;
+    pos height = 0, width = 0;
+    std :: string contents;
+};
+```
+
+**重载成员函数**
+
+```C++
+class Screen
+{
+public:
+    char get() const { return contents[cursor]; }
+    char get(pos h, pos w) const;		// 无需在定义和声明的地方同时声明 inline , 只需要在定义的地方声明 inline
+};
+
+inline char Sereen :: get(pos h, pos w) const	// 只需在定义的地方声明 inline
+{
+    return contents[h * width + w];
+}
+```
+
+**可变数据成员**
+
+* 即使是 `const` 成员函数内, 也可修改可变数据成员的值, `mutable` 关键字
+* 即使是 `const` 对象的成员, 可变数据成员也不会是 `const`
+
+```C++
+class Screen
+{
+public:
+    void fun() const;
+private:
+    mutable int count = 0;
+};
+
+void Screen :: fun() const
+{
+    ++count;
+}
+```
