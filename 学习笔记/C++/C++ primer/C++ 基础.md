@@ -2371,20 +2371,67 @@ class Window
 
 **令其他类的成员函数成为友元**
 
+目的:
+
+1. 类 `Window` 有成员函数 `clear`
+2. 类 `Screen`
+3. `Window :: clear` 需要声明形参为 `Screen` 的引用
+4. `Screen` 需要声明 `Window :: clear` 为友元函数
+
+分析:
+
+1. 由于 类 `Screen` 需要声明类 `Window` 的 `clear` 成员函数为友元, 所以类 `Window` 和成员 `clear` 需要先声明(`Window` 先定义, `clear` 先声明)
+2. 由于 `clear` 需要 `Screen` 作为参数, 所以 `Screen` 要先声明
+3. 由于 `clear` 需要使用 `Screen`, 所以 `clear` 的定义要放到 `Screen` 定义之后
+4. 最终顺序为:
+   1. 声明 `Screen`
+   2. 定义 `Window`, 声明 `clear`
+   3. 定义 `Screen`, 声明 `clear` 为友元
+   4. 定义 `clear`
+
 ```C++
+class Screen; 
+
+class Window
+{
+public:
+    void clear(Screen &s);
+};
+
 class Screen
 {
     friend void Window::clear(Screen &s);
-    
 private:
     std::string contents;
 };
 
-class Window
-{
-    void clear(Screen &s) { s.contents = string(s.contents.length(), ' '); }
-};
+void Window::clear(Screen &s)
+{ 
+    s.contents = string(s.contents.length(), ' '); 
+}
+
+
 ```
+
+> 重载函数需要分别声明为友元函数
 
 **友元声明和作用域**
 
+1. **友元的声明**不必非要在**友元声明**之前
+
+2. 假定: **友元声明中的友元名字在当前作用域可见**
+
+3. **友元的声明**可以声明在**其他作用域**, 只需友元在当前作用域可见
+
+4. 即使是在类的内部定义友元函数, 也**必须在类外声明该友元函数**
+
+   ```C++
+   struct X
+   {
+   	friend void f() { return; } 	//类内定义友元函数
+       void a() { f(); }				//错误, 函数 f() 未声明
+       void b();
+   };
+   void f();							//类外声明友元函数
+   
+   void b() { f(); }					//正确, 函数 f() 已声明
