@@ -2149,3 +2149,242 @@ void Screen :: fun() const
     ++count;
 }
 ```
+
+#### 7.3.2 返回 *this 的成员函数
+
+```C++
+class Screen
+{
+public:
+    Screen &set(char);			// 当前光标处设为新字符, 返回对象的引用
+    Screen &set(pos, pos, char);// 指定光标处设为新字符, 返回对象的引用
+};
+
+Screen my_screen;
+my_screen.set('#').set(3, 4, '%');	// 若成员函数返回对象的引用, 则一系列操作可以在一个表达式完成
+```
+
+**从 `const` 成员函数返回 `this`**
+
+`const` 成员函数中
+
+1. `this` 指向 `const`对象, `this` 类型为 `const Type *`
+
+2. `*this` 类型为 `const Type`
+3. `const` 成员函数返回 `*this`引用, 即 `const Type` 类型, 返回的是**不可修改的左值**
+
+```C++
+// 错误示范
+class Screen
+{
+    const Screen &display(ostream &) const;
+    Screen &set(const char);
+}
+Screen my_screen;
+my_screen.display(cout).set('*');
+/*
+错误, display 返回常量引用, 不能在修改其内容
+1. my_screen.display(cout)
+	函数名: display
+	输入: Screen *const
+	输出: const Screen &
+2. my_screen.display(cout).set('*')
+	函数名: set
+	输入: const Screen &
+	输出: Screen &
+	语法错误: 不能把 const Screen * 赋给 Screen * 类型的 this 指针 
+*/
+```
+
+**基于 `const` 的重载**
+
+1. 底层 `const` 可以用来区分重载函数
+2. 只能在 `const` 对象上调用 `const` 成员函数
+
+```C++
+class Screen
+{
+public:
+    Screen(const std::string &s) : contents(s) {}
+    
+    // 非常量版本
+    Screen &display(std::ostream &os) { do_display(os); return *this; }
+    
+    // 常量版本
+    const Screen &display(std::ostream &os) const { do_display(os); return *this; }
+private:
+    // 公共成员函数共同使用的私有成员函数
+    void do_display(std::ostream &os) const { os << contents; }
+    std::string contents;
+};
+
+Screen screen1("***");
+const Screen screen2("###");
+screen1.display(cout);
+screen2.display(cout);
+
+// 非常量版本
+/*
+screen1.display(cout);
+函数: Screen &display 
+输入: Screen * 传递给 this 指针
+过程: 调用 do_display 函数
+	函数: void do_display() const
+	输入: Screen * 传递给 const this 指针, 即 const Screen *
+	输出: 无
+输出: Screen * 的解引用返回 Screen & 
+
+总结: Screen * -> this -> const this -> void 
+			     *this -> Screen & 
+*/
+
+// 常量版本
+/*
+screen2.display(cout);
+函数: Screen &display() const
+输入: Screen * 传递给 const Screen * 的 const this 指针
+过程: 调用 do_display 函数
+	函数: void do_display() const
+	输入: const Screen * 传递给 const Screen * 的 const this 指针
+	输出: 无
+输出: const Screen * 解引用返回 const Screen &
+
+总结: const Screen * -> const Screen * -> const Screen * -> void
+					   *(const Screen *) -> const Screen &   
+*/
+```
+
+
+
+#### 7.3.3 类类型
+
+**每个类都是唯一的类型**
+
+1. 对两个类, 类名肯定不同
+
+2. 即使两个类的成员类型和名字完全一样, 二者也是不同的类型
+
+   ```C++
+   // 成员完全一致, 类也不相同
+   struct First
+   {
+       int a;
+       double b;
+   };
+   
+   struct Second
+   {
+       int a;
+       double b;
+   };
+
+**类名可直接作为类型使用**
+
+```C++
+// 也可以加上 struct 或 class 关键字
+First a;
+struct First a;
+```
+
+**类的声明**
+
+1. 可以先声明暂时不定义类
+
+   ```C++
+   class Screen;
+
+2. 声明类后, 如果不需要直到类对象所需空间大小, 可以被使用
+
+   1. **定义**指向该类类型的**指针或引用**
+   2. **声明**作为**形参或返回值**的类型
+
+   ```C++
+   class Link_screen
+   {
+       Link_screen *next;
+       Link_screen *prev;
+   };
+
+但只有在**类定义后**, 编译器才知道**类对象所需内存空间大小**
+
+```C++
+class Screen
+{
+    int a;
+    double b;
+};
+```
+
+只有在**类定义后**, **才能声明该类类型的对象**
+
+所以**一个类的成员类型不能是该类自己**
+
+```C++
+class Screen;
+Screen s;		// 错误, Screen 未定义, 是不完全类型
+
+class Screen
+{
+    int a;
+    double b;
+};
+Screen s;		// 正确, Screen 已定义, 可以声明对象
+
+
+// 同样地, 必须在类完成定义后, 才能在其他类里声明该类类型的对象 
+class Screen
+{
+    int a;
+    double b;
+};
+
+class Link_screen
+{
+    Screen window;
+    Link_screen *next;
+    Link_screen *prev;
+};
+```
+
+#### 7.3.4 友元再探
+
+1. 类可以把**非成员函数**, **其他类**, **其他类的成员函数**定义成友元
+2. 友元函数可以**定义在类的内部**, 这样该函数是**隐式内联**的
+3. 类的**友元类的所有成员函数**都**可以访问该类的所有成员**
+
+```C++
+class Screen
+{
+    friend class Window;
+    
+private:
+    std::string contents;
+};
+
+class Window
+{
+    void clear(Screen &s) { s.contents = string(s.contents.length(), ' '); }
+};
+```
+
+> 友元关系没有传递性
+
+**令其他类的成员函数成为友元**
+
+```C++
+class Screen
+{
+    friend void Window::clear(Screen &s);
+    
+private:
+    std::string contents;
+};
+
+class Window
+{
+    void clear(Screen &s) { s.contents = string(s.contents.length(), ' '); }
+};
+```
+
+**友元声明和作用域**
+
