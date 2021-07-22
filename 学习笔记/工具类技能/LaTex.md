@@ -270,7 +270,7 @@ $...$
 \]
 
 % 编号行间公式
-\begin{equation}
+\begin{equation}	% equation 方程
 ...
 \end{equation}
 ```
@@ -320,7 +320,7 @@ E=mc^2.
 
 \begin{document}
 
-$\frac{1}{2}$.
+$\frac{1}{2}$.			% fraction 分数,分式
 
 \[ \sqrt{x}, \]
 
@@ -336,4 +336,144 @@ $\frac{1}{2}$.
 #### 运算符
 
 小的运算符可以在数学模式下直接输入, 另一些则需要控制序列生成
+
+```latex
+\[ 
+\pm\; 		% ±
+\times\; 	% ×
+\div\; 		% ÷
+\cdot\; 	% • 点乘
+\cap\; 		% ∩
+\cup\;		% ∪
+\geq\; 		% ≥
+\leq\; 		% ≤
+\neq\; 		% ≠
+\approx\; 	% ≈
+\equiv\; 	% ≡
+\]
+```
+
+连加, 连乘, 极限, 积分
+
+```latex
+连加 \sum		\sum _{i=1}^n i
+连乘 \prod	\prod _{i=1}^n
+极限 \lim		\lim _{x\to0} x^2	
+积分 \int		\int _a^b x^2 dx
+空格 \quad
+不压缩上下标	\limits		\sum\limits _{i=1}^n i
+压缩上下标	 \nolimits	 \int\nolimits _a^b x^2 dx
+→	\to
+```
+
+多重积分
+
+```latex
+双重	\iint
+三重	\iiint
+四重	\iiiint
+多重	\idotsint
+```
+
+#### 定界符
+
+括号
+
+```latex
+小  中 大   尖 (括号)
+() [] \{\} \langle\rangle
+```
+
+竖线
+
+```latex
+竖线	 \lvert \rvert 
+双竖线	\lVert \rVert
+```
+
+调整定界符大小
+
+```latex
+从小到大	\big \Big \bigg \Bigg
+```
+
+#### 省略号
+
+```latex
+\dots	普通下标省略号	   
+\cdots	横向省略号		
+\vdots	纵向省略号
+\ddots	斜向省略号
+```
+
+#### 矩阵
+
+```latex
+环境而不是控制序列, 所以需要加上 \begin 和 \end 
+小		中	   大	  竖线	 双竖线
+pmatrix bmatrix Bmatrix vmatrix Vmatrix
+
+\[ 
+\begin{pmatrix} a&b\\c&d \end{pmatrix} 
+\begin{bmatrix} a&b\\c&d \end{bmatrix} 
+\begin{Bmatrix} a&b\\c&d \end{Bmatrix} 
+\begin{vmatrix} a&b\\c&d \end{vmatrix} 
+\begin{Vmatrix} a&b\\c&d \end{Vmatrix} 
+\]
+
+\\ 换行
+
+行内公式小矩阵: 环境 smallmatrix
+$ ( \begin {smallmatrix} a&b\\c&d \end {smallmatrix} ) $
+```
+
+#### 多行公式
+
+**不对齐**
+
+`multline` 环境
+
+```latex
+\begin{multline}
+x = a+b+c+{} \\
+d+e+f+g
+\end{multline}
+```
+
+不要编号, `multline*` 环境
+
+**对齐**
+
+用 `aligned` **次环境**实现公式对齐, **次环境必须包含在数学环境内**
+
+```latex
+\[
+\begin{aligned}
+x ={}& a+b+c+{} \\
+&d+e+f+g
+\end{aligned}
+\]
+```
+
+#### 公式组
+
+无需对齐公式组使用 `gather` 环境
+
+需要对齐公式组使用 `align` 环境
+
+不需要编号就用带 `*` 的版本
+
+```latex
+% 不对齐
+\begin{gather}
+a = b+c+d \\
+x = y+z
+\end{gather}
+
+%  对齐
+\begin{align}
+a &= b+c+d \\
+x &= y+z
+\end{align}
+```
 
