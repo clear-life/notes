@@ -2435,3 +2435,44 @@ void Window::clear(Screen &s)
    void f();							//类外声明友元函数
    
    void b() { f(); }					//正确, 函数 f() 已声明
+
+### 7.4 类的作用域
+
+**一个类就是一个作用域**
+
+```C++
+void Window::clear(...)
+{
+    ...
+}
+
+// Window 表明当前处于 Window 类的作用域中
+// 所以 形参列表和函数体中的变量名都是在 Window 类的作用域中查找
+```
+
+1. `Window` 表明当前处于 `Window` 类的作用域中
+
+2. 函数的**返回类型通常在函数名之前**, 此时**返回类型的名字在类的作用域之前(之外)**, 此时要显式声明其作用域
+
+   ```C++
+   class Window
+   {
+   public:
+       using Index = std::string::size_type;
+       Index add(const Index a, const Index b);
+   };
+   // 显式声明返回类型的作用域, 因为其在 Window 之前出现
+   Window::Index Window::add(const Index a, const Index b) { return a + b; }
+
+#### 7.4.1 名字查找与类的作用域
+
+**名字查找**
+
+寻找**与该名字最匹配的声明**
+
+* 一般的名字查找
+
+  只考虑在该**名字之前出现的声明**
+
+  1. 名字所在的块
+  2. 外层作用域
