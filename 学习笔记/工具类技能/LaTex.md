@@ -240,3 +240,65 @@ Hello, world!
 
 > LaTeX 将一个换行当作一个空格处理
 
+## 数学公式
+
+导言区加载 `amsmath` 宏包使用 `AMS-LaTeX` 宏集(排版框架)提供的数学功能
+
+```latex
+\usepackage{amsmath}
+```
+
+### 数学模式
+
+#### 行内模式
+
+行中插入公式
+
+```latex
+$...$	
+或
+\(...\)
+```
+
+#### 行间模式
+
+公式单独成行, 自动居中
+
+```latex
+\[
+...
+\]
+
+% 编号行间公式
+\begin{equation}
+...
+\end{equation}
+```
+
+#### 上下标
+
+1. 上标 `^`, 下标 `_`, 默认只作用于后一个字符, 可以用 `{}` 括住连续字符作为上下标
+2. 行内公式的标点应放在公式外, 行间公式的标点应放在公式内
+
+```latex
+\documentclass{article}
+
+\usepackage{amsmath}	% 数学公式宏包
+
+
+\begin{document}
+
+% 行内公式
+$E=mc^2$.
+
+% 行间无编号公式
+\[ E=mc^2. \]
+
+% 行间有编号公式
+\begin{equation}
+E=mc^2.
+\end{equation}
+
+\end{document}
+```
+
