@@ -302,3 +302,38 @@ E=mc^2.
 \end{document}
 ```
 
+```latex
+\[ e^{2x}. \]
+```
+
+#### 根式与分式
+
+根式 `\sqrt{·}`
+
+分式 `\frac{·}{·}`	第一个参数为分子, 第二个参数为分母
+
+```latex
+\documentclass{article}
+
+\usepackage{amsmath}
+
+
+\begin{document}
+
+$\frac{1}{2}$.
+
+\[ \sqrt{x}, \]
+
+\[ \frac{1}{2}. \]
+
+\end{document}
+```
+
+> 行内行间的分式输出效果不同
+>
+> 若要行内分式显示为 行间分式的大小, 可以使用 `\dfrac`
+
+#### 运算符
+
+小的运算符可以在数学模式下直接输入, 另一些则需要控制序列生成
+
