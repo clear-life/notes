@@ -275,7 +275,7 @@ $...$
 \end{equation}
 ```
 
-#### 上下标
+### 上下标
 
 1. 上标 `^`, 下标 `_`, 默认只作用于后一个字符, 可以用 `{}` 括住连续字符作为上下标
 2. 行内公式的标点应放在公式外, 行间公式的标点应放在公式内
@@ -306,7 +306,7 @@ E=mc^2.
 \[ e^{2x}. \]
 ```
 
-#### 根式与分式
+### 根式与分式
 
 根式 `\sqrt{·}`
 
@@ -333,7 +333,7 @@ $\frac{1}{2}$.			% fraction 分数,分式
 >
 > 若要行内分式显示为 行间分式的大小, 可以使用 `\dfrac`
 
-#### 运算符
+### 运算符
 
 小的运算符可以在数学模式下直接输入, 另一些则需要控制序列生成
 
@@ -375,7 +375,7 @@ $\frac{1}{2}$.			% fraction 分数,分式
 多重	\idotsint
 ```
 
-#### 定界符
+### 定界符
 
 括号
 
@@ -397,7 +397,7 @@ $\frac{1}{2}$.			% fraction 分数,分式
 从小到大	\big \Big \bigg \Bigg
 ```
 
-#### 省略号
+### 省略号
 
 ```latex
 \dots	普通下标省略号	   
@@ -406,7 +406,7 @@ $\frac{1}{2}$.			% fraction 分数,分式
 \ddots	斜向省略号
 ```
 
-#### 矩阵
+### 矩阵
 
 ```latex
 环境而不是控制序列, 所以需要加上 \begin 和 \end 
@@ -427,7 +427,7 @@ pmatrix bmatrix Bmatrix vmatrix Vmatrix
 $ ( \begin {smallmatrix} a&b\\c&d \end {smallmatrix} ) $
 ```
 
-#### 多行公式
+### 多行公式
 
 **不对齐**
 
@@ -455,7 +455,7 @@ x ={}& a+b+c+{} \\
 \]
 ```
 
-#### 公式组
+**公式组**
 
 无需对齐公式组使用 `gather` 环境
 
@@ -477,3 +477,106 @@ x &= y+z
 \end{align}
 ```
 
+**分段函数**
+
+用次环境 `cases` 实现分段函数, 次环境必须包含在数学环境内
+
+```latex
+\[ 
+y= 
+\begin{cases}
+-x, x\leq0 \\
+x, x>0
+\end{cases} 
+\]
+
+```
+
+
+
+### 辅助工具
+
+```
+https://mathpix.com/
+截屏识别为 latex 公式
+
+http://detexify.kirelabs.org/classify.html
+鼠标绘制单个数学符号, 返回 latex 代码和所需宏包
+```
+
+## 插入图片和表格
+
+### 图片
+
+一般用 `graphicx` 宏包提供的 `\includegraphics` 控制序列
+
+可选参数: `[width = .8\textwidth]` 图片宽度设为页面宽度的 80% 
+
+```latex
+\documentclass{article}
+
+\usepackage{graphicx}
+
+\begin{document}
+
+\includegraphics{a.jpg}		% 插入同目录下的 a.jpg 图片
+
+\end{document}
+```
+
+### 表格
+
+`tabular` 环境中的表格功能
+
+`\hline` 	横线
+
+ `|` 			列格式中表示竖线
+
+ `&` 			分列
+
+`\\`			 换行
+
+ `l`、`c`、`r` 每列居左、居中、居右的横向对齐方式
+
+```latex
+\documentclass{ctexart}
+
+\usepackage{amsmath}
+
+\begin{document}
+
+\begin{tabular}{|l|c|r|}		
+ \hline
+操作系统 & 发行版 & 编辑器\\
+ \hline
+Windows & MikTeX & TexMakerX \\
+ \hline
+Unix/Linux & teTeX & Kile \\
+ \hline
+Mac OS & MacTeX & TeXShop \\
+ \hline
+通用 & TeX Live & TeXworks \\
+ \hline
+\end{tabular}
+
+\end{document}
+```
+
+### 浮动体
+
+自动调整位置
+
+用 `figure` 和 `table` 环境来实现
+
+```latex
+\begin{figure}[htbp]		
+% 指定插图的理想位置
+% 字母代表   here   top   bottom   float page
+% 即        这里    页顶   页尾     浮动页
+\centering					% 设置插图居中
+\includegraphics{a.jpg}
+\caption{插图标题}			% 设置插图标题
+\label{fig:myphoto}
+
+\end{figure}
+```
