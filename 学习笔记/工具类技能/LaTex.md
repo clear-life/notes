@@ -580,3 +580,69 @@ Mac OS & MacTeX & TeXShop \\
 
 \end{figure}
 ```
+
+
+
+## 版面设置
+
+### 页边距
+
+`geometry` 宏包
+
+```latex
+\usepackage{geometry}
+
+% 纸张长度为 20cm, 宽度为 15cm
+\geometry{papersize={20cm,15cm}}
+
+% 左边距 1cm, 右边距 2cm, 上边距 3cm, 下边距 4cm
+\geometry{left=1cm,right=2cm,top=3cm,bottom=4cm}
+```
+
+### 页眉页脚
+
+`fancyhdr` 宏包
+
+```latex
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+
+% 页眉
+\lhead{\author}		% 左	作者
+\chead{\date}		% 中 center 日期
+\rhead{176xxxxxxxx}	% 右	手机号
+
+% 页脚
+\lfoot{}
+\cfoot{\thepage}	% 中 页码
+\rfoot{}
+
+\renewcommand{\headrulewidth}{0.4pt}	% 页眉与正文的分割线大小
+\renewcommand{\headwidth}{\textwidth}
+\renewcommand{\footrulewidth}{0pt}
+```
+
+### 首行缩进
+
+CTeX 宏集已处理好首行缩进的问题
+
+### 行间距
+
+`setspace` 宏包
+
+```latex
+\usepackage{setspace}
+% 行距设为 1.5 倍字号
+\onehalfspacing	
+```
+
+### 段间距
+
+修改 `\parskip` 的值来调整段间距
+
+```latex
+% 原有基础上增加段间距 0.4em
+\addtolength{\parskip}{.4em}
+```
+
