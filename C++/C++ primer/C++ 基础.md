@@ -226,6 +226,52 @@ const int *const b = &a;
 
 * 顶层 `const` 可以类型不一致
 
+#### 2.4.4 `constexpr` 和常量表达式
+
+**常量表达式** 
+
+1. **值不会改变**
+2. **编译**过程就能计算出**结果**
+
+```C++
+const int a = 1;	// 是常量表达式
+int b = 1;			// 值会改变, 不是常量表达式
+const int c = fun();// 不能在编译时计算出结果, 不是常量表达式
+```
+
+**constexpr 变量**
+
+1. 编译器验证 constexpr 变量的值是否为常量表达式
+2. constexpr 变量是 const 且由常量表达式初始化
+3. constexpr 函数可以给 constexpr 变量初始化, 普通函数不可以
+
+**字面值类型**
+
+1. `constexpr` 的作用类型是字面值类型
+
+2. 算数类型, 引用和指针都是字面值类型
+
+   > `constexpr` 指针的值必须是 `nullptr` / 0 / 固定地址的对象(静态变量, 全局变量)
+
+**指针和 `constexpr`**
+
+1. `constexpr` 限定符仅对指针有效, 与指向的对象无关
+2. `constexpr` 将定义的对象置为顶层 `const`
+
+```C++
+const int *p = nullptr;		// p 指向 const int 对象, p 是 const int * 类型, p 是底层 const
+constexpr int *q = nullptr; // q 指向 int 对象, q 是顶层 const , q 是常量指针
+```
+
+3.  `constexpr` 指针既可以指向常量也可以指向非常量
+
+   ```C++
+   const int a = 0;
+   int b = 1;
+   
+   constexpr const int *p = &a;	// 常量指针 p 指向 const int 类型
+   constexpr int *p = &b;			// 常量指针 p 指向 int 类型
+
 ### 2.5 处理类型
 
 #### 2.5.1 类型别名
