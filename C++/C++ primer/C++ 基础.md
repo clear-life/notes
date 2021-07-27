@@ -2642,3 +2642,196 @@ private:
 4. **被委托**的构造函数的**函数体**
 5. **委托**构造函数的**函数体**
 
+
+
+#### 7.5.3 默认构造函数的作用
+
+**使用默认构造函数**
+
+```C++
+class Class_A
+{};
+
+Class_A obj();	// 声明一个返回类型是 Class_A 的函数
+Class_A obj;	// 声明并定义了 Class_A 对象 obj
+```
+
+
+
+#### 7.5.4 隐式类类型转换
+
+**只接受一个实参的构造函数**定义**了一种隐式类类型转换规则**
+
+**转换构造函数**
+
+只接受一个实参的构造函数
+
+```C++
+class Book
+{
+public:
+    Book() = default;
+    Book(std::string ss): s(ss) {}
+    Book(istream &is) {}
+    Book combine(Book) {};
+private:
+    std::string s;
+    int a = 0;
+};
+
+string s = "abc";	// 隐式类型转换: 字符串字面量转化为 string 类型
+Book a;				// a 默认初始化
+a.combine(s);		// 合法, 尽管 s 是 string 类型, 而 combine 函数要求输入 Book 类类型的参数
+// 编译器用 string 类型的 s 自动创建了一个临时 Book 对象
+```
+
+**只允许一步类类型转换**
+
+```C++
+a.combine("abc");	// 错误, 想法是字符串字面量转化为 string 类型, 再使用 string 类型自动创建临时 Book 对象, 但编译器只允许一步类型转换
+
+a.combine(string("abc"));	// 正确, 显式转换为 string , 隐式转换为 Book 
+a.combine(Book("abc"));		// 正确, 隐式转换为 string , 显式转换为 Book
+```
+
+**另一个类类型转换**
+
+```C++
+Book a;
+a.combine(cin);
+// istream 隐式转换为 Book 对象
+```
+
+**阻止构造函数定义的隐式转换**
+
+在**类内**将构造函数声明为 `explicit` 阻止该隐式转换
+
+> 只对一个实参的构造函数有效
+>
+> `explicit` 只能在类内使用
+
+```C++
+class Book
+{
+public:
+    Book() = default;
+    explicit Book(std::string ss): s(ss) {}
+    explicit Book(istream &is) {}
+    
+private:
+    std::string s;
+    int a = 0;
+};
+```
+
+**`explicit` 构造函数只能用于直接初始化**
+
+直接初始化: 没有 `=` 的初始化
+
+拷贝初始化: 使用 `=` 的初始化
+
+```C++
+string s = "abc";
+Book a(s);		// 正确, explicit 构造函数只能用于直接初始化, 且该过程不会自动使用该构造函数进行隐式转换
+Book a = s;		// 错误, 不能将 explicit 构造函数用于拷贝初始化
+```
+
+**显式使用构造函数进行类类型转换**
+
+`explicit` 构造函数让编译器**不自动调用**自己执行**隐式转换**
+
+但可以**显式调用** `explicit` 构造函数进行**显式类类型转换**
+
+```C++
+string s;
+Book a(Book(s));					// 显式调用构造函数进行类型转换
+Book b(static_cast<Book> (cin));	// 显式类型转换
+```
+
+#### 7.5.5 聚合类
+
+略像 `C` 里的自定义数据类型
+
+1. 成员都是 `public`
+
+2. 无构造函数
+
+3. 无类内初始值
+
+4. 无基类, 无虚函数
+
+   > 缺点:
+   >
+   > 1. 将初始化成员的重任交给用户
+   > 2. 添加/删除成员后, 所有初始化语句都需要更新
+
+```C++
+struct Data
+{
+    int a;
+    string s;
+};
+
+Data d = {0, "abc" };
+```
+
+#### 7.5.6 字面值常量类
+
+
+
+### 7.6 类的静态成员
+
+类的**静态成员属于类本身**
+
+**声明静态成员**
+
+1. 对象中**不包含**任何与**静态成员**有关的数据
+2. 静态成员不与任何对象绑定在一起, 静态成员函数不包含 `this` 指针
+3. 静态成员函数不能声明为 `const`, 不能在静态成员函数内使用 `this` 指针
+
+```C++
+class Class
+{
+public:
+    void fun1();
+    static void fun2();
+private:
+    std::string s;
+    int a;
+    static char c;
+};
+
+// 每个 Class 对象只包含 s 和 a 两个数据成员和 fun1 一个函数成员
+// 静态成员 c 只存在一份且被所有 Class 对象共享
+```
+
+**访问静态成员**
+
+1. 类名 + 作用域运算符
+2. 类对象/引用/指针访问
+3. 成员函数直接访问
+
+```C++
+// 类访问静态成员
+Class::fun2();
+
+// 对象访问静态成员
+Class a;
+Class *p = &a;
+Class &r = a;
+a.fun2();
+p -> fun2();
+a.fun2();
+
+// 成员函数访问静态成员
+void Class::fun1() { cout << c << endl; }
+```
+
+**定义静态成员**
+
+1.  类外定义静态成员时, **不能重复 `static`** 关键字
+2.  静态数据成员不属于类的对象, **不由构造函数初始化**
+3. 一般在**类外定义和初始化**静态成员
+
+**静态成员的类内初始化**
+
