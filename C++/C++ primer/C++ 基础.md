@@ -266,6 +266,7 @@ constexpr int *q = nullptr; // q 指向 int 对象, q 是顶层 const , q 是常
 3.  `constexpr` 指针既可以指向常量也可以指向非常量
 
    ```C++
+   // a 和 b 都是固定地址(全局或静态变量)
    const int a = 0;
    int b = 1;
    
