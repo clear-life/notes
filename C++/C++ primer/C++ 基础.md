@@ -2610,3 +2610,35 @@ private:
 };
 ```
 
+
+
+#### 7.5.2 委托构造函数
+
+构造函数的初始化列表中**调用别的构造函数**
+
+```C++
+class Class
+{
+public:
+    Class(std::string ss, int aa, double bb): s(ss), a(aa), b(bb) {}
+    
+    // 委托构造函数
+    Class(): Class("", 0, 0) {}				// 委托给第一个构造函数
+    Class(std::string s): Class(s, 0, 0) {}	// 委托给第一个构造函数
+    Class(std::istream &is): Class() { read(is, *this); }	// 委托给默认构造函数
+private:
+    std::string s;
+    int a;
+    double b;
+};
+```
+
+**委托构造函数的执行顺序**
+
+1. **委托**构造函数的**形实结合**
+
+2. **被委托**的构造函数的**初始化列表**
+3. **被委托**的构造函数的**值初始化**
+4. **被委托**的构造函数的**函数体**
+5. **委托**构造函数的**函数体**
+
