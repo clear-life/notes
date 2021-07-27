@@ -2599,3 +2599,14 @@ public:
 
 如果**构造函数提供了默认实参**, 从而使得**不提供实参也能调用该构造函数**, 则**与默认构造函数没有区别**
 
+```C++
+class Class
+{
+    Class(std::string ss = ""):s(ss) {}		// 相当于默认构造函数
+private:
+    std :: string s;
+    int a = 0;
+    char c = '*'; 
+};
+```
+
