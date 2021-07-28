@@ -2824,7 +2824,50 @@ Data d = {0, "abc" };
 
 #### 7.5.6 字面值常量类
 
+某些类也是字面值类型, 可能含有 `constexpr` 成员函数, 其是隐式 `const`
 
+字面值常量类:
+
+1. **数据成员**都是**字面值类型**的**聚合类**
+2. 非聚合类
+   * 数据成员都是字面值类型
+   * 至少有一个 `constexpr` 构造函数
+   * 若成员有类内初始值, 则
+     * 内置成员初始值必须是常量表达式
+     * 类成员初始值必须使用自己的 `constexpr` 构造函数
+   * 必须使用析构函数的默认定义
+
+**`constexpr` 构造函数**
+
+构造函数不能是 `const` , 但字面值常量类的构造函数可以是且至少有一个是 `constexpr` 函数
+
+`constexpr` 构造函数:
+
+1. 可以声明为 `= default`(或删除函数)
+
+2. 既符合构造函数的要求
+
+   不能有返回语句
+
+3. 又符合 `constexpr` 函数的要求
+
+   只能执行返回语句
+
+4. 所以 `constexpr` 构造函数体是空的
+
+```C++
+class Debug
+{
+public:
+    constexpr Debug(bool b = true): io(b), other(b) {}		// 相当于默认构造函数
+    constexpr Debug(bool i, bool o): io(i), other(o) {}
+private:
+    bool io;	// IO 错误, 而非其他错误(先初始化)
+    bool other;	// 其他错误
+};
+```
+
+> 
 
 ### 7.6 类的静态成员
 
@@ -2882,3 +2925,46 @@ void Class::fun1() { cout << c << endl; }
 
 **静态成员的类内初始化**
 
+字面值常量类型的 `constexpr` 的静态成员可以在类内用 const 整数类内初始值初始化
+
+```C++
+class Class
+{
+private:
+    static constexpr int period = 10;
+}
+```
+
+若在类内为 static 成员提供了初始值, 则该成员的定义不能再指定初始值
+
+```C++
+constexpr int Class::period;
+```
+
+**静态成员能用于某些特殊场景**
+
+1. 静态数据成员可以是不完全类型
+2. 静态数据成员可以是该类类型
+3. 静态数据成员可以作为成员函数的默认实参
+
+```C++
+class Class
+{
+public:
+    //...
+private:
+    static Class a;	// 正确, 静态数据成员可以是不完全的该类类型
+    Class *p;		// 正确, 指针成员指向的类型可以是不完全的	
+    Class b;		// 错误, 数据成员必须是完全类型
+};
+```
+
+```C++
+class Class
+{
+public:
+    Class& clear(int a = period);
+private:
+    static const int period; 
+};
+```
