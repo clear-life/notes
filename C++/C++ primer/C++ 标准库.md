@@ -86,3 +86,18 @@
 
 **管理条件状态**
 
+流对象的 `rdstate` 返回 `iostate`
+
+`setstate` 给定位置位
+
+`clear` 重置, 或置为新的流状态
+
+```C++
+auto s = cin.rdstate();	// 记录当前状态 s
+cin.clear();			// 重置 cin 的状态
+cin >> ...				// 使用 cin
+cin.setstate(s);		// 置为原来的状态 s
+```
+
+#### 8.1.3 管理输出缓冲
+
