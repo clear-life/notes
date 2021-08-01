@@ -157,3 +157,72 @@ cin >> a;	// 会刷新 cout 的缓冲区
 
    作用: A.tie(&B) 将流 A 关联到输出流 B
 
+### 8.2 文件输入输出
+
+| 操作             | 功能                                        |
+| ---------------- | ------------------------------------------- |
+| fstream fstrm(); | 创建文件流对象                              |
+| fstrm.open(s)    | 打开文件 s , 并将文件流对象 fstrm 与 s 绑定 |
+| fstrm.close()    | 关闭绑定的文件                              |
+| fstrm.id_open()  | 返回 bool, 表明文件是否打开                 |
+
+#### 8.2.1 使用文件流对象
+
+**用 fstream 代替 iostream&**
+
+可以用**继承类**代替**基类**
+
+可以用 `fstream` 和 `sstream` 替代 `iostream`
+
+```c++
+ifstream in(file);		// 打开并关联到文件 file
+in.close();				// 关闭文件
+in.open(file+"2")		// 打开另一个文件
+```
+
+**自动构造和析构**
+
+局部文件流对象离开作用域时会被销毁, **`close` 成员会自动被调用**
+
+则与该局部文件流对象关联的文件会被关闭
+
+```c++
+while(true)
+{
+    ifstream input(file);
+    if(input)
+    {
+        int a;
+        input >> a; 
+    }
+}	// 离开作用域时, input 对象会被销毁, close 成员自动被调用用来关闭关联的文件
+```
+
+#### 8.2.2 文件模式
+
+| 文件模式 | 作用                   |
+| -------- | ---------------------- |
+| in       | 读方式                 |
+| out      | 写方式                 |
+| app      | 追加到末尾方式         |
+| ate      | 定位到末尾方式         |
+| trunc    | 截断文件, 丢弃文件内容 |
+| binary   | 二进制方式             |
+
+**out 模式会丢弃已有数据**
+
+默认情况下, ofstream 对象是 out 模式打开文件,
+
+打开文件时, **文件的内容默认会被丢弃**, 需要同时指定 **app 模式**
+
+```C++
+ofstream file("file1", ofstream::app);	// 隐含为输出模式
+ofstream file("file2", ofstream::out | ofstream::app);	// 显示指定为 out 和 app 模式
+// ofstream::app 表明是 ofstream 作用的 app 类型, 本质应该是一个 const 数字, 应该以二进制形式读该数字
+// ofstream::out | ofstream::app 中的 | 应该是位或运算
+```
+
+每次调用 open 时都会重新确定文件模式, 可以是隐式设置, 也可以是显式设置
+
+### 8.3 文件流
+
