@@ -266,3 +266,92 @@ for(auto i : datas)
 os << out.str() << endl
 ```
 
+
+
+## 第 9 章 顺序容器
+
+### 9.1 容器总览
+
+容器(**模板类**): **顺序容器**, **关联容器**
+
+容器适配器: `stack`, `queue`, `priority_queue`
+
+| 顺序容器     | 数据结构 |
+| ------------ | -------- |
+| vector       | 可变数组 |
+| deque        | 双端队列 |
+| list         | 双向链表 |
+| forward_list | 单项链表 |
+| array        | 固定数组 |
+| string       | 字符容器 |
+
+| 容器适配器     | 数据结构 |
+| -------------- | -------- |
+| stack          | 栈       |
+| queue          | 队列     |
+| priority_queue | 优先队列 |
+
+### 9.2 容器库概述
+
+**容器操作**
+
+* 所有容器共有
+* 顺序容器, 关联容器, 无序容器独有
+* 小部分容器独有
+
+| 容器操作             | 说明                                   |
+| -------------------- | -------------------------------------- |
+| **类型别名**         |                                        |
+| iterator             | 该容器的迭代器类型                     |
+| const_iterator       |                                        |
+| size_type            | 容器 size, 无符号整数                  |
+| difference_type      | 迭代器间的举例, 有符号整数             |
+| value_type           | 元素类型                               |
+| reference            | 元素的引用类型, 左值                   |
+| const_reference      |                                        |
+| **构造函数**         |                                        |
+| Class c;             | 默认构造函数                           |
+| Class c1(c2);        | c2 的拷贝                              |
+| Class c(b, e);       | 迭代器 b 和 e 范围的拷贝(array 不支持) |
+| Class c{a, b, c...}; | 列表初始化                             |
+| **赋值与 swap**      |                                        |
+| c1 = c2;             |                                        |
+| c = {a, b, c...};    |                                        |
+| a.swap(b)            | 交换 a 和 b 的元素                     |
+| swap(a, b)           |                                        |
+
+| size                                       |                          |
+| ------------------------------------------ | ------------------------ |
+| c.size()                                   | 元素数目                 |
+| c.max_size()                               | 容器 size                |
+| c.empty()                                  | 是否为空                 |
+| **增/删元素**                              |                          |
+| c.insert(args)                             | 拷贝增加                 |
+| c.emplace(inits)                           | 构造增加                 |
+| c.erase(args)                              | 删除元素                 |
+| c.clear()                                  | 清空元素                 |
+| **关系运算符**                             |                          |
+| == , !=                                    | 所有容器都支持           |
+| <, <=, >, >=                               | 部分容器支持             |
+| **迭代器**                                 |                          |
+| c.begin(), c.end()                         | 首元素迭代器, 尾后迭代器 |
+| c.cbegin(), c.cend()                       | const 版本               |
+| **反向容器**(不支持 forward_list 单向列表) |                          |
+| reverse_iterator                           | 逆序迭代器               |
+| const_reverse_iterator                     | const 版本               |
+| c.rbegin(), c.rend()                       | 尾元素迭代器, 首前迭代器 |
+| c.crbegin(), c.crend()                     | const 版本               |
+
+#### 9.2.1 迭代器范围
+
+一对迭代器 `begin` 和 `end` 的左闭右开区间
+
+$[begin,\,end)$​​​​
+
+#### 9.2.2 容器的类型别名成员
+
+```c++
+vector<int>::difference_type count;	// count 是 vector<int> 类定义的 difference_type 类型
+list<string>::iterator iter;	// iter 是 list<string>类定义的 iterator 类型
+```
+
