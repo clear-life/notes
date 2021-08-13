@@ -444,3 +444,60 @@ array: swap 会真正交换二者的元素
 | c.insert(p, b, e) 返回新添加的第一个元素的迭代器, 范围为空就返回 p | 迭代器 p 前新增 b 到 e 范围的元素  |
 | c.insert(p, initlist) 返回新添加的第一个元素的迭代器, 列表为空就返回 p | 迭代器 p 前新增元素值列表 initlist |
 
+**push_back**
+
+* 除 `array` 和 `forward_list` 外, 每个顺序容器都支持 `push_back`
+
+* 拷贝方式, 新增到容器中的元素是一个拷贝
+
+```C++
+string word;
+word.push_back('s'); 	// 等价于 word += 's'
+// 新增到 string 中的元素是 's' 的拷贝
+```
+
+**push_front**
+
+* `list`, `forward_list` 和 `deque` 支持
+
+```C++
+list<int> l;
+l.push_front(1);
+```
+
+**insert**
+
+* 指定位置添加元素
+
+* `vector`, `deque`, `list` 和 `string` 支持 `insert`
+* `forward_list` 支持特殊版本的 `insert`
+
+```C++
+vector<string> s;
+vector<string> v;
+s.insert(s.begin(), "Hello!");				// 单个插入
+s.insert(s.begin(), 10, "Hello!");			// 多个插入, 指定数量和值
+s.insert(s.begin(), v.end()-2, v.end());	// 多个插入, 指定迭代器范围
+s.insert(s.begin(), {"Hello ", "world!"});	// 多个插入, 指定初始化列表
+s.insert(s.begin(), s.begin(), s.end());	// 错误, 不能使用自身的迭代器来插入
+```
+
+* 返回插入的第一个元素的迭代器, 若插入的数量为 0 就返回迭代器 p 
+
+**emplace**
+
+新标准引入 `emplace_front`,  `emplace` 和 `emplace_back`, **构造方式新增元素**
+
+`emplace` 方式会在**容器管理的内存空间中直接创建对象**, **参数必须与元素的构造函数匹配**
+
+`push` 和 `insert` 方式则创建一个**局部临时对象**, 然后压入容器中
+
+```C++
+c.emplace_back("abc", 1, 2.0);	// 使用元素的构造函数直接在容器的内存空间创建元素的对象
+c.push_back("abc", 1, 2.0);		// 错误, 没有该版本的 push_back 
+c.push_back(Book("abc", 1, 2.0));	// 创建一个临时 Book 对象传递给 push_back
+
+c.emplace_back();				// 使用元素的默认构造函数
+c.emplace(iter, "abc");	// 使用类的 Book(string) 构造函数
+```
+
