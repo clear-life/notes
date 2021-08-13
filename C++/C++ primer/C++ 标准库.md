@@ -593,3 +593,16 @@ if(!c.empty())
 * **list 和 forward_list**
   * **迭代器, 指针和引用仍有效**
 
+### 9.4 vector 对象如何增长
+
+**容量相关的成员函数**
+
+| 容器 size 操作                                 | 作用                                              |
+| ---------------------------------------------- | ------------------------------------------------- |
+| shrink_to_fit 只适用于 vector, string 和 deque |                                                   |
+| capacity 和 reserve 只适用于 vector 和 string  |                                                   |
+| c.shrink_to_fit()                              | 将 capacity() 减少为 size() 大小                  |
+| c.capacity()                                   | 当前 c 最多能保存多少元素                         |
+| c.reserve(n)                                   | 空间至少能容纳 n 个元素, 如果不能, 就重新分配空间 |
+
+### 9.5 额外的 string 操作
