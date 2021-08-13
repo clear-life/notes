@@ -425,3 +425,22 @@ array: swap 会真正交换二者的元素
 
 **容器的关系运算符使用元素的关系运算符完成比较**
 
+### 9.3 顺序容器操作
+
+#### 9.3.1 向顺序容器添加元素
+
+| 向顺序容器(不包括 array )添加元素                            | 作用                               |
+| ------------------------------------------------------------ | ---------------------------------- |
+| forward_list 有自己的 insert 和 emplace                      |                                    |
+| forward_list 不支持 push_back 和 emplace_back                |                                    |
+| vector 和 string 不支持 push_front 和 emplace_front          |                                    |
+| c.push_back(t) 返回 void                                     | 尾部新增元素 t , 拷贝方式          |
+| c.emplace_back(args) 返回 void                               | 尾部新增元素 , 构造方式            |
+| c.push_front(t) 返回 void                                    | 头部新增元素 t , 拷贝方式          |
+| c.emplace_front(args) 返回 void                              | 头部新增元素 , 构造方式            |
+| c.insert(p, t) 返回新添加元素的迭代器                        | 迭代器 p 前新增元素 t , 拷贝方式   |
+| c.emplace(p, args) 返回新添加元素的迭代器                    | 迭代器 p 前新增元素 , 构造方式     |
+| c.insert(p, n, t) 返回新添加的第一个元素的迭代器, n 为 0 就返回 p | 迭代器 p 前新增 n 个元素 t         |
+| c.insert(p, b, e) 返回新添加的第一个元素的迭代器, 范围为空就返回 p | 迭代器 p 前新增 b 到 e 范围的元素  |
+| c.insert(p, initlist) 返回新添加的第一个元素的迭代器, 列表为空就返回 p | 迭代器 p 前新增元素值列表 initlist |
+
