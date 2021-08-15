@@ -606,3 +606,148 @@ if(!c.empty())
 | c.reserve(n)                                   | 空间至少能容纳 n 个元素, 如果不能, 就重新分配空间 |
 
 ### 9.5 额外的 string 操作
+
+#### 9.5.1 构造 string 的其他方法
+
+| 构造 string 的其他方法   | 作用                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| n, pos, len 都是无符号数 |                                                              |
+| string s(p, n)           | p 指向的字符数组的前 n 个字符的拷贝<br />该字符数组必须以空字符结尾 |
+| string s(s2, pos)        | string s2 从下标 pos 开始的拷贝                              |
+| string s(s2, pos, len)   | string s2 从下标 pos 开始 len 个字符的拷贝                   |
+| s.substr(pos, n)         | 返回从 s 的 pos 开始的 n 个字符的 string 子串<br />pos 默认值为 0, n 默认值为 s.size() - pos |
+
+#### 9.5.2 改变 string 的其他方法
+
+| 修改 string 的其他方法         | 作用                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
+| s.insert(pos, args)            | 在 pos 前插入 args 指定的字符<br />pos 可以是下标和迭代器<br />下标则返回引用, 迭代器则返回迭代器 |
+| s.erase(pos, len)              | 删除从 pos 开始的 len 个字符<br />len 省略时删除到末尾<br />返回 s 的引用 |
+| s.assign(args)                 | 将 s 中的字符替换为 args 指定的字符<br />返回 s 的引用       |
+| s.append(args)                 | 将 args 指定的字符追加到 s 末尾<br />返回 s 的引用           |
+| s.replace(range, args)         | 删除 s 中 range 中的字符, 替换为 args 指定的字符<br />range 可以是 下标, 长度, 一对迭代器<br />返回 s 的引用 |
+| args 可能是下列形式之一        | append 和 assign 可以使用所有形式                            |
+| str 不能是 s, 迭代器不能指向 s |                                                              |
+| str                            | string str                                                   |
+| str, pos, len                  | str 中 pos 开始的最多 len 个字符                             |
+| p, len                         | p 指向的字符数组的前(最多) len 个字符                        |
+| p                              | p 指向的以空字符结尾的字符数组                               |
+| n, c                           | n 个 c 字符                                                  |
+| b, e                           | 迭代器 b 和 e 指定范围的字符                                 |
+| initlist                       | 字符初始化列表                                               |
+
+#### 9.5.3 string 搜索操作
+
+* 返回类型: string::size_type, 表示下标
+* 失败返回 string::npos 的 static 成员
+* npos 的类型: const string::size_type, 初始化为 -1
+  * npos 为无符号类型, 则 -1 表示 string 的 size 最大值
+
+| string 搜索操作                       | 作用                                                         |
+| ------------------------------------- | ------------------------------------------------------------ |
+| 返回指定字符的下标, 未找到则返回 npos |                                                              |
+| s.find(args)                          | args 第一次出现的位置                                        |
+| s.rfind(args)                         | args 逆序第一次出现的位置(最后一次出现的位置)                |
+| s.find_first_of(args)                 | args 中任一字符第一次出现的位置                              |
+| s.find_last_of(args)                  | args 中任一字符最后一次出现的位置                            |
+| s.find_first_not_of(args)             | 第一个不在 args 中的字符的位置                               |
+| s.find_last_not_of(args)              | 最后一个不在 args 中的字符的位置                             |
+| args 必须是下列形式之一               |                                                              |
+| c, pos                                | 从 pos 开始查找字符 c, pos 默认为 0                          |
+| s2, pos                               | 从 pos 开始查找字符串 s2, pos 默认为 0                       |
+| p, pos                                | 从 pos 开始查找 p 指向的以空字符结尾的字符数组, pos 默认为 0 |
+| p, pos, n                             | 从 pos 开始查找 p 指向的以空字符结尾的字符数组的前 n 个字符<br />pos 和 n 无默认值 |
+
+#### 9.5.4 compare 函数
+
+比较两个字符串/字符数组的大小
+
+| s.compare() 的参数形式 | 作用                                                         |
+| ---------------------- | ------------------------------------------------------------ |
+| s2                     | 比较 s 和 s2                                                 |
+| pos, n, s2             | s 中 pos 开始的 n 个字符与 s2 比较                           |
+| pos1, n1, s2, pos2, n2 | s 中 pos1 开始的 n1 个字符 与 s2 中 pos2 开始的 n2 个字符比较 |
+| p                      | 比较 s 和 p 指向的以空字符结尾的字符数组                     |
+| pos, n, p              | s 中 pos 开始的 n 个字符与 p 指向的以空字符结尾的字符数组比较 |
+| pos, n1, p, n2         | s 中 pos 开始的 n1 个字符与 p 指向的地址的 n2 个字符比较     |
+
+#### 9.5.5 数值转换
+
+| string 和数值之间的转换 | 作用                                                         |
+| ----------------------- | ------------------------------------------------------------ |
+| to_string(val)          | 返回 val 的 string 表示                                      |
+| stoi(s, p, b)           | 返回 s 的数值表示(整数), b 是转换的基数, 默认为 10<br />返回 int |
+| stol(s, p, b)           | p 是 size_t 指针, 默认为 0, 保存 s 中第一个非数值字符的下标<br />返回 long |
+| stoul(s, p, b)          | 返回 unsigned long                                           |
+| stoll(s, p, b)          | 返回 long long                                               |
+| stoull(s, p, b)         | 返回 unsigned long long                                      |
+| stof(s, p)              | 返回 s 的数值表示(浮点数)<br />返回 float                    |
+| stod(s, p)              | 返回 double                                                  |
+| stold(s, p)             | 返回 long double                                             |
+
+### 9.6 容器适配器
+
+**顺序容器适配器**
+
+* stack 栈
+* queue 单向队列
+* priority_queue 优先队列
+
+**容器适配器**
+
+* 把一个容器**装饰为一种数据结构**
+
+| 所有的容器适配器都支持的操作和类型                      | 作用                                  |
+| ------------------------------------------------------- | ------------------------------------- |
+| size_type                                               | size 的类型                           |
+| value_type                                              | value 的类型                          |
+| container_type                                          | 被装饰的容器的类型                    |
+| A a;                                                    | 创建空适配器 a                        |
+| A a(c);                                                 | 创建空适配器 a, 初始化为容器 c 的拷贝 |
+| 所有适配器都支持所有的关系运算符<br />==, !=, <=, >, >= | 关系运算符                            |
+| a.empty()                                               | a 是否为空                            |
+| a.size()                                                | 返回 a 的元素数目                     |
+| swap(a, b)                                              | 交换 a 和 b 的内容                    |
+| a.swap(b)                                               | a 和 b 必须适配器类型和容器类型都相同 |
+
+* 所有适配器都要求容器有**添加, 删除和访问尾元素**的能力
+
+  * 所以 array 和 forward_list 不能用来构造容器适配器
+
+* 默认情况下, stack 和 queue 基于 deque 实现, priority_queue 基于 vector 实现
+
+* **只能使用适配器的操作**, 不能使用底层容器的操作
+
+  ```C++
+  deque<int> deq;
+  stack<int> stk(deq);	// 从 deq 拷贝元素来初始化 stk
+  
+  // 基于 vector 实现 stack 数据结构
+  stack<int, vector<int>> stk;
+  ```
+
+  
+
+**栈适配器**
+
+| 栈独有操作                                                | 作用                               |
+| --------------------------------------------------------- | ---------------------------------- |
+| stack 默认基于 deque 实现, 也可以在 list 或 vector 上实现 | stack 只要求能在末尾增删和访问元素 |
+| s.pop()                                                   | 弹出栈顶元素, 但不返回元素值       |
+| s.push(item)                                              | 压入元素, 拷贝方式                 |
+| s.emplace(args)                                           | 压入元素, 构造方式                 |
+| s.top()                                                   | 返回栈顶元素                       |
+
+**队列适配器**
+
+| queue 和 priority_queue 独有操作                             | 作用                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| queue 默认基于 deque 实现, priority_queue 默认基于 vector 实现 |                                                              |
+| queue 也可以用 list 和 vector 实现, priority_queue 也可以用 deque 实现 |                                                              |
+| q.pop()                                                      | 删除 queue 首元素 / 删除 priority_queue  最高优先级元素<br />但不返回该元素 |
+| q.push(item)                                                 | queue 末尾入队元素 item / priority_queue 合适位置入队 item, 拷贝方式 |
+| q.emplace(args)                                              | 入队操作, 构造方式                                           |
+| q.front()                                                    | 返回首元素                                                   |
+| q.back()                                                     | 返回尾元素, 仅 queue                                         |
+| q.top()                                                      | 返回最高优先级元素, 仅 priority_queue                        |
+
