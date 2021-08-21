@@ -751,3 +751,222 @@ if(!c.empty())
 | q.back()                                                     | 返回尾元素, 仅 queue                                         |
 | q.top()                                                      | 返回最高优先级元素, 仅 priority_queue                        |
 
+
+
+## 第 10 章 泛型算法
+
+### 10.1 概述
+
+头文件:
+
+* <algorithm> 
+* <numeric>
+
+算法工作过程
+
+* 算法运行于迭代器之上, 不执行容器的操作, 只执行迭代器的操作
+* 算法不会直接添加或删除容器元素
+
+### 10.2 初识泛型算法
+
+**输入范围**
+
+泛型算法操作的元素范围, 使用两个迭代器(首元素和尾后元素迭代器)
+
+#### 10.2.1 只读算法
+
+```C++
+accumulate(begin, end, sum)		// 输入范围和求和的初值
+```
+
+**操作两个序列**
+
+```C++
+equal(a1.begin, a1.end, a2.begin)
+// 从 a2 某个迭代器开始比较与 a1 的输入元素是否相等
+```
+
+> 单一迭代器表示一个序列的时, 假定该序列与两个迭代器表示的范围一样长
+
+* **算法不检查空间是否足够操作**, 由程序员检查
+
+#### 10.2.2 写容器算法
+
+**back_inserter**
+
+* 插入迭代器
+* 相当于调用 push_back 函数
+* 输入: 容器的引用
+* 输出: 容器的插入迭代器
+
+```C++
+auto it = back_inserter(容器);	// it 是与容器绑定的插入迭代器
+*it = 1;			// 向容器插入元素 1
+fill_n(it, 5, 0);	// 向容器插入 5 个 0
+```
+
+#### 10.2.3 重排容器算法
+
+```C++
+sort(a.begin, a.end)		// 对 a 排序
+auto it = unique(a.begin, a.end)		// 重复元素放最后, 函数返回第一个重复元素的迭代器
+a.erase(it, a.end)			// 删除从 it 到 a 末尾的所有元素
+```
+
+
+
+### 10.3 定制操作
+
+自定义**比较运算符**, 即自定义**谓词**
+
+* **谓词**是一个**可调用的对象/表达式**, **返回 bool 类型**的值
+  * 可调用: **能用调用运算符调用**
+  * **可调用对象**
+    * 函数和函数指针
+    * lambda 表达式
+    * 重载了函数调用运算符的类
+* 分为一元谓词和二元谓词
+
+#### 10.3.1 传递函数
+
+向算法传递函数
+
+```C++
+bool fun(int a, int b) {return a < b;}
+sort(a.begin, a.end, fun);
+```
+
+#### 10.3.2 lambda 表达式
+
+lambda 表达式形式
+
+```C++
+[capture list] (parameter list) -> return type {function body}
+capture list: 捕获列表		不可忽略
+    捕获 lambda 所在函数中的局部非 static 变量
+parameter list: 参数列表	可忽略
+return type: 返回类型		可忽略
+function body: 函数体		 不可忽略
+    
+// 忽略参数列表和返回类型
+auto f = [] {return 0;};
+cout << f() << endl;		// 调用运算符调用
+```
+
+* lambda 表达式类似**未命名的内联函数**
+* 忽略返回类型会自动推断返回类型, 若**包含 return 语句之外的语句**, 则**返回 void 类型**
+
+* lambda 不能由默认参数
+* lambda 可以直接使用当前函数之外的名字
+
+#### 10.3.3 lambda 捕获和返回
+
+定义 lambda 时, 编译器**生成一个新的类类型**
+
+lambda **捕获的变量作为类的数据成员**在 lambda 对象初始化时初始化
+
+**值捕获**
+
+被捕获的变量在 lambda 对象**创建时拷贝初始化**
+
+```C++
+void fun()
+{
+    int a = 0;
+    auto f = [a] {return a;};
+    a = 1;
+    auto b = f();	// b 的值为 0 而不是 1
+}
+```
+
+**引用捕获**
+
+引用捕获必须**保证**调用 lambda 时**被引用的对象存在**
+
+```C++
+void fun()
+{
+    int a = 0;
+    auto f = [&a] {return a;};
+    a = 1;
+    auto b = f();	// b 的值是 1 
+}
+```
+
+**隐式捕获**
+
+告诉编译器自动推断捕获
+
+= 表示值捕获, & 表示引用捕获
+
+```C++
+//值捕获
+void fun()
+{
+    int a = 0;
+    auto f = [=] {return a;};	// 值隐式捕获
+    a = 1;
+    auto b = f();	// b 的值是 0 
+}
+
+// 引用捕获
+void fun()
+{
+    int a = 0;
+    auto f = [&] {return a;};	// 引用隐式捕获
+    a = 1;
+    auto b = f();	// b 的值是 1 
+}
+```
+
+**混合捕获**
+
+隐式捕获与显式捕获混合使用, 但**二者必须捕获类型不同**
+
+```C++
+//值捕获
+void fun()
+{
+    int a = 0, b = 0;
+    auto f = [=, &b] {return a + b;};	// a 隐式值捕获, b 显式引用捕获
+    a = 1;
+    auto c = f();	// c 的值是 0 
+}
+
+// 引用捕获
+void fun()
+{
+    int a = 0, b = 0;
+    auto f = [&, b] {return a + b;};	// a 引用隐式捕获, b 显式值捕获
+    a = 1;
+    auto c = f();	// c 的值是 1 
+}
+```
+
+**可变 lambda**
+
+mutable 关键字使得**值传递的变量是可修改的左值**
+
+> lambda 值捕获的变量依然没有修改, 修改的只是拷贝给 lambda 表达式的参数变量
+
+```C++
+void fun()
+{
+    int a = 0;
+    auto f = [a] () mutable {return ++a;};	// 正常情况下传进去的 a 是 const 变量, 不能对其修改
+    auto b = f();	// b 的值是 1 
+}
+```
+
+**指定 lambda 返回类型**
+
+```C++
+[] (int i) {return i < 0 ? -i : i;};	// 返回类型推断为 int 
+
+// 替换为 if 语句后, 看似与上式等价, 实际返回类型是 void
+[] (int i) {if (i < 0) return -1; else return i;};	// 由于有 return 之外的语句, 所以推断为 void 返回类型
+
+// 使用 return 之外的语句需要显式指定返回类型
+[] (int i) -> int {if (i < 0) return -1; else return i;};
+```
+
