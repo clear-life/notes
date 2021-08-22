@@ -970,3 +970,61 @@ void fun()
 [] (int i) -> int {if (i < 0) return -1; else return i;};
 ```
 
+#### 10.3.4 参数绑定
+
+**标准库 bind 函数**
+
+函数适配器
+
+输入: 可调用对象
+
+输出: 新的可调用对象, 参数列表不同
+
+```C++
+auto newCallble = bind(callable, arg_list);
+// callable: 可调用对象
+// arg_list: 参数列表, 包含占位符 _n, 表示 newCallble 的第 n 个参数
+// newCallble: 新的可调用对象
+```
+
+```C++
+check_size(string s, int sz);
+
+auto check6 = bind(check_size, _1, 6);
+
+// _1 和 6 对应 check_size 的两个参数 string s 和 int sz
+// _1 表示是 check6 的第一个参数, 同时也是唯一一个参数
+// 调用 check6 只需要 string 类型的 _1 参数, 然后调用 _1 和 6 为参数的 check_size 函数 
+```
+
+**使用 placeholders 名字**
+
+命名空间:  
+
+std :: placeholders :: _n
+
+**bind 的参数**
+
+bind 可以重新安排参数顺序
+
+```C++
+auto g = bind(f, a, b, _2, c, _1);
+// f 的参数为 a, b, _2, c, _1
+// g 的参数为 _1, _2
+g(_1, _2)	映射为 f(a, b, _2, c, _1) 
+```
+
+**bind 绑定引用参数**
+
+默认情况下, bind 的非占位符参数被拷贝到旧的可调用对象里
+
+但我们希望能用**引用传递**方式传递非占位符参数
+
+* 标准库 `ref` 函数返回对象的引用, 该引用是可以拷贝的
+* 标准库 `cref` 函数返回对象的 `const` 引用
+
+```C++
+ostream os;		// ostream 对象不能拷贝, 只能引用
+bind(print, ref(os), _1, ' '); 		// ref 返回 os 的引用, 且该引用可以被拷贝, 符合 bind 的要求
+```
+
