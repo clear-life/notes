@@ -1028,3 +1028,226 @@ ostream os;		// ostream 对象不能拷贝, 只能引用
 bind(print, ref(os), _1, ' '); 		// ref 返回 os 的引用, 且该引用可以被拷贝, 符合 bind 的要求
 ```
 
+### 10.4 再探迭代器
+
+除了普通迭代器之外, 还有四种特殊迭代器
+
+头文件: **<iterator>**
+
+* 插入迭代器( insert iterator )	
+
+  插入元素
+
+* 流迭代器( stream iterator )
+
+  遍历 IO 流
+
+* 反向迭代器( reverse iterator )
+
+  反向移动
+
+* 移动迭代器( move iterator )
+
+  移动元素
+
+#### 10.4.1 插入迭代器
+
+* 迭代器适配器
+  * 输入: 容器
+  * 输出: 插入迭代器
+
+| 插入迭代器操作     | 作用                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| it = value         | 插入迭代器 it 指向的位置插入值 value<br />共 push_front push_back insert 三种插入方式 |
+| *it, ++it, it++    | 操作依然存在, 但 it 无任何变化, 都返回 it                    |
+| **插入迭代器类型** | **作用**                                                     |
+| front_inserter     | 调用 push_front                                              |
+| back_inserter      | 调用 push_back                                               |
+| inserter           | 调用 insert                                                  |
+
+```C++
+deque<int> a = ...;
+auto it = insert(a, iter);
+// 向 it 赋值会永远在 iter 迭代器之前插入元素
+
+auto it = front_insert(a);
+// 向 it 赋值会永远在容器 a 的开头插入元素
+
+auto it = back_insert(a);
+// 向 it 赋值会永远在容器 a 的末尾插入元素
+```
+
+#### 10.4.2 iostream 迭代器
+
+IO 类型对象的迭代器, **将流当作特定类型的元素序列来处理**
+
+* istream_iterator
+
+  读取输入流
+
+* ostream_iterator
+
+  向输出流写数据
+
+**istream_iterator**
+
+* 绑定流, 不绑定就初始化为**尾后迭代器 end**
+* 读取的类型必须定义 `>>` 输入运算符
+
+``` C++
+istream_iterator<int> it(cin);	// 绑定 cin 流对象, 从 cin 流读取 int 数据
+istream_iterator<int> eof;		// 尾后迭代器 end, 判断是否结束使用
+vector<int> a;
+
+while(it != eof)
+    a.push_back(*it++);			// 与普通迭代器一样, *it++ 作用是返回当前迭代器指向元素的值并递增迭代器
+
+// 等价于
+vector<int> a(it, eof);			// 用迭代器范围构造容器初始值
+```
+
+| istream_iterator 操作               | 作用                                                         |
+| ----------------------------------- | ------------------------------------------------------------ |
+| istream_iterator<T> it ( istream ); | it 从输入流 istream 读取类型为 T 的值                        |
+| istream_iterator<T> end;            | 尾后迭代器                                                   |
+| it1 == it2                          | 读取类型相同, 若都是尾后迭代器或绑定到相同的输入流, 则二者相等 |
+| it1 != it2                          | 否则, 二者不等                                               |
+| *it                                 | 解引用, 返回从流中读取的值                                   |
+| it -> mem                           | 等价于 (*it).mem                                             |
+| ++it, it++                          | 与普通迭代器相同                                             |
+
+**ostream_iterator**
+
+| ostream_iterator 操作              | 作用                                                         |
+| ---------------------------------- | ------------------------------------------------------------ |
+| ostream_iterator<T> it(ostream);   | it 将类型 T 的值写入输出流 ostream 中                        |
+| ostream_iterator<T> it(ostream, d) | it 将类型 T 的值写入输出流 ostream 中, 每个值后面都添加一个 d<br />d 是一个 C 风格字符串指针 |
+| it = value                         | 用 << 运算符将 value 写入 it 绑定的输出流中                  |
+| *it, ++it, it++                    | 运算符存在, 但 it 无任何变化, 结果都为 it                    |
+
+```C++
+vector<int> a = ...;
+ostream_iterator<int> it(cout, " ");
+for(auto i; a)
+    *it++ = i;		// *it++ = i 与 it = i 等价
+```
+
+#### 10.4.3 反向迭代器
+
+反向移动的迭代器
+
+> forward_list 不支持
+
+* 反向迭代器需要 `++` 和 `--` 运算符
+
+* base 成员函数得到反向迭代器对应的普通迭代器
+
+  ```C++
+  a.rbegin().base();
+  ```
+
+* it 和 it.base() **位置相邻** 
+
+### 10.5 泛型算法结构
+
+算法要求的迭代器操作可分为 5 个类别
+
+| 迭代器类别     | 作用                       |
+| -------------- | -------------------------- |
+| 输入迭代器     | 只读, 单遍, 递增           |
+| 输出迭代器     | 只写, 单遍, 递增           |
+| 前向迭代器     | 读写, 多遍, 递增           |
+| 双向迭代器     | 读写, 多遍, 递增递减       |
+| 随机访问迭代器 | 读写, 多遍, 全部迭代器运算 |
+
+#### 10.5.1 5 类迭代器
+
+**输入迭代器**
+
+* `==`, `!=`
+* `++`
+* `*`
+* `->`
+
+**输出迭代器**
+
+* `++`
+* `*`
+
+**前向迭代器**
+
+* 可读写
+
+* 只能沿一个方向移动
+
+**双向迭代器**
+
+* 可正向/反向读写
+* `++`, `--`
+
+**随机访问迭代器**
+
+支持所有操作
+
+#### 10.5.2 算法形参模式
+
+| 算法参数形式                           | 作用                        |
+| -------------------------------------- | --------------------------- |
+| alg(beg, end, other args);             | beg, end 表示算法的输入范围 |
+| alg(beg, end, dest, other args);       | dest 目的位置               |
+| alg(beg, end, beg2, other args);       | beg2 第二个范围             |
+| alg(beg, end, beg2, end2, other args); | beg2, end2 第二个范围       |
+
+> 算法假定空间足够大
+
+#### 10.5.3 算法命名规范
+
+**重载形式传递谓词**
+
+```C++
+unique(beg, end);
+unique(beg, end, compare);	// 谓词 compare 比较元素
+```
+
+**_if 版本**
+
+```C++
+find(beg, end, value);		// 查找 value 第一次出现的位置
+find(beg, end, 谓词);		   // 查找第一个使 谓词 为真的元素值
+```
+
+**_copy 版本**
+
+```C++
+reverse(beg, end);				// 反转输入范围的元素
+reverse_copy(beg, end, dest);	// 将输入范围的元素逆序拷贝到 dest 中
+```
+
+### 10.6 特定容器算法
+
+| list 和 forward_list 成员函数版本的算法 | 作用                                           |
+| --------------------------------------- | ---------------------------------------------- |
+| **都返回 void**                         |                                                |
+| list.merge(list2)                       | list2 的元素合并到 list 中, list 和 list2 有序 |
+| list.merge(list2, compare)              | list2 的元素会被删除                           |
+| list.remove(value)                      | 调用 erase 删除元素 value                      |
+| list.remove_if(谓词)                    | 调用 erese 删除使 谓词 为真的元素              |
+| list.reverse()                          | 反转 list 的元素                               |
+| list.sort()                             | 排序 list 元素                                 |
+| list.sort(谓词)                         | 使用谓词排序 list 元素                         |
+| list.unique()                           | 调用 erase 删除重复的元素                      |
+| list.unique(谓词)                       | 调用 erase 删除使谓词相等的元素                |
+
+**splice**
+
+此算法是链表特有, 不需要通用版本
+
+| list 和 forward_list 的 splice 成员函数的参数        |
+| ---------------------------------------------------- |
+| list.splice(args) 和 forward_list.splice_after(args) |
+| (p, list2)                                           |
+| (p, list2, p2)                                       |
+| (p, list2, b, e)                                     |
+
+**链表特有的操作会改变容器**
+
