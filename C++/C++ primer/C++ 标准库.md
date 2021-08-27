@@ -1315,3 +1315,100 @@ multiset<int> ms(v.cbegin(), v.cend());	// 用 v 初始化 ms, ms 允许 key 重
 cout << s.size() << " " << ms.size() << endl;	// s 的 size 为 3, ms 的 size 为 6
 ```
 
+#### 11.2.2 关键字类型的要求
+
+**有序容器的关键字类型**
+
+关键字类型必须定义**严格弱序**($\leq$)
+
+> * 组织元素的操作的类型也是容器类型的一部分
+>
+> * 必须在定义关联容器时提供该操作的类型
+> * 尖括号中的类型, 仅仅只是一个类型, 只有在创建容器对象的时候, 才会以构造函数的形式提供真正的比较操作
+
+**使用关键字类型的比较函数**
+
+```C++
+// 比较函数, 定义 "<"
+bool compare(const pair<int,int> &a, const pair<int,int> &b)
+{
+    return a.second < b.second;
+}
+set<pair<int,int>,decltype(compare)*> s(compare);	// 传入 compare 函数作为构造函数的参数
+s.insert({{1,2}, {2,4},{3,6}});
+```
+
+#### 11.2.3 pair 类型
+
+头文件: `<utility>`
+
+```C++
+pair<int,int> p = {1,2};
+```
+
+| pair 的操作                | 作用                                      |
+| -------------------------- | ----------------------------------------- |
+| pair<T1, T2> p;            |                                           |
+| pair<T1, T2> p(v1, v2);    |                                           |
+| pair<T1, T2> p = {v1, v2}; |                                           |
+| make_pair(v1, v2);         |                                           |
+| p.first                    |                                           |
+| p.second                   |                                           |
+| p1 relation_operator p2    | 关系运算符                                |
+| p1 == p2                   | first 和 second 成员都相等时, pair 才相等 |
+| p1 != p2                   |                                           |
+
+**返回 pair 对象的函数**
+
+```C++
+pair<string, int> fun(vector<string> &v)
+{
+    if(!v.empty())
+        return {v.back(), v.back().size()};	// 列表初始化
+    	return make_pair(v.back(), v.back().size());	// 函数构造
+    else
+        return pair<string, int>();			// 默认初始化	
+}
+
+```
+
+### 11.3 关联容器
+
+| 关联容器的类型别名 | 说明       |
+| ------------------ | ---------- |
+| key_type           | 关键字类型 |
+| mapped_type        | 关联的类型 |
+| value_type         | 元素的类型 |
+
+* `set`
+  * key_type 和 value_type 一样
+* `map`
+  * value_type 是 pair
+  * key_type 和 mapped_type 是 pair 的 first 和 second 的类型
+  * 由于 关键字 不能修改, 所以 pair 的 first 类型是 const 版本的
+
+``` C++
+set<string>::key_type s;		// string
+set<string>::value_type s;		// string
+map<string, int>::key_type s;	// string
+map<string, int>::mapped_type s;// int
+map<string, int>::value_type s;	// pair<const string, int>
+```
+
+#### 11.3.1 关联容器迭代器
+
+解引用关联容器的迭代器时, 得到容器的 `value_type` 的引用类型
+
+```C++
+map<string, int> m;
+auto it = m.begin();
+cout << it -> first << " " << it -> second << endl;
+it -> second ++;
+```
+
+**set 的迭代器是 const**
+
+虽然 set 同时定义了 iterator 和 const_iterator 类型, 但二者都只能读取 set 中的元素, 因为 set 的元素是关键字, 不能修改
+
+> 有序容器的迭代器按关键字升序遍历元素
+
