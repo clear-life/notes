@@ -1412,3 +1412,56 @@ it -> second ++;
 
 > 有序容器的迭代器按关键字升序遍历元素
 
+#### 11.3.2 添加元素
+
+向 `set` 和 `map` 插入已存在的元素对容器没有任何影响
+
+```C++
+vector<int> v = {2,4,6,2,4,6};
+set<int> s;
+s.insert(v.begin(), v.end());	// s 现有 3 个元素 {2,4,6}
+s.insert({1,3,5,1,3,5});		// s 现有 6 个元素 {1,2,3,4,5,6}
+```
+
+**向 map 添加元素**
+
+`map` 的元素类型是 `pair`
+
+```C++
+map<string, int> m;
+string s;
+m.insert({s,1});
+m.insert(make_pair(s,1);
+m.insert(pair<string,int>(s,1));
+m.insert(map<string,int>::value_type(s,1));
+```
+
+| 关联容器 insert 操作 | 作用                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| c.insert(v)          | v 是 value_type 类型, args 用来构造 value_type 对象          |
+| c.emplace(args)      | 返回 pair, first 是迭代器, 指向插入元素, second 是 bool, 表示是否插入成功 |
+| c.insert(b, e)       | 插入范围元素                                                 |
+| c.insert(initlist)   | 插入初始化列表元素                                           |
+| c.insert(p, v)       | p 作为提示, 指出应从哪里开始搜索插入元素的位置, 返回迭代器, 指向插入元素 |
+| c.emplace(p, args)   |                                                              |
+
+**检查 insert 的返回值**
+
+```C++
+map<string,int> m;
+string s;
+auto it = m.insert({s,1});
+if(!it.second)
+    it.first -> second ++;	// it.first 是指向插入元素的迭代器, it.first -> second 是插入元素的关联值 
+```
+
+**向 multiset 或 multimap 添加元素**
+
+```C++
+multimap<string,int> m;
+m.insert({"a",1});
+m.insert({"a",2});
+```
+
+> 允许重复的关联容器, 接收单个元素的 insert 返回指向插入元素的迭代器
+
