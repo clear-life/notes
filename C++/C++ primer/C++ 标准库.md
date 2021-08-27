@@ -1251,3 +1251,67 @@ reverse_copy(beg, end, dest);	// 将输入范围的元素逆序拷贝到 dest �
 
 **链表特有的操作会改变容器**
 
+## 第 11 章
+
+**关联容器**: `map`, `set`
+
+**头文件**
+
+* `<map>`: `map`, `multimap`
+* `<set>`: `set`, `multiset`
+* `<unordered_map>`: `unordered_map`, `unordered_multimap`
+* `<unordered_set>`: `unordered_set`, `unordered_multiset`
+
+| 关联容器类型       | 说明                |
+| ------------------ | ------------------- |
+| **按关键字有序**   |                     |
+| map                | 关联数组: key-value |
+| set                | 集合                |
+| multimap           | key 可重复          |
+| multiset           | key 可重复          |
+| **无序(哈希函数)** |                     |
+| unordered_map      | 哈希 map            |
+| unordered_set      | 哈希 set            |
+| unordered_multimap | key 可重复          |
+| unordered_multiset | key 可重复          |
+
+### 11.1 使用关联容器
+
+**map**
+
+```C++
+map<string, int> a;
+string s;
+while(cin >> s)
+    a[s]++;
+```
+
+**set**
+
+```C++
+set<string> a = {"One", "Two", "Three"};
+a.find("Two");
+```
+
+### 11.2 关联容器概述
+
+关联容器的迭代器都是双向的
+
+#### 11.2.1 定义关联容器
+
+```C++
+map<string, int> m = {{"One", 1},
+                      {"Two", 2},
+                      {"Three", 3}};		// {key, value}
+set<string> s = {"One", "Two", "Three"};
+```
+
+**初始化 `multimap` 和 `mutliset`**
+
+```C++
+vector<int> v = {0,0,1,1,2,2};
+set<int> s(v.cbegin(), v.cend());		// 用 v 初始化 s
+multiset<int> ms(v.cbegin(), v.cend());	// 用 v 初始化 ms, ms 允许 key 重复
+cout << s.size() << " " << ms.size() << endl;	// s 的 size 为 3, ms 的 size 为 6
+```
+
