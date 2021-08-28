@@ -1529,3 +1529,59 @@ for(auto p = m.equal_range("a"); p.first != p.second; ++p.first)
     ...
 ```
 
+### 11.4 无序容器
+
+用哈希函数和关键字的 `==` 运算符组织元素
+
+**使用无序容器**
+
+元素并未按关键字的顺序存储
+
+```C++
+unordered_map<string,int> um;
+string s;
+um[s] = 1;
+```
+
+**管理桶**
+
+一个桶是一个哈希值的链表
+
+| 无序容器管理操作       | 说明                            |
+| ---------------------- | ------------------------------- |
+| **桶接口**             |                                 |
+| c.bucket_count()       | 当前桶的数量                    |
+| c.max_bucket_count()   | 最大的桶数量                    |
+| c.bucket_size(n)       | 第 n 个桶的 size                |
+| c.bucket(k)            | 查找关键字为 k 的元素所在的桶   |
+| **桶迭代**             |                                 |
+| local_iterator         | 桶中元素的迭代器                |
+| const_local_iterator   | const 版本                      |
+| c.begin(n), c.end(n)   | 桶 n 的首元素迭代器和尾后迭代器 |
+| c.cbegin(n), c.cend(n) | const 版本                      |
+| **哈希策略**           |                                 |
+| c.load_factor()        | 装载因子, 桶的平均元素数量      |
+| c.max_laod_factor()    | 最大装载因子                    |
+| c.rehash(n)            | 重新 hash                       |
+| c.reserve(n)           | 重新存储, 但不必重新 hash       |
+
+**无序容器对关键字类型的要求**
+
+无序容器使用 hash<key_type> 类型的对象来生成哈希值
+
+* STL 为 内置类型, string, 智能指针 和一些标准库类型提供了 hash 模板
+* 但关键字为自定义类型的话, 需要专门提供 hash 模板版本
+
+```C++
+Class c;
+int hasher(const Class &c)
+{return hash<int>()(c.int);}
+
+bool equal(const Class &c1, const Class &c2)
+{return c1.string == c2.string;}
+
+unordered_set<Class, decltype(hasher)*, decltype(equal)*> us = (1, hasher, equal);
+```
+
+
+
