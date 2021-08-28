@@ -82,6 +82,15 @@ plt.savefig(file, format=fig_extension, dpi=resolution)
 # dpi 		每英寸的像素数量, 图像质量
 ```
 
+**plt.figure**
+
+创建画板
+
+```python
+plt.figure(figsize=(5,5))
+# 宽和高, 单位为英寸
+```
+
 **plt.imshow**
 
 绘制图像
@@ -132,6 +141,27 @@ plt.axis("off")		# 关闭坐标轴
 datasets.fetch_openml('mnist_784', version=1, as_frame=False)
 ```
 
+### linear_model
+
+线性模型 module
+
+**linear_model.SGDClassifier**
+
+类, 使用 SGD 优化方法的线性分类器
+
+```python
+sgd = linear_model.SGDClassifier(max_iter=1000, tol=1e-3, random_state=42)
+# max_iter: 训练数据的迭代次数, 就是 epochs
+# tol: 误差
+# random_state: 数据混洗
+
+sgd.fit(X_train, y_train)	# 训练
+
+sgd.predict(X_test)			# 预测
+```
+
+
+
 ## numpy
 
 向量运算库
@@ -145,7 +175,18 @@ np.zeros(shape, dtype=float)
 # shape 是一个元组
 ```
 
+**np.concatenate**
 
+```
+a = np.array([[1,2],[3,4]])
+b = np.array([[1,3],[5,7]])
+c = np.array([[2,4],[6,8]])
+res0 = np.concatenate((a,b,c),axis=0)	# 按第 0 维度连接, 只有维度 0 改变, 其他维度大小不变
+res1 = np.concatenate((a,b,c),axis=1)	# 按第 1 维度连接, 只有维度 1 改变, 其他维度大小不变
+
+res0.shape		# (6,2), axis = 0 改变, 其余不变
+res1.shape		# (2,6), axis = 1 改变, 其余不变
+```
 
 ### ndarray 类
 
