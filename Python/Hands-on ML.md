@@ -1,4 +1,16 @@
-# Hands-on ML
+# python 语法
+
+## 常见语法
+
+**列表推导式**
+
+```python
+[表达式 for 迭代变量 in 可迭代对象 [if 条件表达式] ]
+a = [x**2 for x in range(-3, 3) if x >= -1]
+# a = [1, 0, 1, 4]
+```
+
+
 
 ## sys
 
@@ -65,10 +77,40 @@ import matplotlib.pyplot as plt
 
 ```python
 plt.savefig(file, format=fig_extension, dpi=resolution)
-# file 		保存的文件名, 就是整个路径
+# file 		保存的文件名, 就是保存路径
 # format 	保存的格式
 # dpi 		每英寸的像素数量, 图像质量
 ```
+
+**plt.imshow**
+
+绘制图像
+
+```python
+plt.imshow(X)	# X 为图像数据
+# 参数
+# interpolation: 插值方法
+```
+
+**plt.show**
+
+展示图像
+
+```
+plt.show()
+```
+
+**plt.axis**
+
+设置坐标轴
+
+```python
+plt.axis("square")	# 正方形
+plt.axis("equal")	# x,y 轴刻度等长
+plt.axis("off")		# 关闭坐标轴
+```
+
+
 
 
 
@@ -88,5 +130,39 @@ plt.savefig(file, format=fig_extension, dpi=resolution)
 
 ```
 datasets.fetch_openml('mnist_784', version=1, as_frame=False)
+```
+
+## numpy
+
+向量运算库
+
+**np.zeros**
+
+返回给定 shape 的全 0 数组
+
+```python
+np.zeros(shape, dtype=float)
+# shape 是一个元组
+```
+
+
+
+### ndarray 类
+
+**reshape**
+
+成员函数, 重组对象 shape
+
+```python
+np.reshape(28, 28)
+```
+
+**astype**
+
+成员函数, 返回对应数据类型的副本
+
+```python
+np.astype("float64")
+np.astype(np.uint8)
 ```
 
