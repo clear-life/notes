@@ -70,3 +70,23 @@ plt.savefig(file, format=fig_extension, dpi=resolution)
 # dpi 		每英寸的像素数量, 图像质量
 ```
 
+
+
+## sklearn
+
+全称 scikit-learn, 机器学习库
+
+> Machine learning module for Python
+
+### datasets
+
+获取数据集的 module
+
+**datasets.fetch_openml**
+
+从 http://openml.org/ 获取数据集的函数
+
+```
+datasets.fetch_openml('mnist_784', version=1, as_frame=False)
+```
+
