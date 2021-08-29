@@ -42,6 +42,8 @@ values ("a",1),("b",2)	# 插入数据要与指定的列对应上, 可插入多�
 
 ## UPDATE
 
+更新数据
+
 ```mysql
 update `table`
 set `column1` = value1, `column2` = value2,...
@@ -50,10 +52,12 @@ where `some_column` = some_value;
 
 ## DELETE
 
+删除数据
+
 ```mysql
 delete from `table`		# 删除所有行数据
 
-delete from `table`
+delete from `table`		# 删除符合条件的行数据
 where `column` relation_operator value
 ```
 
@@ -143,4 +147,42 @@ WHERE `column` LIKE  value;
 D 表示字母 "D"
 % 是通配符, 表示 0~n 个字符
 ```
+
+## 输出格式
+
+### ORDER BY
+
+排序
+
+```mysql
+SELECT `column1`, `column2`
+FROM `table`
+ORDER BY `column1`, `column2` ASC|DESC;	# ASC 升序, DESC 降序
+# 排序依据: 先按 column1, 再按 column2
+```
+
+### LIMIT
+
+限制
+
+```mysql
+SELECT `column1`, `column1`
+FROM `table`
+LIMIT `offset` , `count`;
+```
+
+> 如有 ORDER BY , 则 LIMIT 需放在 ORDER BY 之后
+
+## 算数函数
+
+### AVG()
+
+均值
+
+```mysql
+SELECT AVG(`column`) AS `别名`
+FROM `table`;
+```
+
+> AS 取别名
 
