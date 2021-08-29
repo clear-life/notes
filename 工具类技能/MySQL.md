@@ -186,3 +186,12 @@ FROM `table`;
 
 > AS 取别名
 
+### MAX()
+
+最大值
+
+```mysql
+SELECT MAX(`column`) 
+FROM `table`;
+```
+
