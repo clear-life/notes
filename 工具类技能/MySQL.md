@@ -235,5 +235,47 @@ FROM `table`;
 
 判断空值
 
+**ISNULL()**
 
+判断是否为空
+
+```mysql
+SELECT ISNULL(`column`)
+FROM `table`;
+```
+
+**IFNULL()**
+
+判断是否为空, 并有备用值
+
+```mysql
+SELECT IFNULL(`column`, `value`)
+FROM `table`;
+# 如果是 NULL 则返回 value
+# 如果不是, 则正常返回
+```
+
+> COALESCE(column, value) 用法和 IFNULL(column, value) 一摸一样
+
+#### COUNT()
+
+计数
+
+```mysql
+SELECT COUNT(`column`) 
+FROM `table`;
+
+COUNT(column)
+# 对指定列进行计数
+# 不包含值为 NULL 的行
+# 包含空字符串 "" 所在的行
+
+COUNT(*)
+# 统计表中所有行数, 包括值为 NULL 的行和重复项所在的行
+# 不包含值全为 NULL 的行
+# 包含空字符串 "" 所在的行
+
+COUNT(DISTINCT column)
+# 统计不重复的行
+```
 
