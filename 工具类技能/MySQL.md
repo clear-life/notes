@@ -279,3 +279,34 @@ COUNT(DISTINCT column)
 # 统计不重复的行
 ```
 
+### 时间函数
+
+#### 当前时间
+
+NOW(),CURDATE(),CURTIME()
+
+**NOW()**
+
+```mysql
+NOW(number)
+number 为精确的毫秒位数, 默认为 0
+返回当前时间
+格式: Y-M-D h:m:s
+```
+
+**CURDATE()**
+
+```myql
+返回当前时间
+格式: Y-M-D
+```
+
+**CURTIME()**
+
+```mysql
+CURTIME(number)
+number 为精确的毫秒位数, 默认为 0
+返回当前时间
+格式: h:m:s
+```
+
