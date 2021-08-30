@@ -354,3 +354,54 @@ DATE_FORMAT(date,format)
 # 返回时间字符串
 ```
 
+#### 修改时间
+
+**DATE_ADD()**
+
+增加时间
+
+```mysql
+SELECT DATE_ADD(`date`, INTERVAL expr type)
+FROM `table`
+# date: 起始时间
+# INTERVAL: 关键字, 间隔
+# expression: 表达式, 时间间隔的数值
+# type: 类型, 时间间隔的单位(MICROSECOND,SECOND,MINUTE,HOUR,DAY,WEEK,MONTH,QUARTER,YEAR)
+```
+
+**DATE_SUB()**
+
+减少时间
+
+```mysql
+SELECT DATE_SUB(`date`, INTERVAL expr type)
+FROM `table`
+# date: 起始时间
+# INTERVAL: 关键字, 间隔
+# expression: 表达式, 时间间隔的数值
+# type: 类型, 时间间隔的单位(MICROSECOND,SECOND,MINUTE,HOUR,DAY,WEEK,MONTH,QUARTER,YEAR)
+```
+
+#### 计算日期差
+
+**DATEDIFF()**
+
+天数差
+
+```mysql
+DATEDIFF(time1, time2)
+# 计算 time1 - time2 的天数差 
+# time 格式为 "Y-M-D"
+```
+
+**TIMESTAMPDIFF()**
+
+时间戳差
+
+```mysql
+TIMESTAMPDIFF(type, time1, time2)
+# 计算 time2 - time1 的时间差, type 为时间单位
+# time 格式为 "Y-M-D"
+# type: 时间单位
+```
+
