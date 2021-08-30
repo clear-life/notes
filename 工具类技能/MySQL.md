@@ -310,3 +310,47 @@ number 为精确的毫秒位数, 默认为 0
 格式: h:m:s
 ```
 
+#### 提取日期和时间
+
+**DATE()**
+
+提取时间中的年月日信息
+
+```mysql
+DATE(Y-M-D h:m:s)
+返回  Y-M-D
+```
+
+**TIME()**
+
+提取时间中的时分秒信息
+
+```mysql
+TIME(Y-M-D h:m:s)
+返回  h:m:s
+```
+
+**EXTRACT()**
+
+提取想要的一种时间信息
+
+```mysql
+SELECT EXTRACT(unit FROM date)
+FROM `table`
+# 从 date 中提取 unit 类型的时间信息
+# unit: YEAR, MONTH, DAY, HOUR, MINUTE, SECOND
+# date: 合法的时间表达式 Y-M-D h:m:s
+```
+
+**DATE_FORMAT()**
+
+格式化提取时间信息
+
+```mysql
+DATE_FORMAT(date,format)
+# 从 data 中按照 format 格式提取时间
+# date: 数据
+# format: 时间的格式
+# 返回时间字符串
+```
+
