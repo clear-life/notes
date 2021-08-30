@@ -751,6 +751,15 @@ if(!c.empty())
 | q.back()                                                     | 返回尾元素, 仅 queue                                         |
 | q.top()                                                      | 返回最高优先级元素, 仅 priority_queue                        |
 
+```C++
+priority_queue<Type, Container, Functional>
+// Type: 元素类型
+// Container: 容器类型
+// Functional: 比较"运算符"
+priority_queue <int, vector<int>，greater<int>> q;	// 升序
+priority_queue <int, vector<int>，less<int>>q;		// 降序
+```
+
 
 
 ## 第 10 章 泛型算法
