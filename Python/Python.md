@@ -1,4 +1,4 @@
-# python 语法
+# python
 
 ## 常见语法
 
@@ -8,6 +8,73 @@
 [表达式 for 迭代变量 in 可迭代对象 [if 条件表达式] ]
 a = [x**2 for x in range(-3, 3) if x >= -1]
 # a = [1, 0, 1, 4]
+```
+
+### 装饰器
+
+装饰其他函数的函数
+
+#### 1. 函数也是对象
+
+```python
+def fun1(a):		# 创建函数对象 fun1
+    print("fun"+a)
+fun1("1")			# 调用函数对象 fun1, 输出: fun1
+
+fun2 = fun1			# 创建函数对象 fun2, 用 fun1 初始化
+
+del fun1			# 销毁函数对象 fun1
+
+fun2("2")			# 调用函数对象 fun2, 输出: fun2
+```
+
+#### 2. 在函数中定义函数
+
+```python
+def fun():
+    print("fun")
+    
+	def fun1():			# 函数内部定义的函数只能在函数内访问
+		print("fun1") 	# 不能在函数外访问
+    
+    def fun2():
+        print("fun2")
+    
+    fun1()
+    fun2()
+
+fun()	# 可以访问, 输出: fun  fun1  fun2
+
+fun1()	# 不可以访问
+```
+
+#### 3. 从函数中返回函数对象
+
+```python
+def fun(num = 1):
+    print("fun")
+    
+	def fun1():			# 函数内部定义的函数只能在函数内访问
+		print("fun1") 	# 不能在函数外访问
+    
+    def fun2():
+        print("fun2")
+    
+    if(num == 1):
+        return fun1()
+    else:
+    	return fun2()
+
+a = fun()	# 访问 fun, 输出 "fun", 返回函数对象 fun1 赋值给 a
+a()			# 调用函数对象 a, a 的内容和 fun1 一样
+
+# a = fun()
+# a()
+# 相同输出的代码
+
+fun()()		
+# 先访问 fun, 输出 "fun", 返回 fun1
+# 然后访问 fun1, 输出 "fun1", 返回空
 ```
 
 
