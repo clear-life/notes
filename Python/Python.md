@@ -77,6 +77,50 @@ fun()()
 # 然后访问 fun1, 输出 "fun1", 返回空
 ```
 
+#### 4. 函数对象作为参数
+
+```python
+def fun():
+    print("fun")
+def decorate(fun):
+    print("before")
+    fun()
+    print("after")
+
+decorate(fun)	
+# 先调用 decorate 函数对象, 传入参数为函数对象 fun
+# 然后执行 decorate 函数
+# 再调用函数对象 fun, 执行函数对象 fun
+```
+
+#### 5. 装饰器
+
+```python
+# 装饰器函数
+# 输入: 待装饰的函数对象
+# 输出: 装饰后的函数对象, 在被装饰对象执行前和执行后做了一些操作, 但不修改被装饰对象本身
+
+def decorate(fun):
+    def warp():
+        print("before fun")
+        fun()
+        print("after fun")
+      
+    return warp
+
+# 普通的函数对象
+def fun():
+	print("fun")
+    
+fun()		# 执行 fun, 输出 "fun"
+
+fun = decorate(fun)	# 装饰好函数对象 fun 后赋值给自己
+
+fun()		
+# 调用装饰后的函数对象 fun
+# 输出 before fun    fun    after fun        
+```
+
 
 
 ## sys
