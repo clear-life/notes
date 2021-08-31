@@ -470,4 +470,151 @@ DROP INDEX id_name	# 删除约束名为 id_name 的约束
 
 * 约束一列时, `PRIMARY KEY = UNIQUE + NOT NULL`
 * 约束多列时, `PRIMARY KEY` 仅保证多列之和唯一, 某一列可能重复
+* 主键必须设为 `NOT NULL`
+
+**创建表时设置主键约束**
+
+```mysql
+# 创建时添加主键约束
+CREATE TABLE `table` (
+    `id` int NOT NULL,
+    `name` varchar(255) NOT NULL,
+    `age` int
+    PRIMARY KEY (`id`)
+);
+
+# 多列为主键
+CREATE TABLE `table` (
+    `id` int NOT NULL,
+    `name` varchar(255) NOT NULL,
+    `age` int
+    CONSTRAINT id_name PRIMARY KEY (`id`,`name`)
+);
+```
+
+**新增主键约束**
+
+```mysql
+# 一列为主键
+ALTER TABLE `table`
+ADD PRIMARY KEY (`id`)
+
+# 多列为主键
+ALTER TABLE `table`
+ADD CONSTRAINT id_name PRIMARY KEY (`id`,`name`)
+```
+
+**删除主键约束**
+
+```mysql
+# 删除一列型主键
+ALTER TABLE `table`
+DROP PRIMARY KEY
+
+# 删除多列型主键
+ALTER TABLE `Persons`
+DROP CONSTRAINT id_name
+```
+
+### 外键约束
+
+**创建表时设置外键约束**
+
+```mysql
+CREATE TABLE `table`
+(
+`id` int NOT NULL,
+`foreign_id` int,
+PRIMARY KEY (`id`),
+FOREIGN KEY (`foreign_id`) REFERENCES table2(`foreign_id`)
+)
+# 外键 foreign_id 引用自 table2 的主键 foreign_id
+
+# 命名外键约束
+CONSTRAINT f_if FOREIGN KEY (`foreign_id`) REFERENCES Persons(`foreign_id`)
+```
+
+> REFERENCES 表示 引用一个表
+
+**添加外键约束**
+
+```mysql
+ALTER TABLE `table`
+ADD FOREIGN KEY (`id`) REFERENCES table2(`foreign_id`)
+```
+
+**删除外键约束**
+
+```mysql
+ALTER TABLE `table`
+DROP FOREIGN KEY (`foreign_id`)
+```
+
+### 检查约束
+
+限制列的值的范围
+
+**创建时添加**
+
+```mysql
+# 一列添加约束
+CREATE TABLE `table`
+(
+`id` int,
+`count` int,
+CHECK (`count` > 0)
+)
+
+# 多列添加约束
+CREATE TABLE `table`
+(
+`id` int,
+`count` int,
+CHECK (`count` > 0 AND `id` > 0)
+)
+
+# 为检查约束命名
+CONSTRAINT chk_count CHECK (`count` > 0);
+```
+
+**添加约束**
+
+```mysql
+ALTER TABLE `table`  
+ADD CONSTRAINT chk_courses CHECK ( `count` > 0 AND `id` > 0);
+```
+
+**删除约束**
+
+```mysql
+ALTER TABLE `table` 
+DROP CHECK chk_courses
+```
+
+### 默认约束
+
+设置列的默认值
+
+```mysql
+# 创建时添加
+CREATE TABLE `table`
+(
+    `id` int NOT NULL,
+    `city` varchar(255) DEFAULT 'Beijing'
+)
+
+CREATE TABLE `table`
+(
+    `id` int NOT NULL,
+    `date` date DEFAULT GETDATE()
+)
+
+# 添加默认约束
+ALTER TABLE `table`
+ALTER `city` SET DEFAULT 'Beijing'
+
+# 删除默认约束
+ALTER TABLE `table`
+ALTER `city` DROP DEFAULT
+```
 
