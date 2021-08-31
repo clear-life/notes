@@ -618,3 +618,133 @@ ALTER TABLE `table`
 ALTER `city` DROP DEFAULT
 ```
 
+## 多表连结
+
+**联结**
+
+关联多个表, 返回一组输出
+
+### 创建联结
+
+```mysql
+`table1`.`column1` = `table2`.`column2`
+# 把 table1 中的 column1 与 table2 中的 column2 联结起来
+
+# teachers 表中的 id 是主键, courses 表中的 teacher_id 是外键
+`teachers`.`id` = `courses`.`teacher_id` 
+```
+
+### JOIN 连接子句
+
+将两个及以上表的数据组合起来, 主要有四类
+
+* **INNER JOIN(内连接)**
+* **OUTER JOIN(外连接)**
+  * **LEFT JOIN(左外连接)**
+  * **RIGHT JOIN(右外连接)**
+  * **FULL JOIN(全连接)**
+* **CROSS JOIN(交叉连接)**
+
+#### INNER JOIN(内连接)
+
+A 和 B 的交集
+
+```mysql
+SELECT `table1`.`column1`, `table2`.`column2`...
+FROM `table1`
+INNER JOIN `table2`		# INNER 可省略不写
+ON `table1`.`common_field` = `table2`.`common_field`;
+# common_field 在 table1 表中是外键
+# common_field 在 table2 表中是主键
+
+SELECT `c`.`id`, `c`.`name` AS `cname`, `t`.`name` AS `tname`
+FROM `courses` `c`
+    INNER JOIN `teachers` `t` ON `c`.`teacher_id` = `t`.`id`;
+# courses.teacher_id 是 courses 中的外键
+# teachers.id 是 teacher 中的主键
+```
+
+> ```mysql
+> FROM `courses` `c`			# courses 的别名是 c
+> INNER JOIN `teachers` `t`	# teachers 的别名是 t
+> ```
+
+#### OUTER JOIN(外连接)
+
+A 和 B 的差集
+
+```mysql
+SELECT column1,column2 ... columnn
+    FROM table1
+        LEFT | RIGHT | FULL  (OUTER) JOIN table2
+        ON CONDITION;
+# table1 是 A 集合
+# table2 是 B 集合
+# 左外联结, A-B + AB, A 的所有行 + B 的匹配行
+# 右外连接, B-A + AB, B 的所有行 + A 的匹配行
+# 全外连接, A + B 
+```
+
+**左外连接**
+
+以左边(table1)为主
+
+```mysql
+SELECT column1,column2 ... columnn
+    FROM table1
+        LEFT JOIN table2
+        ON CONDITION ;
+```
+
+**右外连接**
+
+以右边(table2)为主
+
+```mysql
+SELECT column1,column2 ... columnn
+    FROM table1
+        RIGHT JOIN table2 ON CONDITION ;
+```
+
+**全外连接**
+
+table1 + table2
+
+> MySQL 不支持全连接, 但可以用 UNION ALL 将左连接和右连接的结果组合起来实现全连接
+
+#### UNION
+
+把两次及以上的查询结果合并起来
+
+> * 列数和(数据的)顺序必须一致, 列名可以不同
+>
+> * UNION 结果中的列名等于第一个 SELECT 语句中的列名
+> * UNION 会将数据相同的行合并为一行
+>   * UNION ALL 不会去掉重复行
+> * 如果子句有 order by, limit, 则要用 () 包起来放在所有语句的最后
+
+```mysql
+SELECT column1,column2 ... columnn
+    FROM table1
+        LEFT JOIN table2 ON CONDITION 
+UNION
+SELECT column1,column2 ... columnn
+    FROM table1
+        RIGHT JOIN table2 ON CONDITION ;
+```
+
+**CROSS JOIN(交叉连接)**
+
+笛卡尔乘积
+
+```mysql
+# 隐式交叉连接
+SELECT `table1`.`column1`, `table2`.`column2`...
+FROM `table1`,`table2`;
+
+# 显式交叉连接
+SELECT `table1`.`column1`, `table2`.`column2`...
+FROM `table1`
+CROSS JOIN `table2`;
+```
+
