@@ -464,3 +464,10 @@ ALTER TABLE `table`
 DROP INDEX id_name	# 删除约束名为 id_name 的约束
 ```
 
+### 主键约束
+
+**PRIMARY KEY**
+
+* 约束一列时, `PRIMARY KEY = UNIQUE + NOT NULL`
+* 约束多列时, `PRIMARY KEY` 仅保证多列之和唯一, 某一列可能重复
+
