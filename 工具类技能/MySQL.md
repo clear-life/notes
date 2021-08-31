@@ -8,7 +8,7 @@
 
 ### SELECT
 
-#### SELECT DISTINCT
+**SELECT DISTINCT**
 
 查询不重复列数据
 
@@ -16,7 +16,7 @@
 SELECT DISTINCT `column` 	# 查询不重复的列数据
 ```
 
-#### SELECT WHERE 
+**SELECT WHERE** 
 
 筛选过滤
 
@@ -28,7 +28,7 @@ where 判断表达式
 
 ### INSERT
 
-#### INSERT INTO
+**INSERT INTO**
 
 插入数据
 
@@ -91,7 +91,7 @@ where `column` relation_operator value
 
 ### 特殊条件
 
-#### IN
+**IN**
 
 多条件 and
 
@@ -101,7 +101,7 @@ FROM `table`
 WHERE column IN (value1, value2);
 ```
 
-#### NOT IN
+**NOT IN**
 
 排除
 
@@ -111,7 +111,7 @@ FROM `table`
 WHERE `column` NOT IN (value1, value2);
 ```
 
-#### BETWEEN AND
+**BETWEEN AND**
 
 两个值之间
 
@@ -124,7 +124,7 @@ WHERE `column` BETWEEN value1 AND value2;
 
 
 
-#### IS NULL 和 IS NOT NULL
+**IS NULL 和 IS NOT NULL**
 
 判断是否为 NULL
 
@@ -140,7 +140,7 @@ FROM `table`
 WHERE `column` IS NOT NULL;
 ```
 
-#### LIKE 
+**LIKE** 
 
 模糊查询
 
@@ -156,7 +156,7 @@ D 表示字母 "D"
 
 ### 输出格式
 
-#### ORDER BY
+**ORDER BY**
 
 排序
 
@@ -167,7 +167,7 @@ ORDER BY `column1`, `column2` ASC|DESC;	# ASC 升序, DESC 降序
 # 排序依据: 先按 column1, 再按 column2
 ```
 
-#### LIMIT
+**LIMIT**
 
 限制
 
@@ -183,7 +183,7 @@ LIMIT `offset` , `count`;
 
 ### 算数函数
 
-#### AVG()
+**AVG()**
 
 均值
 
@@ -194,7 +194,7 @@ FROM `table`;
 
 > AS 取别名
 
-#### MAX()
+**MAX()**
 
 最大值
 
@@ -203,7 +203,7 @@ SELECT MAX(`column`)
 FROM `table`;
 ```
 
-#### MIN()
+**MIN()**
 
 最小值
 
@@ -212,7 +212,7 @@ SELECT MIN(`column`)
 FROM `table`;
 ```
 
-#### SUM()
+**SUM()**
 
 求和
 
@@ -221,7 +221,7 @@ SELECT SUM(`column`)
 FROM `table`;
 ```
 
-#### ROUND()
+**ROUND()**
 
 四舍五入
 
@@ -231,7 +231,7 @@ FROM `table`;
 # decimals: 返回的小数位数, 默认为 0 
 ```
 
-#### NULL()
+**NULL()**
 
 判断空值
 
@@ -257,7 +257,7 @@ FROM `table`;
 
 > COALESCE(column, value) 用法和 IFNULL(column, value) 一摸一样
 
-#### COUNT()
+**COUNT()**
 
 计数
 
@@ -403,5 +403,64 @@ TIMESTAMPDIFF(type, time1, time2)
 # 计算 time2 - time1 的时间差, type 为时间单位
 # time 格式为 "Y-M-D"
 # type: 时间单位
+```
+
+## 约束
+
+规定表的数据规则
+
+### 非空约束
+
+**NOT NULL**
+
+列不能为空
+
+```mysql
+CREATE TABLE `table` (
+    `id` int NOT NULL,
+    `name` varchar(255) NOT NULL,
+    `age` int
+);
+# 创建表, 设置列名及属性
+```
+
+**ALTER**
+
+修改表
+
+```mysql
+ALTER TABLE `Persons`		# 修改表
+MODIFY `age` int NOT NULL;	# 修改 `age` 列为 int NOT NULL
+MODIFY `age` int NOT NULL;	# 修改 `age` 列为 int NULL, 即允许为空
+
+# 空串不是空值
+# 空串是 "", 是一个有效值
+# 空值是 NULL, 是没有值的意思
+```
+
+### 唯一约束
+
+**UNIQUE**
+
+列的值不能重复
+
+```mysql
+CREATE TABLE `table`
+(
+`id` int NOT NULL,
+`name` varchar(255) NOT NULL,
+`age` int
+UNIQUE (`id`)	# id 列的值不能重复
+CONSTRAINT id_name UNIQUE (`id`,`name`)	# 唯一约束两列
+# CONSTRAINT id_name 给约束起名字, 方面操作
+)
+
+# 在已有的表上增加唯一约束
+ALTER TABLE `table`
+ADD CONSTRAINT id_name UNIQUE (`id`,`name`)
+
+# 在已有的表上删除约束
+ALTER TABLE `table`
+DROP INDEX id_name	# 删除约束名为 id_name 的约束
 ```
 
