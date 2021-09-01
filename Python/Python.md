@@ -209,6 +209,33 @@ def logit(logfile='out.log'):
 
 #### 8. 装饰器类
 
+用类构建装饰器
+
+```python
+class logit(object):
+    def __init__(self, logfile='out.log'):
+        self.logfile = logfile
+ 
+    def __call__(self, fun):
+        @wraps(fun)
+        def decorated(*args, **kwargs):
+            log_string = func.__name__ + " was called"
+            print(log_string)	# 打印日志
+            with open(self.logfile, 'a') as opened_file:	# 保存日志	
+                opened_file.write(log_string + '\n')
+            self.notify()		# 提醒用户
+            return func(*args, **kwargs)	# 返回函数本身, 不做任何修改
+        return decorated
+ 
+    def notify(self):
+        # 提醒用户
+        
+# 用法和以前一样
+@logit()
+def fun():
+    pass
+```
+
 
 
 ## sys
