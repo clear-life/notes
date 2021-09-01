@@ -837,3 +837,30 @@ INSERT INTO `table`
 	[ WHERE VALUE OPERATOR ]
 ```
 
+### UPDATE
+
+用子查询的结果更新数据
+
+```mysql
+UPDATE `table` 
+SET `column` = `value`
+WHERE `column` OPERATOR 
+   (SELECT `column`
+   FROM `table`
+   [WHERE] )
+```
+
+### DELETE
+
+用子查询的结果筛选条件
+
+ ```mysql
+ DELETE FROM `table1`
+ WHERE `column` OPERATOR 
+    (SELECT `column`
+    FROM `table2`  
+    [WHERE] )
+ ```
+
+> 删除数据的表不能是查询的表
+
