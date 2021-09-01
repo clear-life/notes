@@ -811,3 +811,29 @@ where `country` in (
                     )
 ```
 
+## 子查询
+
+一个查询是另一个查询的条件
+
+### SELECT
+
+```mysql
+SELECT `column`		# table1 表的 column 列
+FROM `table1`
+WHERE `column` OPERATOR (
+    SELECT `column`	# table2 表的 column列
+    FROM `table2`
+);
+```
+
+### INSERT
+
+子查询的结果作为要插入的数据
+
+```mysql
+INSERT INTO `table`
+	SELECT `colnum`
+	FROM `table`
+	[ WHERE VALUE OPERATOR ]
+```
+
