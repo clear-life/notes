@@ -403,6 +403,8 @@ np.zeros(shape, dtype=float)
 
 **np.concatenate**
 
+连接
+
 ```
 a = np.array([[1,2],[3,4]])
 b = np.array([[1,3],[5,7]])
@@ -413,6 +415,31 @@ res1 = np.concatenate((a,b,c),axis=1)	# 按第 1 维度连接, 只有维度 1 �
 res0.shape		# (6,2), axis = 0 改变, 其余不变
 res1.shape		# (2,6), axis = 1 改变, 其余不变
 ```
+
+**np.transpose**
+
+轴变换
+
+```python
+np.transpose(1,0,2) 	# 将 0 轴和 1 轴变换
+np.transpose()			# 无参数就转置
+```
+
+### linalg
+
+线性代数模块
+
+**linalg.eig()**
+
+计算方针的特征值和特征向量
+
+```python
+linalg.eig(a)
+```
+
+
+
+
 
 ### ndarray 类
 
