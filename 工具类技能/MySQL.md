@@ -793,3 +793,21 @@ GROUP BY `column` 	# 分组依据
 HAVING   aggregate_function(`column`) operator value;	# 分组后过滤
 ```
 
+```mysql
+# 错误代码
+select *
+from `teachers`
+group by `country`
+having avg(`age`) > (select avg(`age`) from `teachers`)
+
+# 正确代码
+select *
+from `teachers`
+where `country` in (
+                    select `country`
+                    from `teachers`
+                    group by `country`
+                    having avg(`age`) > (select avg(`age`) from `teachers`)
+                    )
+```
+
