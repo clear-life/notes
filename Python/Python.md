@@ -93,7 +93,7 @@ decorate(fun)
 # 再调用函数对象 fun, 执行函数对象 fun
 ```
 
-#### 5. 装饰器
+#### 5. 第一个装饰器
 
 ```python
 # 装饰器函数
@@ -101,7 +101,7 @@ decorate(fun)
 # 输出: 装饰后的函数对象, 在被装饰对象执行前和执行后做了一些操作, 但不修改被装饰对象本身
 
 def decorate(fun):
-    def warp():
+    def decorated():
         print("before fun")
         fun()
         print("after fun")
@@ -111,15 +111,103 @@ def decorate(fun):
 # 普通的函数对象
 def fun():
 	print("fun")
-    
+
+# 装饰前
 fun()		# 执行 fun, 输出 "fun"
 
+# 装饰
 fun = decorate(fun)	# 装饰好函数对象 fun 后赋值给自己
 
+# 装饰后
 fun()		
 # 调用装饰后的函数对象 fun
-# 输出 before fun    fun    after fun        
+# 输出 before fun    fun    after fun    
+
+# 用 @ 来装饰函数
+#函数定义时
 ```
+
+**在函数定义时用 @ 直接装饰**
+
+```python
+def decorate(fun):
+    def decorated():
+        print("before fun")
+        fun()
+        print("after fun")
+      
+    return warp
+
+@decorate		# 等价于 fun = decorate(fun)
+def fun():
+	print("fun")
+    
+fun() 	# 调用装饰后的 fun 函数
+```
+
+**输出被装饰函数的名字**
+
+```python
+print(fun.__name__)		# 装饰器会重写被装饰函数的函数名和注释文档, 结果输出 warp
+
+# 使用 functools 模块的 warps 函数来装饰我们自己写的装饰器, 使得被装饰函数不会被修改函数名(fun.__name__)和注释文档(fun.__doc__)
+
+def decorate(fun)
+	@wraps(fun)	# 在我们自己写的装饰器上使用 functools 模块的 warps 函数
+	def decorated():
+        ...
+    ...
+    
+@decorate	
+def fun():
+    ...
+```
+
+#### 6. 使用场景
+
+**授权**
+
+检查是否被授权
+
+```python
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            authenticate()
+        return f(*args, **kwargs)
+    return decorated
+```
+
+**日志**
+
+```python
+def logit(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        print(func.__name__ + " was called")
+        return func(*args, **kwargs)
+    return decorated
+```
+
+#### 7. 带参数的装饰器
+
+```python
+def logit(logfile='out.log'):
+    def logging_decorator(fun):
+        @wraps(fun)
+        def decorated(*args, **kwargs):
+            log_string = fun.__name__ + " was called"
+            print(log_string)	# 打印日志
+            with open(logfile, 'a') as opened_file:	# 保存日志
+                opened_file.write(log_string + '\n')
+            return fun(*args, **kwargs)	# 被装饰函数原封不动返回
+        return decorated
+    return logging_decorator
+```
+
+#### 8. 装饰器类
 
 
 

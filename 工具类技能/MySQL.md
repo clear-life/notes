@@ -748,3 +748,48 @@ FROM `table1`
 CROSS JOIN `table2`;
 ```
 
+## 分组查询
+
+### GROUP BY
+
+分组
+
+```mysql
+SELECT `column`, aggregate_function(`column`)
+FROM `table`
+WHERE `column` operator value
+GROUP BY `column`;
+# aggregate_function: 分组统计函数, 分组统计用
+# 以不同的 column 为分组
+
+# 单表分组
+SELECT `country`, COUNT(`country`) AS `teacher_count`
+FROM `teachers`
+GROUP BY `country`
+ORDER BY `teacher_count`, `country`;
+# 以 country 的不同为分组, 统计每个分组的大小作为 teacher_count
+# 最后以 teacher_count 和 country 作为排序依据
+
+# 多表分组
+SELECT T.name AS `teacher_name`, IFNULL(SUM(C.student_count), 0) AS `student_count`
+FROM `courses` C
+	RIGHT JOIN `teachers` T ON C.teacher_id = T.id
+GROUP BY T.id;
+# 以 teachers 为主, 以 teachers.id 的不同为分组依据
+# 统计教师名字和教授课程的学生的人数
+```
+
+### HAVING
+
+对分组统计函数过滤
+
+> WHERE 在分组前过滤, HAVIND 在分组后过滤
+
+```mysql
+SELECT   `column`, aggregate_function(`column`) 
+FROM     `table` 
+WHERE    `column` operator value 	# 分组前过滤
+GROUP BY `column` 	# 分组依据
+HAVING   aggregate_function(`column`) operator value;	# 分组后过滤
+```
+
