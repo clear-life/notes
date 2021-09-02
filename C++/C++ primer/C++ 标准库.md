@@ -1649,3 +1649,14 @@ unordered_set<Class, decltype(hasher)*, decltype(equal)*> us = (1, hasher, equal
 
 
 
+#### 12.1.1 shared_ptr 类
+
+```C++
+shared_ptr<string> p;		// p 可以指向 string
+shared_ptr<vector<int>> p;	// p 可以指向 vector<int>
+    
+if(p)						// p 可以直接用来判断是否为空
+    cout << 1 << endl;
+else cout << 0 << endl;
+```
+
