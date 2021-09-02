@@ -1013,3 +1013,52 @@ having `student_count` between 2000 and 5000
 order by `student` desc, `t`.`country` asc
 ```
 
+## 事物
+
+**加锁**, 要么成功执行, 要么失败回滚到最初
+
+### MySQL 事物语句
+
+* `START TRANSACTION`
+  * 启动事物, 别名: `BEGIN` 或 `BEGIN WORK`
+
+* `COMMIT`
+
+  * **提交**当前事务并永久化
+
+* `ROLLBACK`
+
+  * **回滚**当前事务并取消变化
+
+* `SET autocommit`
+
+  * **禁用或启用**当前事务的**自动提交**
+
+    ```mysql
+    # 禁用自动提交
+    SET autocommit = 0
+    SET autocommit = OFF
+    
+    # 启用自动提交
+    SET autocommit = 1
+    SET autocommit = ON
+    
+    insert into `teachers`(`name`,`age`,`country`)
+    values ("Xie Xu", 49,"CN")
+    ```
+
+    
+
+### 实例
+
+```mysql
+BEGIN;
+
+insert into `teachers`(`name`,`age`,`country`)
+values ("Xie Xun", 49,"CN");
+
+COMMIT;
+
+
+```
+
