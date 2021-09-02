@@ -911,3 +911,105 @@ where `teacher_id` in (
 )
 ```
 
+### ANY 子查询
+
+子查询满足任何一个比较运算就返回真
+
+```mysql
+SELECT `column`
+FROM `table`
+WHERE `column` OPERATOR
+   ANY(	SELECT column
+   		FROM table)
+   		
+select `name`
+from `courses`
+where `created_at` > any(
+    select `c`.`created_at`
+    from `courses` `c`
+    	right join `teachers` `t` on `c`.`teacher_id` = `t`.`id`
+    where `t`.`name` = "Southern Emperor"
+)
+and `teacher_id` != (select `id` from `teachers` where `name` = "Southern Emperor")
+```
+
+### ALL 子查询
+
+所有子查询的结果满足就返回真
+
+```mysql
+SELECT `column`
+FROM `table`
+WHERE `column` OPERATOR
+   ALL(SELECT column
+   FROM table)
+   
+   
+select *
+from `courses`
+where `student_count` > all(
+    select `student_count`
+    from `courses`
+    where `teacher_id` in (
+        select `id`
+        from `teachers`
+        where `age` in (select max(`age`) from `teachers`)
+    )
+)
+```
+
+### 多列子查询
+
+* 单行多列子查询
+  * 用单行比较符号: ＝，>，<，>=，<=， <> 
+* 多行多列子查询
+  * 用多行比较符号: IN，ANY，ALL
+
+```mysql
+SELECT `name`, `age`, `country` 
+FROM `teachers` 
+WHERE (`country`, `age`) IN ( 
+    SELECT `country`, MAX(`age`) 
+    FROM `teachers` 
+    GROUP BY `country` 
+);
+
+select `name`,`student_count`
+from `courses`
+where `id` in (
+    select `id`
+    from `courses`
+    where (`teacher_id`,`student_count`) in (
+        select `teacher_id`,max(`student_count`)
+        from `courses`
+        group by `teacher_id`
+    ) 
+)
+```
+
+### HAVING 子查询
+
+分组后过滤子查询
+
+```mysql
+SELECT `name`
+FROM `teachers`
+WHERE `id` IN (
+	SELECT `teacher_id`
+	FROM `courses`
+	GROUP BY `teacher_id`
+	HAVING AVG(`student_count`) > (
+		SELECT AVG(`student_count`)
+		FROM `courses`
+	)
+);
+
+select `t`.`country` as `country`,ifnull(sum(`c`.`student_count`),0) as `student_count`
+from `courses` `c`
+inner join `teachers` `t` on `c`.`teacher_id` = `t`.`id` 
+where `t`.`country` like "U%"
+group by `t`.`country`
+having `student_count` between 2000 and 5000
+order by `student` desc, `t`.`country` asc
+```
+
