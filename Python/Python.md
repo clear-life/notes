@@ -460,3 +460,7 @@ np.astype("float64")
 np.astype(np.uint8)
 ```
 
+## heapq
+
+优先队列
+

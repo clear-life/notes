@@ -864,3 +864,50 @@ WHERE `column` OPERATOR
 
 > 删除数据的表不能是查询的表
 
+### 内联视图子查询
+
+在子查询中查询
+
+```mysql
+SELECT *
+FROM (			# 子查询结果为国家是美国的所有教师
+	SELECT *
+	FROM `teachers`
+	WHERE `country` = 'USA'
+) `T`
+WHERE `age` = (
+	SELECT MAX(`age`)
+	FROM `teachers`
+);
+
+select *
+from (
+    select `c`.`name` as `course_name`, `c`.`student_count`,`t`.`name` as `teacher_name`
+    from `courses` `c`
+    inner join `teachers` `t` on `c`.`teacher_id` = `t`.`id`
+) `T`
+where `T`.`student_count` = (select max(`student_count`) from `courses`)
+```
+
+### IN 子查询
+
+查询条件是 IN 子查询
+
+```mysql
+SELECT `column`
+FROM `table`
+WHERE `column` IN(
+    SELECT `column`
+    FROM `table`
+    WHERE `column` = VALUE
+);
+
+select `name`
+from `courses`
+where `teacher_id` in (
+    select `id`
+    from `teachers`
+    where `age` > 20 
+)
+```
+
