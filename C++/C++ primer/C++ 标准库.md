@@ -1660,3 +1660,86 @@ if(p)						// p 可以直接用来判断是否为空
 else cout << 0 << endl;
 ```
 
+**shared_ptr 和 unique_ptr 都支持的操作**
+
+| shared_ptr 和 unique_ptr 都支持的操作 | 说明                                        |
+| ------------------------------------- | ------------------------------------------- |
+| shared_ptr<T\> p;                     | 空的 shared_ptr 指针, 指向 T 类型           |
+| unique_ptr<T\> p;                     | 空的 unique_ptr 指针, 指向 T 类型           |
+| p                                     | 判断条件, p 不空则为 true, p 为空则为 false |
+| *p                                    | 解引用 p                                    |
+| p->mem                                | (*p).mem                                    |
+| p.get()                               | 返回 p 保存的指针                           |
+| swap(p, q)                            | 交换 p 和 q 中的指针                        |
+| p.swap(q)                             | 交换 p 和 q 中的指针                        |
+
+**shared_ptr 独有的操作**
+
+| shared_ptr 独有的操作  | 说明                                                         |
+| ---------------------- | ------------------------------------------------------------ |
+| make_shared<T\> (args) | 创建一个 shared_ptr 对象                                     |
+| shared_ptr<T\> p(q)    | 创建一个 shared_ptr 对象, 并用 q 初始化<br />递增 q 的计数器 |
+| p = q                  | 递减 p 的计数器, 递增 q 的计数器                             |
+| p.unique()             | 若 p "独占", 返回 true, 否则返回 false                       |
+| p.use_count()          | 返回智能指针的数量, 很慢                                     |
+
+**make_shared 函数**
+
+在动态内存中分配一个对象并用 args 初始化它, 返回指向该对象的 shared_ptr
+
+```C++
+shared_ptr<string> p = make_shared<string>(3, 'a');	
+// 创建一个 "aaa" string 对象, 返回其 shared_ptr
+```
+
+**拷贝和赋值**
+
+* 拷贝一个 shared_ptr, 计数器递增
+* 赋新值或被销毁, 计数器递减
+
+```C++
+auto p = make_shared<int>(1);
+auto q(p);	
+```
+
+**shared_ptr 能自动销毁管理的对象**
+
+* 最后一个 shared_ptr 被销毁时, shared_ptr **通过析构函数自动销毁管理的对象**
+* shared_ptr 的析构函数还会自动递减引用计数
+
+**shared_ptr 能自动释放相关内存**
+
+```C++
+shared_ptr<string> fun(T arg)
+{
+    shared_ptr<string> p = make_shared<string>(arg);	// 引用计数为 1
+    return p;	// p 拷贝给调用的对象, 引用计数为 2
+}				// 销毁 p, 引用计数为 1, p 指向的内存不会被释放
+```
+
+**使用动态生存期资源的类**
+
+使用**动态内存**的原因
+
+1. 不确定使用对象的**数量**
+
+   例: 容器类
+
+2. 不确定适用对象的**准确类型**
+
+3. 需要在多个对象间**共享数据**
+
+   例: 定义 Share 类的对象拷贝后共享相同数据
+
+   ```C++
+   Share<string> a;	// 空 Share 对象
+   {
+       Share<string> b = {"a", "b", "c"};
+       a = b;	// a 和 b 共享相同的元素
+   }			// b 被销毁, 但 b 的数据没有被销毁, a 指向这些元素
+   ```
+
+   
+
+
+
