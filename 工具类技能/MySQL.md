@@ -1084,7 +1084,6 @@ InnoDB 是 MySQL 上第一个提供外键约束的数据存储引擎
 ```mysql
 # 查询自增锁模式
 show variables like '%innodb_autoinc_lock_mode%';
-
 ```
 
 * **0**：`traditonal`(传统)

@@ -10,6 +10,20 @@ a = [x**2 for x in range(-3, 3) if x >= -1]
 # a = [1, 0, 1, 4]
 ```
 
+### 字符串
+
+**string.strip()**
+
+删除头尾的指定字符
+
+```python
+string.strip(',')	# 删除字符串头尾的 ','
+```
+
+
+
+
+
 ### 装饰器
 
 装饰其他函数的函数
@@ -255,7 +269,11 @@ is_numpy = "numpy" in sys.modules	# true
 
 操作系统相关的库
 
-**os.path.join**
+### path
+
+路径和文件属性相关模块
+
+**path.join**
 
 函数, 拼接成一个路径
 
@@ -266,6 +284,16 @@ is_numpy = "numpy" in sys.modules	# true
 ```python
 a = os.path.join(".","dir1","dir2")	# .\dir1\dir2
 ```
+
+**os.getcwd()**
+
+返回当前路径
+
+```python
+current_directory = os.getcwd()
+```
+
+
 
 **os.makedirs**
 
@@ -463,4 +491,25 @@ np.astype(np.uint8)
 ## heapq
 
 优先队列
+
+
+
+## psycopg2
+
+操作 postgreSQL 数据库的模块
+
+## configparser
+
+读取配置文件
+
+### configparser.ConfigParser()
+
+生成 ConfigParser 对象
+
+```python
+config = configparser.ConfigParser()
+
+# read 方法读取配置文件
+config.read(filename, encoding='utf-8')
+```
 
