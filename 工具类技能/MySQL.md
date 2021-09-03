@@ -1098,5 +1098,50 @@ show variables like '%innodb_autoinc_lock_mode%';
 
   不加锁, 实施插入, 并发最高, 但不安全
 
+**意向锁**
 
+特殊的表级锁
+
+**提前声明**未来某一时刻**可能要加共享锁或排他锁**
+
+* 意向共享锁(Intention Shared Lock) IS
+
+  事务有意向对**某些行加共享锁(S锁)**
+
+  ```mysql
+  # 事务要获取某些行的 S 锁，必须先获得表的 IS 锁。
+  SELECT column FROM table ... LOCK IN SHARE MODE;
+  ```
+
+* 意向排他锁(Intention Exclusive Lock) IX
+
+  事务有意向对**某些行加排他锁(X锁)**
+
+  ```mysql
+  # 事务要获取某些行的 X 锁，必须先获得表的 IX 锁。
+  SELECT column FROM table ... FOR UPDATE;
+  ```
+
+* 例:
+
+  ```mysql
+  # 设置 IS 锁 
+  select * from A where id = 1 lock in share mode;
+  # 设置 IX 锁
+  select * from A where id > 0 for update;
+  ```
+
+**意向锁协议**
+
+* 事务要获取表 A 某些行的 S 锁必须要获取表 A 的 IS 锁
+
+* 事务要获取表 A 某些行的 X 锁必须要获取表 A 的 IX 锁
+
+**记录锁**
+
+锁定索引记录
+
+**间隙锁**
+
+防止不可重复读
 
