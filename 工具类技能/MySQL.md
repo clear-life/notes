@@ -1145,3 +1145,10 @@ show variables like '%innodb_autoinc_lock_mode%';
 
 防止不可重复读
 
+**临键锁**
+
+记录锁加 gap 锁
+
+**插入意向锁(Insert Intention Locks)**
+
+针对 insert 操作的一种间隙锁
