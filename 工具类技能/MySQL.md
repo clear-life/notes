@@ -1062,3 +1062,42 @@ COMMIT;
 
 ```
 
+## 锁
+
+访问共享资源的一种保护机制
+
+* 重要性: 保证数据并发访问的一致性, 有效性
+* 缺点: 锁的操作需要额外消耗资源
+
+**查看数据库的事务隔离级别**
+
+```mysql
+show variables like "%isolation%"
+```
+
+### InnoDB 锁的类型
+
+InnoDB 是 MySQL 上第一个提供外键约束的数据存储引擎
+
+**自增锁**
+
+```mysql
+# 查询自增锁模式
+show variables like '%innodb_autoinc_lock_mode%';
+
+```
+
+* **0**：`traditonal`(传统)
+
+  每次 `insert` 语句执行都会产生**表级别的锁**
+
+* **1**：`consecutive simple insert`(连续简单插入, 默认级别)
+
+  批量加锁, 保证插入的连续性, 但在**插入前解锁**
+
+* **2**：`interleaved`(交错)
+
+  不加锁, 实施插入, 并发最高, 但不安全
+
+
+
