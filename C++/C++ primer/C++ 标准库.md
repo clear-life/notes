@@ -1739,7 +1739,78 @@ shared_ptr<string> fun(T arg)
    }			// b 被销毁, 但 b 的数据没有被销毁, a 指向这些元素
    ```
 
-   
+**定义 StrBlob 类**
+
+管理 string 
+
+```C++
+using namespace std;
+class StrBlob
+{
+// 私有数据成员
+private:
+    shared_ptr<vector<string>> data;	// 如果 data[i] 不合法就抛出一个异常
+    
+public:
+    typedef vector<string>::size_type size_type;	// 定义类型
+	StrBlob();	// 默认构造函数
+    StrBlob(initializer_list<string> il);			// 带初始化器的构造函数
+    
+    size_type size() const {return data->size(); }
+    bool empty() const {return data->empty(); }
+    
+    // 增删元素
+    void push_back(const string &t) {data->push_back(t);}
+    void pop_back();
+    
+    // 访问元素
+    string& front();
+    string& back();
+    
+private:
+    void check(size_type i, const string &msg) const;
+}
+
+
+```
+
+**StrBlob 构造函数**
+
+```C++
+StrBlob::StrBlob(): data(make_shared<vector<string>>()) {}		// 分配空 vector
+StrBlob::StrBlob(initializer_list<string> il):
+	data(make_shared<vector<string>>(il)) {}	// 用初始化器初始化 vector 然后分配 shared_ptr 指针
+```
+
+**元素访问函数**
+
+```C++
+// 检查元素是否存在
+void StrBlob::check(size_type i, const string &msg) const
+{
+    if(i >= data->size())
+        throw out_of_range(msg);
+}
+
+// 访问元素
+string& StrBlob::front()
+{
+    check(0,"empty")
+    return data->front();
+}
+string& StrBlob::back()
+{
+    check(0,"empty")
+    return data->back();
+}
+
+// 删除尾元素
+string& StrBlob::pop_back()
+{
+    check(0,"empty")
+    return data->pop_back();
+}
+```
 
 
 
