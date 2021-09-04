@@ -1152,3 +1152,100 @@ show variables like '%innodb_autoinc_lock_mode%';
 **插入意向锁(Insert Intention Locks)**
 
 针对 insert 操作的一种间隙锁
+
+### 上锁
+
+* MySQL 常用引擎有 MyISAM 和 InnoDB
+* InnoDB 是 MySQL 默认的引擎
+* MyISAM 不支持行锁, InnoDB 支持**行锁和表锁**
+
+#### 表锁
+
+**隐式上锁**
+
+默认, 自动加锁, 自动释放
+
+```mysql
+# 上读锁
+SELECT 
+
+# 上写锁
+INSERT, UPDATE, DELETE
+```
+
+**显式上锁**
+
+```mysql
+# 上共享锁(读锁)
+select  column from table where lock in share mode;
+
+# 上排他锁(写锁)
+select column from table where conditions for update;
+```
+
+**解锁(手动)**
+
+```mysql
+# 解锁所有锁表
+UNLOCK TABLES;
+```
+
+**实例**
+
+```mysql
+# 对 teachers 表上读锁
+LOCK TABLES teachers READ;
+
+# 解锁
+UNLOCK TABLES;
+
+# 更新邮箱
+UPDATE teachers 
+SET email = '1336509100@qq.com'
+WHERE name = 'Yjq';
+```
+
+#### 行锁
+
+行锁优劣
+
+* 优点: 粒度小, 锁冲突几率小, 并发能力强
+* 缺点: 开销大, 加锁慢, 会出现死锁
+
+行锁分为共享锁(S 锁, 读锁) 和排他锁(X 锁, 写锁)
+
+**隐式上锁**
+
+默认, 自动加锁, 自动释放
+
+* UPDATE, DELETE, INSERT 操作, InnoDB 会自动加排他锁
+* SELECT 操作, InnoDB 不会加锁 
+
+```mysql
+# 不会上锁
+SELECT
+
+# 上写锁
+INSERT, UPDATE, DELETE
+```
+
+**显式上锁**
+
+```mysql
+# 读锁 
+SELECT *
+FROM table
+LOCK IN SHARE MODE;
+
+# 写锁
+SELECT *
+FROM table
+FOR UPDATE;
+```
+
+**解锁**
+
+1. 提交事务( commit )
+2. 回滚事务( rollback )
+3. 阻塞进程( kill )
+
