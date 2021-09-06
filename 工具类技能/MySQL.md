@@ -1330,3 +1330,47 @@ update goods set status=2;
 commit;/commit work;
 ```
 
+## 触发器
+
+存储程序, 发生事件时自动调用
+
+类型: **行级触发器**和**语句级触发器**
+
+* 行级触发器
+
+  增删改查每条记录时激活
+
+* 语句级触发器
+
+  每个事务执行时激活
+
+> MySQL 只支持行级触发器, 不支持语句级触发器
+
+### 触发器优缺点
+
+#### 优点
+
+* 检查数据完整性
+* 处理来自数据库的错误
+* 运行计划任务
+* 审计表的数据变化
+
+#### 缺点
+
+* 只能提供扩展验证
+* 很难排除故障
+* 增加开销
+
+### 创建触发器
+
+#### MySQL CREATE TRIGGER 语法
+
+```mysql
+CREATE TRIGGER name		# 触发器标识
+{BEFORE | AFTER} {INSERT | UPDATE| DELETE }	
+# 触发器的动作时间: BEFORE | AFTER 记录修改前/修改后调用触发器
+# 激活触发器的操作: INSERT | UPDATE| DELETE
+ON table FOR EACH ROW	# 触发器所属的表
+body;					# 触发器激活时执行的语句, 函数体
+```
+
