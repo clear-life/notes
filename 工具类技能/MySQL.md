@@ -1374,3 +1374,34 @@ ON table FOR EACH ROW	# 触发器所属的表
 body;					# 触发器激活时执行的语句, 函数体
 ```
 
+```mysql
+CREATE TRIGGER before_update
+    BEFORE UPDATE ON table
+    FOR EACH ROW 
+ INSERT INTO table
+ SET col1 = val1,
+     col2 = OLD.val2,	# 用 OLD 关键字来访问受触发器影响的行的列
+     col3 = OLD.val3;
+     
+SHOW TRIGGERS;			# 显示所有触发器
+
+create trigger before_teachers_insert
+	before insert on teachers 
+	for each row
+SET new.country = "CN"
+
+create trigger before_teachers_update
+	before update on teachers
+	for each row
+SET new.country = 'CN'
+```
+
+### 删除触发器
+
+```mysql
+DROP TRIGGER [IF EXISTS] [schema_name.]trigger_name;
+# schema_name 触发器所属模式的名称
+# trigger_name 触发器名称
+# IF EXISTS 
+```
+
