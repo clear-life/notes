@@ -1249,3 +1249,84 @@ FOR UPDATE;
 2. 回滚事务( rollback )
 3. 阻塞进程( kill )
 
+### 排查锁
+
+排查锁的情况
+
+```mysql
+# 查看表锁的情况
+SHOW OPEN TABLES;
+
+# 表锁分析
+SHOW STATUS LIKE 'table%';
+
+# 行锁分析
+SHOW STATUS LIKE 'innodb_row_lock%';
+```
+
+### 乐观锁与悲观锁
+
+作用: 解决并发控制的问题
+
+#### 乐观锁
+
+从应用层面做并发控制, 去加锁
+
+常用方式: 版本号 version
+
+更新前, 查询版本号, 如果查出的版本号与库中的版本号一致, 说明数据未被修改, 则执行更新操作; 如果不一致, 说明数据被其他人修改, 则不更新
+
+> 更新数据时连同版本号一起更新
+
+```mysql
+# 1.查询出商品信息
+select status,version from goods where id=#{id};
+
+# 2.根据商品信息生成订单
+...
+
+# 3.修改商品status为2
+update goods
+set status=2,version=version+1
+where id=#{id} and version=#{version};
+```
+
+#### 悲观锁
+
+数据库层面做并发控制, 去加锁
+
+实现方式: 共享锁(读锁) 和排他锁(写锁)
+
+**共享锁(IS锁)**
+
+```mysql
+SELECT ... LOCK IN SHARE MODE
+# 其他 session 可以读取锁定的记录，也可以继续添加 IS 锁
+# 但无法修改锁定的记录直到加锁的 session 执行完成
+```
+
+**排他锁(IX锁)**
+
+```mysql
+SELECT ... FOR UPDATE
+# 其他 session 无法在锁定的记录上添加任何的 S 锁或 X 锁
+
+
+set autocommit=0;
+
+# 0. 开始事务(三者选一)
+begin;/begin work;/start transaction;
+
+# 1. 查询出商品信息
+select status from goods where id=1 for update; 
+
+# 2. 根据商品信息生成订单
+insert into orders (id,goods_id) values (null,1);
+
+# 3. 修改商品 status 为 2
+update goods set status=2;
+
+# 4. 提交事务
+commit;/commit work;
+```
+
