@@ -853,3 +853,99 @@ done
    1. 使用 `top` 找到进程 PID
    2. `kill -9 PID` 杀死进程
 
+### 函数
+
+返回 exit code , 范围为 0-255, 0 表示正常 
+
+函数的返回值(exit code) 通过 `$?` 获取
+
+函数的内容(stdout) 通过 `echo $(function)` 获取
+
+```shell
+[function] func_name() {	# function关键字可以省略
+    语句1
+    语句2
+    ...
+}
+```
+
+**获取 exit code 和 stdout 值**
+
+```shell
+func
+{
+    name=yjq
+    echo "Hello $name"
+
+    return 17
+}
+echo $?			# 输出 17
+echo $(func)	# 输出 Hello yjq
+ 
+```
+
+**函数的参数**
+
+`$1` 表示第一个参数, `$2` 表示第二个参数, 以此类推 
+
+> `$0` 仍是 shell 文件的文件名, 不是函数名
+
+**函数的局部变量**
+
+函数内定义的局部变量作用范围仅限于当前函数
+
+```shell
+#! /bin/bash
+
+func() {
+    local name=yjq	# 局部变量 name	
+    echo $name		# 输出 name 的内容(stdout)
+}
+func		# 调用 func 函数, 输出 yjq
+
+echo $name	# 不能输出局部变量的内容
+```
+
+**exit 命令**
+
+退出当前 shell 进程, 返回一个退出状态 exit code, 使用 `$?` 接收退出状态
+
+```shell
+#! /bin/bash
+
+if [...]  
+then
+	...
+    exit 1		# exit code 为 1
+else
+	...
+    exit 0		# exit code 为 0
+fi
+```
+
+### 文件重定向
+
+每个进程默认打开 3 个文件描述符
+
+* `stdin` 标准输入, 文件描述符为 0
+* `stdout` 标准输出, 文件描述符为 1
+* `stderr` 标准错误输出, 文件描述符为 2
+
+| 命令             | 说明                           |
+| ---------------- | ------------------------------ |
+| command > file   | stdout 重定向到 file           |
+| command >> file  | stdout 追加重定向到 file       |
+| command < file   | stdin 重定向到 file            |
+| command n> file  | 文件描述符 n 重定向到 file     |
+| command n>> file | 文件描述符 n 追加重定向到 file |
+
+### 引入外部文件
+
+```shell
+. filename 
+
+或
+
+source filename
+```
+
