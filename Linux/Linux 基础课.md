@@ -541,3 +541,140 @@ expr \( $a + 1 \) \* \( $b + 1 \)
 read name	# 从标准输入读一行数据到 name 变量中
 ```
 
+### echo 命令
+
+输出字符串
+
+```shell
+echo str
+
+echo yjq
+echo 'yjq'
+echo "yjq"
+```
+
+**转义**
+
+```shell
+# 显示转义后的字符
+name=yjq
+echo "${name}\""	# 输出 yjq"
+
+echo "\n"			# 输出 \n
+# 开启转义
+echo -e "\n"		# 不输出 \n , 而是换行
+
+echo -e "y\c"		# 不换行输出 y
+echo -e "j\c"		# 不换行输出 j
+echo -e "q"			# 输出 q 后换行
+					# 最终输出 yjq 后换行
+					
+# 原样输出字符串, 不转义也不取变量
+echo '${name}\"'	# 输出 ${name}\", 如果是双引号则输出 yjq"
+```
+
+**重定向**
+
+```shell
+echo "yjq" > output.txt	# stdout 重定向至 output.txt
+```
+
+**显示命令的 stdout**
+
+```shell
+echo `date`			# 显示 date 命令的 stdout
+```
+
+### printf 命令
+
+格式化输出, 默认不添加换行符
+
+```shell
+printf format-string [arguments...]
+
+printf "%-8.2f.\n" 123.123  # 占10位，保留2位小数，左对齐
+printf "%d * %d = %d\n"  2 3 `expr 2 \* 3`
+```
+
+### test 命令与判断符号[]
+
+**逻辑运算符 && 和 ||**
+
+* 短路原则
+* exit code 作为判断条件, 0 表示真, 非 0 表示假
+
+**test 命令**
+
+* 判断文件类型, 对变量作比较
+* exit code 作为判断条件, 0 表示真, 非 0 表示假
+
+```shell
+test 2 -lt 3 	# 为真, 返回 exit code 0
+echo $?			# 输出 0
+
+test -e test.sh && echo "exist" || echo "not exist"
+# -e 表示测试是否存在, 如果存在就判断 echo "exist", 一般为真, 然后输出 echo "exist" 的 stdout, 即 exist
+# 如果 test.sh 文件不存在, 就判断 echo "not exist", 一般为真, 然后输出 echo "exist" 的 stdout, 即 not exist
+```
+
+**文件类型判断**
+
+| 参数 | 含义         |
+| ---- | ------------ |
+| -e   | 文件是否存在 |
+| -f   | 是否为文件   |
+| -d   | 是否为目录   |
+
+**文件权限判断**
+
+| 参数 | 含义       |
+| ---- | ---------- |
+| -r   | 是否可读   |
+| -w   | 是否可写   |
+| -x   | 是否可执行 |
+| -s   | 是否非空   |
+
+**整数的比较**
+
+```shell
+test $a -eq $b
+```
+
+| 参数 | 含义         |
+| ---- | ------------ |
+| -eq  | 是否相等     |
+| -ne  | 是否不等     |
+| -gt  | 是否大于     |
+| -lt  | 是否小于     |
+| -ge  | 是否大于等于 |
+| -lt  | 是否小于等于 |
+
+**字符串的比较**
+
+| 参数              | 含义                 |
+| ----------------- | -------------------- |
+| test -z str       | str 是否为空         |
+| test -n str       | str 是否非空         |
+| test str1 == str2 | str1 是否等于 str2   |
+| test str1 != str2 | str1 是否不等于 str2 |
+
+**多重条件**
+
+| 参数 | 含义             |
+| ---- | ---------------- |
+| -a   | 是否都成立       |
+| -o   | 是否至少一个成立 |
+| !    | 取反             |
+
+**判断符号 []**
+
+[] 与 test 用法几乎一样, 常用于 `if` 语句中, [[]] 是 [] 的加强版
+
+```shell
+[ 2 -lt 3 ]	# 为真 exit code 返回 0
+echo $?  	# 输出 0
+
+# 判断文件是否存在
+[ -e test.sh ] && echo "exist" || echo "Not exist"
+```
+
