@@ -678,3 +678,178 @@ echo $?  	# 输出 0
 [ -e test.sh ] && echo "exist" || echo "Not exist"
 ```
 
+### 判断语句
+
+#### if 条件判断
+
+```shell
+# 单层 if
+if condition
+then
+    语句1
+    语句2
+    ...
+fi
+
+# 单层 if-else
+if condition
+then
+    语句1
+    语句2
+    ...
+else
+    语句1
+    语句2
+    ...
+fi
+
+# 多层 if-else
+if condition
+then
+    语句1
+    语句2
+    ...
+elif condition
+then
+    语句1
+    语句2
+    ...
+elif condition
+then
+    语句1
+    语句2
+else
+    语句1
+    语句2
+    ...
+fi
+```
+
+示例
+
+```shell
+a=3
+b=4
+
+if ! [ "$a" -lt "$b" ]	# 如果 a < b
+then					# 为真
+    echo ${a}不小于${b}
+else					# 为假
+    echo ${a}小于${b}
+fi
+```
+
+#### case 条件判断
+
+```shell
+case $变量名称 in
+    值1)
+        语句1
+        语句2
+        ...
+        ;;  # 类似于C/C++中的break
+    值2)
+        语句1
+        语句2
+        ...
+        ;;
+    *)  	# 类似于C/C++中的default
+        语句1
+        语句2
+        ...
+        ;;
+esac
+```
+
+示例
+
+```shell
+a=3
+
+case $a in
+    1)
+        echo ${a}等于1
+        ;;  
+    2)
+        echo ${a}等于2
+        ;;  
+    3)                                                
+        echo ${a}等于3
+        ;;  
+    *)
+        echo 其他
+        ;;  
+esac
+
+# 输出 3
+```
+
+### 循环语句
+
+#### for 循环
+
+**for…in…do…done**
+
+```shell
+for var in val1 val2 val3
+do
+    语句1
+    语句2
+    ...
+done
+```
+
+**for ((…;…;…)) do…done**
+
+```shell
+for ((expression; condition; expression))
+do
+    语句1
+    语句2
+done
+
+for ((i=1; i<=10; i++))
+do
+    echo $i
+done
+```
+
+#### while 循环
+
+**while…do…done**
+
+```shell
+while condition
+do
+    语句1
+    语句2
+    ...
+done
+```
+
+**until…do…done**
+
+```shell
+until condition
+do
+    语句1
+    语句2
+    ...
+done
+```
+
+#### break
+
+跳出当前循环, 但不能跳出 `case` 语句
+
+#### continue
+
+跳出当前循环, 执行下一层循环
+
+#### 死循环处理
+
+1. Ctrl + c 杀死进程
+2. 关闭进程
+   1. 使用 `top` 找到进程 PID
+   2. `kill -9 PID` 杀死进程
+
