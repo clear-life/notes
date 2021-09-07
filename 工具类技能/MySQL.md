@@ -1396,12 +1396,108 @@ create trigger before_teachers_update
 SET new.country = 'CN'
 ```
 
-### 删除触发器
+#### 删除触发器
 
 ```mysql
 DROP TRIGGER [IF EXISTS] [schema_name.]trigger_name;
 # schema_name 触发器所属模式的名称
 # trigger_name 触发器名称
 # IF EXISTS 
+```
+
+#### 触发器基本操作
+
+**BEFORE INSERT**
+
+```mysql
+CREATE TRIGGER trigger_name
+    BEFORE INSERT
+    ON table_name FOR EACH ROW
+    
+trigger_body;
+或
+BEGIN
+    -- statements
+END$$
+
+DELIMITER ;
+```
+
+```mysql
+DELIMITER $$
+
+CREATE TRIGGER before_workcenters_insert	# 触发器名称
+BEFORE INSERT					# 触发的事件
+ON table1 FOR EACH ROW		# 触发器关联的表
+BEGIN
+    DECLARE rowcount INT;
+    
+    SELECT COUNT(*) 			# 统计 table2 表的记录数
+    INTO rowcount
+    FROM table2;
+    
+    IF rowcount > 0 THEN		# 如果 table2 的记录数大于 0
+        UPDATE table2			# 就更新 table2 表的 total 列
+        SET total = total + new.count;
+    ELSE						# 否则就插入一条记录
+        INSERT INTO table2(total)
+        VALUES(new.count);
+    END IF; 
+
+END $$
+
+DELIMITER ;
+```
+
+```mysql
+create trigger before_courses_insert
+before insert
+on courses for each row
+begin
+	declare id_count int;
+	
+	select count(id)	
+	into id_count
+	from teachers
+	where id = new.teacher_id;
+	
+	if id_count<=0
+	then
+		set new.teacher_id = 0, new.created_at = NULL;
+	end if;
+end;
+
+
+
+create trigger before_insert
+before insert
+on recording for each row
+
+begin
+
+	declare id1_count int;
+	declare id2_count int;
+	
+	select count(id)
+	into id1_count 
+	from students
+	where id = new.student_id;
+	
+	select count(id)
+	into id2_count
+	from companies
+	where id = new.company_id;
+	
+	if id1_count <= 0
+	then
+		set new.student_id = 0;
+	end if;
+	
+	if id2_count <= 0
+	then
+		set new.company_id = 0;
+	end if;
+
+end;
 ```
 
