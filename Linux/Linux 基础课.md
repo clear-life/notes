@@ -461,9 +461,42 @@ ${#array[*]}
 ${#array[@]}
 ```
 
+### expr 命令
 
+求表达式的值
 
+```shell
+expr expression
+```
 
+* 空格隔开每一项
+* 特殊字符要转义
+* 最好用 "" 括住一个整体
+* 输出
+  * stdout: 为真输出 1, 否则输出 0
+  * exot code: 为真输出 0, 否则输出 0
+
+**字符串表达式**
+
+* `length` str	
+
+  返回字符串 str 长度
+
+* `index` str set
+
+  返回 set 中任意一个字符在 str 首次出现的位置, 下标从 1 开始, 不存在则返回 0
+
+* `substr` str pos len
+
+  返回 str 字符串中从 pos 开始的 len 个字符的字符串, 否则返回空字符串
+
+```shell
+str="Hello World!"
+
+expr length "$str" 		# 返回 12
+expr index "$str" abcd 	# 返回 10
+expr substr "$str" 2 3	# 返回 llo
+```
 
 
 
