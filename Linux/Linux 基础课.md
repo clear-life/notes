@@ -292,9 +292,178 @@
 
 ## shell
 
+### 概述
+
+shell 是通过命令行**与操作系统交互**的语言
+
+linux 默认使用 bash, `/bin/bash`
+
+**运行方式**
+
+```shell
+# 可执行文件
+chmod +x test.sh
+./tesh.sh 或 /home/user/test.sh
+
+# bash 解释器执行
+bash test.sh
+```
+
+**查看命令类型**
+
+```shell
 type commend
+```
 
-查看命令类型
+**注释**
 
-数组可以跳下标使用
+```shell
+# 单行注释
+
+:<<EOF(或其他任意字符串)
+多行注释
+EOF(对映上面)
+```
+
+
+
+### 变量
+
+**定义变量**
+
+```shell
+# 定义变量时不可以在 = 前后加空格
+name1='yjq'  # 不转义, 原样输出
+name2="yjq"  # 转义, 不原样输出
+name3=yjq    # 相当于双引号, 转义
+```
+
+**变量类型**
+
+1. 自定义变量
+
+   局部变量, 子进程不能访问
+
+   ```shell
+   name=yjq			# 自定义变量
+   export name 		# 设为 exportname 变量(环境变量)
+   或
+   declare -x name		# 设为 exportname 变量(环境变量) 
+   ```
+
+2. 环境变量
+
+   全局变量, 子进程可以访问
+
+   ```shell
+   export name=yjq		# 环境变量
+   declare +x name		# 设为自定义变量, 与 -x 反着来
+   ```
+
+**使用变量**
+
+```shell
+name=yjq
+echo $name  
+echo ${name} 
+```
+
+> 只读变量
+>
+> `readonly name`
+>
+> 或
+>
+> `declare -r name`
+
+**删除变量**
+
+```shell
+name=yjq 	
+unset name
+echo $name
+```
+
+**字符串**
+
+```shell
+name=yjq
+echo '$name'	# 输出 $name
+echo "$name"	# 输出 yjq
+
+# 字符串长度
+name"yjq"
+echo ${#name}	# 输出 3
+
+# 提取字串
+name="Hello, world!"
+echo ${name:2:3}  # 提取从0开始的3个字符, 下标从 1 开始, 输出 llo
+```
+
+**自带变量**
+
+执行 shell 脚本时, 可以向脚本传递参数
+
+* `$0` 是文件名(带路径)
+* `$1` 是第一个参数，`$2` 是第二个参数, ...
+
+```shell
+#! /bin/bash
+echo $0		# 带路径的文件名
+echo $1		# 第一个参数
+echo $2		# 第二个参数
+...
+```
+
+| 参数        | 说明                                  |
+| ----------- | ------------------------------------- |
+| $#          | 传入的参数个数                        |
+| $*          | 所有参数的字符串 "\$1 \$2 $3"         |
+| $@          | 每个参数的字符串 "$1" "\$2" "\$3"     |
+| $$          | 当前运行脚本的进程 ID                 |
+| $?          | 上调命令的 exit code, 0 表示正常      |
+| $(command)  | 返回 command 命令的 stdout (可嵌套)   |
+| \`command\` | 返回 command 命令的 stdout (不可嵌套) |
+
+### 数组
+
+* 可以存放**不同类型**的值
+
+* 但只支持**一维数组**
+
+* 下标从 0 开始
+
+> 数组可以跳下标使用
+
+```shell
+array=(1 'yjq' "yjq")
+
+array[0]=1
+array[1]='yjq' 
+array[2]="yjq"
+
+
+```
+
+**读取数组元素**
+
+```shell
+echo ${array[2]}
+
+# 读取整个数组
+${array[*]}  
+或
+${array[@]}
+
+# 数组长度
+${#array[*]}  
+或
+${#array[@]}
+```
+
+
+
+
+
+
 
