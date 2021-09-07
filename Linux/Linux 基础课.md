@@ -493,10 +493,39 @@ expr expression
 ```shell
 str="Hello World!"
 
-expr length "$str" 		# 返回 12
-expr index "$str" abcd 	# 返回 10
-expr substr "$str" 2 3	# 返回 llo
+expr length "$str" 		# stdout 返回 12
+expr index "$str" abcd 	# stdout 返回 10
+expr substr "$str" 3 3	# stdout 返回 llo, 下标从 1 开始
 ```
 
+**整数表达式**
 
+优先级: 逻辑表达式 < 算术表达式 < 字符串表达式
+
+```shell
+expr \( $a + 1 \) \* \( $b + 1 \)	
+# 表达式 (a + 1) * (b + 1)
+```
+
+**逻辑关系表达式**
+
+* `|`
+
+  如果第一个为真, 则返回第一个参数的值, 短路第二个参数
+
+  如果第一个为假, 则看第二个参数
+
+  如果两个都为假, 则返回 0
+
+* `&`
+
+  如果两个参数都为真, 则返回第一个参数的值, 否则返回 0
+
+  如果第一个参数为假, 则短路第二个参数
+
+* `< <= = == != >= >`
+
+  如果表达式为真, 返回 1, 否则返回 0
+
+> `()` 可以表示优先级, 但需要转义 
 
