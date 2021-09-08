@@ -1670,3 +1670,58 @@ begin
 end;
 ```
 
+**BEFORE DELETE**
+
+> 可以访问 old, 但不能更新
+>
+> 没有 new
+
+```mysql
+CREATE TRIGGER trigger_name
+    BEFORE DELETE
+    ON table_name FOR EACH ROW
+trigger_body
+```
+
+实例
+
+```mysql
+create trigger abc
+	before delete
+	on members for each row
+
+begin
+	declare str varchar(400);
+	set str = concat("Delete members {","[id=",old.id,"] [name=",ifnull(old.name,"null"),"] [email=",ifnull(old.email,"null"),"] [birthDate=",ifnull(old.birthDate,"null"),"]}");
+	insert into reminders(memberId, message)
+	values (old.id,concat(str));
+end;
+```
+
+**AFTER DELETE**
+
+> 可以访问 old, 但不能修改
+>
+> 没有 new
+
+```mysql
+CREATE TRIGGER trigger_name
+    AFTER DELETE
+    ON table_name FOR EACH ROW
+trigger_body;
+```
+
+实例
+
+```mysql
+create trigger abc
+	after delete
+	on teachers for each row
+
+begin	
+	update courses
+	set teacher_id = 0
+	where teacher_id = old.id;
+end;
+```
+
