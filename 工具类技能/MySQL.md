@@ -1725,3 +1725,85 @@ begin
 end;
 ```
 
+## 多个触发器
+
+一张表多个触发器
+
+```mysql
+DELIMITER $$
+
+CREATE TRIGGER trigger_name
+{BEFORE|AFTER}{INSERT|UPDATE|DELETE} 
+ON table_name FOR EACH ROW 
+{FOLLOWS|PRECEDES} existing_trigger_name	# 指定触发器间的顺序
+BEGIN
+    -- statements
+END$$
+
+DELIMITER ;
+```
+
+实例
+
+```mysql
+create trigger bkp_teachers_delete
+	before delete
+	on teachers for each row
+	
+begin
+	insert into teachers_bkp(id,name,email,age,country)
+	values (old.id,old.name, old.email, old.age, old.country);
+
+
+create trigger before_teachers_delete
+	before delete
+	on teachers for each row
+	follows bkp_teachers_delete
+
+
+	update teachers_bkp
+	set country = "CN"
+	where age = (select max(age) from teachers_bkp)
+end;
+```
+
+### 存储过程
+
+使用 call 语句从触发器调用存储过程, 多个触发器可以重复调用同一存储过程
+
+```mysql
+DELIMITER $$
+
+CREATE TRIGGER before_accounts_update
+BEFORE UPDATE
+ON accounts FOR EACH ROW
+BEGIN
+    CALL CheckWithdrawal (		# 调用存储过程
+        OLD.accountId, 
+        OLD.amount - NEW.amount
+    );
+END$$
+
+DELIMITER ;
+```
+
+### 显示触发器
+
+```mysql
+SHOW TRIGGERS
+[{FROM | IN} database_name]
+[LIKE 'pattern' | WHERE search_condition];
+
+# 显示所有触发器
+SHOW TRIGGERS;
+
+# 显示 classicmodels 数据库的触发器
+SHOW TRIGGERS
+FROM classicmodels;
+
+# 显示 classicmodels 数据库的 employees 表的触发器
+SHOW TRIGGERS
+FROM classicmodels
+WHERE `table` = 'employees';
+```
+
