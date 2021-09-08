@@ -1623,3 +1623,50 @@ begin
 end;	
 ```
 
+**AFTER UPDATE**
+
+> 可以访问 old 和 new, 但不能修改
+
+```mysql
+CREATE TRIGGER trigger_name
+AFTER UPDATE
+ON table_name FOR EACH ROW
+trigger_body
+```
+
+```mysql
+create trigger abc
+	after update
+	on teachers for each row
+
+begin
+	insert into teachers_bkp(name,email,age,country)
+    values (old.name, old.email, old.age, old.country);
+end;
+
+create trigger abc
+	after update
+	on members for each row
+	
+begin
+	declare 
+	if old.name != new.name
+	then
+		insert into reminders(memberId,message)
+		values(old.id,concat("Update ", old.name, " To ", new.name));
+	end if;
+	
+	if old.email != new.email
+	then
+		insert into reminders(memberId,message)
+		values(old.id,concat("Update ", old.email, " To ", new.email));
+	end if;
+	
+	if old.birthDate != new.birthDate
+	then
+		insert into reminders(memberId,message)
+		values(old.id,concat("Update ", old.birthDate, " To ", new.birthDate));
+	end if;
+end;
+```
+
