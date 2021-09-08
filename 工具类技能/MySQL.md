@@ -1501,3 +1501,125 @@ begin
 end;
 ```
 
+**AFTER INSERT**
+
+插入操作后调用
+
+```mysql
+CREATE TRIGGER trigger_name
+    AFTER INSERT
+    ON table_name FOR EACH ROW
+        trigger_body
+    
+DELIMITER $$
+
+CREATE TRIGGER after_members_insert
+AFTER INSERT
+ON members FOR EACH ROW
+BEGIN
+    IF NEW.birthDate IS NULL THEN
+        INSERT INTO reminders(memberId, message)
+        VALUES(new.id,CONCAT('Hi ', NEW.name, ', please update your date of birth.'));
+    END IF;
+END$$
+
+DELIMITER ;
+
+# CONCAT 字符串连接函数
+```
+
+> 可以访问 new 值, 但不能修改 new 值, 也不能访问 old 值
+
+实例
+
+```mysql
+create trigger abc
+after insert
+on members for each row
+
+begin
+	if new.birthDate is null
+	then
+		insert into reminders(memberId,message)
+		values (new.id, concat('Hi ', new.name, ', please update your date of birth.'));
+    end if;
+end;
+
+
+create trigger abc
+after insert
+on teachers for each row
+
+begin
+	insert into teachers_bkp(name,email,age,country)
+	values (new.name, new.email, new.age, new.country);
+end;
+```
+
+**BEFORE UPDATE**
+
+更新之前
+
+> ```
+> 可以通过 OLD 和 NEW 访问旧值和新值
+> ```
+
+```mysql
+CREATE TRIGGER trigger_name
+BEFORE UPDATE
+ON table_name FOR EACH ROW
+trigger_body
+```
+
+```mysql
+create trigger before_courses_update
+    before update
+    on courses for each row
+
+begin
+	declare id_count int;
+	
+	select count(id)
+	into id_count
+	from teachers
+	where id = new.teacher_id;
+	
+	if id_count <= 0
+	then 
+		set new.teacher_id = old.teacher_id;
+	end if;
+		
+end;
+
+
+create trigger abc
+	before update
+	on recording for each row
+	
+begin
+	declare s_count int;
+	declare c_count int;
+	
+	select count(id)
+	into s_count
+	from students
+	where id = student_id;
+	
+	select count(id)
+	into c_count
+	from ctudents
+	where id = company_id;
+	
+	if s_count = 0 and c_count = 0
+	then
+		set new.id = old.id;
+	else if s_count = 0
+	then
+		set new.student_id = old.student_id;
+	else if c_count = 0
+	then
+		set new.company_id = old.company_id;
+	end if;
+end;	
+```
+
