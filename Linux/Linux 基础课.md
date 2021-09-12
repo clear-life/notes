@@ -448,7 +448,7 @@ array[2]="yjq"
 **读取数组元素**
 
 ```shell
-echo ${array[2]}
+echo ${array[2]}	# 需要用 {} 圈定哪些是变量
 
 # 读取整个数组
 ${array[*]}  
@@ -647,7 +647,7 @@ test $a -eq $b
 | -gt  | 是否大于     |
 | -lt  | 是否小于     |
 | -ge  | 是否大于等于 |
-| -lt  | 是否小于等于 |
+| -le  | 是否小于等于 |
 
 **字符串的比较**
 
@@ -872,7 +872,7 @@ done
 **获取 exit code 和 stdout 值**
 
 ```shell
-func
+func()
 {
     name=yjq
     echo "Hello $name"
@@ -889,6 +889,17 @@ echo $(func)	# 输出 Hello yjq
 `$1` 表示第一个参数, `$2` 表示第二个参数, 以此类推 
 
 > `$0` 仍是 shell 文件的文件名, 不是函数名
+
+```shell
+fun()
+{
+	echo $1
+}
+
+fun 3	# 函数调用
+```
+
+
 
 **函数的局部变量**
 
