@@ -1029,5 +1029,31 @@ ssh user@hostname command
 
 如:
 ssh user@hostname ls -a
+
+# 引号的作用和小括号一样, 表明是一个整体, 而不是 shell 语法中的字符串
+
+# 单引号中的$i可以求值
+ssh myserver 'for ((i = 0; i < 10; i ++ )) do echo $i; done'
+
+# 双引号中的$i不可以求值
+ssh myserver "for ((i = 0; i < 10; i ++ )) do echo $i; done"
+```
+
+### scp
+
+```shell
+# 将 source 文件复制到 destination 中
+scp source1 source2 destination
+
+
+# 参数放在 source 前
+# 复制文件夹
+scp -r source destination
+
+# 指定端口号
+scp -P 22 source destination
+
+# 将本地的配置文件复制到远程服务器的家目录下(~/)
+scp ~/.vimrc ~/.tmux.conf myserver:
 ```
 
