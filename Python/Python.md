@@ -511,3 +511,38 @@ config = configparser.ConfigParser()
 config.read(filename, encoding='utf-8')
 ```
 
+## pywt
+
+PyWavelets 小波变换模块
+
+**pywt.dwt2**
+
+单层小波变换
+
+```python
+pywt.dwt2(data, wavelet, mode='symmetric', axes=(-2, -1))
+
+# data：输入的数据
+# wavelet：小波基
+# mode：默认是对称的
+
+return：(cA, (cH, cV, cD))
+# 返回的值，分别为低频分量，水平高频，垂直高频，对角线高频
+# 高频的值包含在一个tuple中
+```
+
+## cv2
+
+opencv-python 计算机视觉库
+
+**cv2.imread**
+
+读取图片数据
+
+```python
+cv.imread(filename[, flags])
+# filename 图片文件路径
+# flags 图片读取模式
+# 返回图片的矩阵数据
+```
+
