@@ -960,3 +960,74 @@ fi
 source filename
 ```
 
+## ssh
+
+### 登录
+
+**普通登录**
+
+```shell
+ssh user@hostname
+# user 用户名
+# hostname 主机名: IP 地址或域名
+```
+
+第一次回会提示无法确定真实性, 确认是否连接
+
+输入 `yes` 后远程服务器的信息会记录在 `~/.ssh/known_hosts` 中
+
+默认登陆端口号为 22
+
+```shell
+ssh user@hostname -p 22
+```
+
+**配置文件**
+
+创建文件 `~/.ssh/config`
+
+```shell
+Host remoteserver1			# remoteserver1 就是远程服务器的别名了, 以后可以直接用别名登录
+	HostName IP地址或域名
+	User 用户名
+	
+Host remoteserver2
+	HostName IP地址或域名
+	User 用户名
+
+...
+```
+
+用别名登录
+
+```shell
+ssh remoteserver1
+```
+
+**密钥登陆**
+
+创建密钥
+
+```shell
+ssh-keygen
+```
+
+密钥
+
+* `~/.ssh/id_rsa` :  私钥
+* `~/.ssh/id_rsa.pub` :  公钥
+
+公钥传递
+
+* 将公钥中的内容复制到远程服务器的 `~/.ssh/authorized_keys` 文件里
+* `ssh-copy-id remoteserver1` 命令
+
+**远程执行命令**
+
+```shell
+ssh user@hostname command
+
+如:
+ssh user@hostname ls -a
+```
+
