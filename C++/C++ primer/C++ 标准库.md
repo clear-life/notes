@@ -1866,3 +1866,67 @@ auto p = new auto(1);	// p 指向 int 类型, p 是 int * 类型
 const int *p = new const int(1);	// new 返回 const int * 类型, 值初始化为 1
 ```
 
+**内存耗尽**
+
+如果 new 失败, 会抛出 ball_alloc 异常
+
+```C++
+int *p = new int;
+int *p = new (nothrow) int;		// 如果分配失败, 不抛出异常, 而是返回一个空指针
+```
+
+**释放动态内存**
+
+```C++
+delete p;	// 释放 p 指向的地址, p 必须指向一个动态分配的对象或是一个空指针
+// delete 执行两个动作: 销毁指向的对象, 释放对应的内存
+```
+
+**指针值和 delete**
+
+释放一块非 new 的内存, 或释放多次相同的指针的行为是未定义的
+
+```C++
+int a;
+int *p1 = &a;
+int *p2 = new int;
+int *p3 = nullptr;
+delete a;	// 错误
+delete p1;	// 错误
+delete p2;	// 正确
+delete p2;	// 错误
+delete p3; 	// 正确
+```
+
+> 编译器不能分辨出指针指向的是静态分配的对象还是动态分配的对象
+>
+> 编译器也不能分辨出指针指向的内存是否被释放
+
+指向 const 对象的指针可以被 delete
+
+```C++
+const int *p = new const int(1);
+delete p;	//释放一个 const 对象
+```
+
+**动态对象的生存期到释放时为止**
+
+```C++
+void fun()
+{
+    int *p = new int;
+}	// 内置指针类型 p 离开了作用域, 什么都没有发生, 所以 p 指向的内存没有被释放, 依然存在
+```
+
+**delete 之后重置指针值**
+
+空悬指针: 指向一块曾经保存过数据但现在被释放了内存的指针
+
+```C++
+int *p = new int;
+delete p;
+p = nullptr;	// 释放 p 指向的内存后, 将 p 赋为空指针
+```
+
+
+
