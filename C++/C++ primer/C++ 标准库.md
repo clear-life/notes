@@ -1928,5 +1928,63 @@ delete p;
 p = nullptr;	// 释放 p 指向的内存后, 将 p 赋为空指针
 ```
 
+#### 12.1.3 shared_ptr 和 new 结合使用
 
+用 new 返回的指针初始化智能指针
+
+```C++
+shared_ptr<int> p(new int(1));	// p 指向值为 1 的 int
+```
+
+> 接受指针参数的 shared_ptr 的构造函数是 explicit 
+>
+> 所以不能将内置指针直接赋值给智能指针
+>
+> shared_prt<int> p = new int(1);		// 错误, 不能将 int * 类型隐式转换为 shared_prt<int> 类型, 必须使用直接初始化的形式
+
+shared_ptr 必须显式绑定内置指针
+
+```C++
+shared_prt<int> fun()
+{
+    return shared_prt<int>(new int(1));
+}
+```
+
+如果将智能指针绑定到类类型的指针时, 需要提供专门的操作来代替 delete
+
+| shared_ptr 的其他方法  | 说明                                                         |
+| ---------------------- | ------------------------------------------------------------ |
+| shared_ptr<T> p(q)     | p 管理内置指针 q 指向的对象                                  |
+| shared_ptr<T> p(u)     | p 从 unique_ptr u 那接管对象的所有权; u 置为空               |
+| shared_ptr<T> p(q, d)  | p 管理内置指针 q 指向的对象, p 调用可调用对象 d 来代替 delete |
+| shared_ptr<T> p(p2, d) | p 是 shared_ptr p2 的拷贝, 递增 p2 的计数器, 并调用 d 来代替 delete |
+| p.reset()              | 释放智能指针 p, p 原来指向的对象引用计数减一, p 置为空       |
+| p.reset(q)             | 释放 p, 令 p 绑定到内置指针 q                                |
+| p.reset(q, d)          | 释放 p, 令 p 绑定到内置指针 q, 并用可调用对象 d 代替 delete  |
+
+> 使用智能指针后, 不要再用普通指针访问指向的内存了
+
+**不要用 get 给另一个智能指针赋值**
+
+智能指针的 get 函数返回对应的内置指针
+
+该内置指针不能 delete
+
+```C++
+shared_ptr<int> p(new int(1));	// p 指向值为 1 的内存 a
+int *pp = p.get();				// pp 也指向内存 a, pp 是普通指针
+{
+    shared_ptr<int> q(pp);		// q 也指向内存 a, 且 q 和 p 是独立的智能指针
+}	// q 销毁, 释放内存 a, p 成为空悬指针, 然后编译器报错, 看不懂错误信息
+int i = *p;		// 不能正常使用 p 了
+```
+
+**reset**
+
+```C++
+shared_ptr<int> p;
+p = new int(1);	// 错误, 不能将普通指针赋值给智能指针
+p.reset(new int(1));	// 正确 p 指向值为 1 的内存
+```
 
