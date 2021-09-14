@@ -1988,3 +1988,82 @@ p = new int(1);	// 错误, 不能将普通指针赋值给智能指针
 p.reset(new int(1));	// 正确 p 指向值为 1 的内存
 ```
 
+#### 12.1.4 智能指针和异常
+
+遇到异常时, 智能指针也能正常释放内存, 但普通指针指向的内存不会被释放
+
+```C++
+void fun()
+{
+    shared_ptr<int> p(new int(1));
+    
+    // 抛出一个异常
+    ...
+}	// 函数结束时, 无论是正常结束还是发生了异常, 局部对象 p 都会被销毁, shared_ptr 自动释放 p 指向的内存 
+
+void fun()
+{
+    int *p = new int(1);
+    
+    // 抛出一个异常
+    
+    //
+    
+    delete p;
+}
+```
+
+> 如果在 new 之后 delete 之前 发生了异常, 且异常未在 fun 中被捕获, 则 p 指向的内存永远不会被释放
+
+**使用自定义的释放操作**
+
+默认情况下, shared_ptr 假定管理的是动态内存, 当一个 shared_ptr 对象销毁时, 默认会 delete 其管理的指针
+
+自定义释放操作
+
+```C++
+void end(int *p)
+{
+    delete p;
+}
+
+shared_ptr<int> p(new int(1), end);
+// 当 p 销毁时, 会调用 end 来销毁管理的指针
+```
+
+**智能指针使用规范**
+
+* 不用一个内置指针初始化多个智能指针
+* 不 delete get() 返回的指针
+* 不用一个智能指针的 get() 指针初始化另一个智能指针
+* 使用 get() 返回的指针时, 要记住最后一个智能指针销毁后, get() 返回的指针就无效了
+* 如果智能指针管理的资源不是 new 分配的内存, 要传递自定义的释放操作
+
+#### 12.1.5 unique_ptr
+
+一个 unique_ptr 独占所指向的对象
+
+```C++
+unique_ptr<int> p(new int(1));	// unique_ptr 没有类似 make_shared 的函数, 需要用 new 直接初始化
+```
+
+> 由于 unique_ptr 独占指向的对象, 所以不支持拷贝和赋值操作
+
+```C++
+unique_ptr<int> p(new int(1));
+unique_ptr<int> p2(p);	// 错误, unique_ptr 不支持拷贝
+unique_ptr<int> p3;
+p3 = p;					// 错误, unique_ptr 不支持赋值
+```
+
+| unique_ptr 操作       | 说明                                                         |
+| --------------------- | ------------------------------------------------------------ |
+| unique_ptr\<T> u1     | 空 unique_ptr 对象                                           |
+| unique_ptr<T, D> u2   | 空 unique_ptr 对象, D 为自定义的释放操作的类型               |
+| unique_ptr<T, D> u(d) | 空 unique_ptr 对象, D 为自定义的释放操作的类型, d 为自定义的释放操作对象 |
+| u = nullptr           | 释放 u 指向的对象, u 置为空                                  |
+| u.release()           | u 不再管理内置指针, 返回指针, u 置为空                       |
+| u.reset()             | 释放 u 指向的对象                                            |
+| u.rest(nullptr)       | 释放 u 指向的对象, u 置为空                                  |
+| u.rest(q)             | 释放 u 指向的对象, u 管理 q                                  |
+
