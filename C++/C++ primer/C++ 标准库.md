@@ -1936,5 +1936,34 @@ void end() {}	// 自定义的删除器
 unique_ptr<int, decltype(end) *> p(new int(1), end);
 ```
 
+#### 12.1.6 weak_ptr
 
+weak_ptr 是一种不控制所指对象生存期的智能指针, 它指向一个 shared_ptr 指向的对象
+
+* 将 weak_ptr 绑定到 shared_ptr 不会改变 shared_ptr 的引用计数
+* 当最后一个 shared_ptr 要被销毁时, 即使 weak_ptr 指向这个 shared_ptr 指向的对象, 该对象依然会被释放
+* 因此, weak_ptr 具有弱共享对象的特点
+
+| weak_ptr           | 说明                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| weak_ptr\<T> w     | 空 weak_ptr                                                  |
+| weak_ptr\<T> w(sp) | weak_ptr 指向 shared_ptr sp 指向的对象                       |
+| w = p              | w 和 p 共享对象, p 是 shared_ptr 或 weak_ptr                 |
+| w.reset()          | w 置为空                                                     |
+| w.use_count()      | 与 w 共享对象的 shared_ptr 的数量                            |
+| w.expired()        | 若 w.use_count() 为 0, 返回 true, 否则返回 false             |
+| w.lock()           | 若 w.expired() 为 true, 即 w.use_count() 为 0, 返回一个空 shared_ptr; 否则返回一个与 w 共享对象的 shared_ptr |
+
+**使用 lock 访问 weak_ptr 管理的对象**
+
+由于对象可能不存在, 所以用 weak_ptr 直接访问指向的对象是不安全的
+
+需要使用 lock 成员函数来返回一个 shared_ptr 对象
+
+```C++
+auto p = make_shared<int>(1);
+weak_ptr<int> wp(p);
+
+auto tmp = wp.lock();
+```
 
