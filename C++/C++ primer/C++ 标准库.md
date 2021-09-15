@@ -83,6 +83,7 @@
   ```C++
   while(cin >> a)
       // 运行到这里说明读取成功
+  ```
 
 **管理条件状态**
 
@@ -393,9 +394,7 @@ list<string>::iterator iter;	// iter 是 list<string>类定义的 iterator 类�
 允许从一个**不同但相容**的容器赋值
 
 ```C++
-list<string> s;
-vector<const char * > p;
-s.assign(p.cbegin(), p.cend());
+list<string> s;vector<const char * > p;s.assign(p.cbegin(), p.cend());
 ```
 
 **使用 swap**
@@ -461,8 +460,7 @@ word.push_back('s'); 	// 等价于 word += 's'
 * `list`, `forward_list` 和 `deque` 支持
 
 ```C++
-list<int> l;
-l.push_front(1);
+list<int> l;l.push_front(1);
 ```
 
 **insert**
@@ -473,13 +471,7 @@ l.push_front(1);
 * `forward_list` 支持特殊版本的 `insert`
 
 ```C++
-vector<string> s;
-vector<string> v;
-s.insert(s.begin(), "Hello!");				// 单个插入
-s.insert(s.begin(), 10, "Hello!");			// 多个插入, 指定数量和值
-s.insert(s.begin(), v.end()-2, v.end());	// 多个插入, 指定迭代器范围
-s.insert(s.begin(), {"Hello ", "world!"});	// 多个插入, 指定初始化列表
-s.insert(s.begin(), s.begin(), s.end());	// 错误, 不能使用自身的迭代器来插入
+vector<string> s;vector<string> v;s.insert(s.begin(), "Hello!");				// 单个插入s.insert(s.begin(), 10, "Hello!");			// 多个插入, 指定数量和值s.insert(s.begin(), v.end()-2, v.end());	// 多个插入, 指定迭代器范围s.insert(s.begin(), {"Hello ", "world!"});	// 多个插入, 指定初始化列表s.insert(s.begin(), s.begin(), s.end());	// 错误, 不能使用自身的迭代器来插入
 ```
 
 * 返回插入的第一个元素的迭代器, 若插入的数量为 0 就返回迭代器 p 
@@ -493,12 +485,7 @@ s.insert(s.begin(), s.begin(), s.end());	// 错误, 不能使用自身的迭代�
 `push` 和 `insert` 方式则创建一个**局部临时对象**, 然后压入容器中
 
 ```C++
-c.emplace_back("abc", 1, 2.0);	// 使用元素的构造函数直接在容器的内存空间创建元素的对象
-c.push_back("abc", 1, 2.0);		// 错误, 没有该版本的 push_back 
-c.push_back(Book("abc", 1, 2.0));	// 创建一个临时 Book 对象传递给 push_back
-
-c.emplace_back();				// 使用元素的默认构造函数
-c.emplace(iter, "abc");	// 使用类的 Book(string) 构造函数
+c.emplace_back("abc", 1, 2.0);	// 使用元素的构造函数直接在容器的内存空间创建元素的对象c.push_back("abc", 1, 2.0);		// 错误, 没有该版本的 push_back c.push_back(Book("abc", 1, 2.0));	// 创建一个临时 Book 对象传递给 push_backc.emplace_back();				// 使用元素的默认构造函数c.emplace(iter, "abc");	// 使用类的 Book(string) 构造函数
 ```
 
 #### 9.3.2 访问元素
@@ -752,12 +739,7 @@ if(!c.empty())
 | q.top()                                                      | 返回最高优先级元素, 仅 priority_queue                        |
 
 ```C++
-priority_queue<Type, Container, Functional>
-// Type: 元素类型
-// Container: 容器类型
-// Functional: 比较"运算符"
-priority_queue <int, vector<int>，greater<int>> q;	// 升序
-priority_queue <int, vector<int>，less<int>>q;		// 降序
+priority_queue<Type, Container, Functional>// Type: 元素类型// Container: 容器类型// Functional: 比较"运算符"priority_queue <int, vector<int>，greater<int>> q;	// 升序priority_queue <int, vector<int>，less<int>>q;		// 降序
 ```
 
 
@@ -791,8 +773,7 @@ accumulate(begin, end, sum)		// 输入范围和求和的初值
 **操作两个序列**
 
 ```C++
-equal(a1.begin, a1.end, a2.begin)
-// 从 a2 某个迭代器开始比较与 a1 的输入元素是否相等
+equal(a1.begin, a1.end, a2.begin)// 从 a2 某个迭代器开始比较与 a1 的输入元素是否相等
 ```
 
 > 单一迭代器表示一个序列的时, 假定该序列与两个迭代器表示的范围一样长
@@ -809,17 +790,13 @@ equal(a1.begin, a1.end, a2.begin)
 * 输出: 容器的插入迭代器
 
 ```C++
-auto it = back_inserter(容器);	// it 是与容器绑定的插入迭代器
-*it = 1;			// 向容器插入元素 1
-fill_n(it, 5, 0);	// 向容器插入 5 个 0
+auto it = back_inserter(容器);	// it 是与容器绑定的插入迭代器*it = 1;			// 向容器插入元素 1fill_n(it, 5, 0);	// 向容器插入 5 个 0
 ```
 
 #### 10.2.3 重排容器算法
 
 ```C++
-sort(a.begin, a.end)		// 对 a 排序
-auto it = unique(a.begin, a.end)		// 重复元素放最后, 函数返回第一个重复元素的迭代器
-a.erase(it, a.end)			// 删除从 it 到 a 末尾的所有元素
+sort(a.begin, a.end)		// 对 a 排序auto it = unique(a.begin, a.end)		// 重复元素放最后, 函数返回第一个重复元素的迭代器a.erase(it, a.end)			// 删除从 it 到 a 末尾的所有元素
 ```
 
 
@@ -879,13 +856,7 @@ lambda **捕获的变量作为类的数据成员**在 lambda 对象初始化时�
 被捕获的变量在 lambda 对象**创建时拷贝初始化**
 
 ```C++
-void fun()
-{
-    int a = 0;
-    auto f = [a] {return a;};
-    a = 1;
-    auto b = f();	// b 的值为 0 而不是 1
-}
+void fun(){    int a = 0;    auto f = [a] {return a;};    a = 1;    auto b = f();	// b 的值为 0 而不是 1}
 ```
 
 **引用捕获**
@@ -893,13 +864,7 @@ void fun()
 引用捕获必须**保证**调用 lambda 时**被引用的对象存在**
 
 ```C++
-void fun()
-{
-    int a = 0;
-    auto f = [&a] {return a;};
-    a = 1;
-    auto b = f();	// b 的值是 1 
-}
+void fun(){    int a = 0;    auto f = [&a] {return a;};    a = 1;    auto b = f();	// b 的值是 1 }
 ```
 
 **隐式捕获**
@@ -909,23 +874,7 @@ void fun()
 = 表示值捕获, & 表示引用捕获
 
 ```C++
-//值捕获
-void fun()
-{
-    int a = 0;
-    auto f = [=] {return a;};	// 值隐式捕获
-    a = 1;
-    auto b = f();	// b 的值是 0 
-}
-
-// 引用捕获
-void fun()
-{
-    int a = 0;
-    auto f = [&] {return a;};	// 引用隐式捕获
-    a = 1;
-    auto b = f();	// b 的值是 1 
-}
+//值捕获void fun(){    int a = 0;    auto f = [=] {return a;};	// 值隐式捕获    a = 1;    auto b = f();	// b 的值是 0 }// 引用捕获void fun(){    int a = 0;    auto f = [&] {return a;};	// 引用隐式捕获    a = 1;    auto b = f();	// b 的值是 1 }
 ```
 
 **混合捕获**
@@ -933,23 +882,7 @@ void fun()
 隐式捕获与显式捕获混合使用, 但**二者必须捕获类型不同**
 
 ```C++
-//值捕获
-void fun()
-{
-    int a = 0, b = 0;
-    auto f = [=, &b] {return a + b;};	// a 隐式值捕获, b 显式引用捕获
-    a = 1;
-    auto c = f();	// c 的值是 0 
-}
-
-// 引用捕获
-void fun()
-{
-    int a = 0, b = 0;
-    auto f = [&, b] {return a + b;};	// a 引用隐式捕获, b 显式值捕获
-    a = 1;
-    auto c = f();	// c 的值是 1 
-}
+//值捕获void fun(){    int a = 0, b = 0;    auto f = [=, &b] {return a + b;};	// a 隐式值捕获, b 显式引用捕获    a = 1;    auto c = f();	// c 的值是 0 }// 引用捕获void fun(){    int a = 0, b = 0;    auto f = [&, b] {return a + b;};	// a 引用隐式捕获, b 显式值捕获    a = 1;    auto c = f();	// c 的值是 1 }
 ```
 
 **可变 lambda**
@@ -959,24 +892,13 @@ mutable 关键字使得**值传递的变量是可修改的左值**
 > lambda 值捕获的变量依然没有修改, 修改的只是拷贝给 lambda 表达式的参数变量
 
 ```C++
-void fun()
-{
-    int a = 0;
-    auto f = [a] () mutable {return ++a;};	// 正常情况下传进去的 a 是 const 变量, 不能对其修改
-    auto b = f();	// b 的值是 1 
-}
+void fun(){    int a = 0;    auto f = [a] () mutable {return ++a;};	// 正常情况下传进去的 a 是 const 变量, 不能对其修改    auto b = f();	// b 的值是 1 }
 ```
 
 **指定 lambda 返回类型**
 
 ```C++
-[] (int i) {return i < 0 ? -i : i;};	// 返回类型推断为 int 
-
-// 替换为 if 语句后, 看似与上式等价, 实际返回类型是 void
-[] (int i) {if (i < 0) return -1; else return i;};	// 由于有 return 之外的语句, 所以推断为 void 返回类型
-
-// 使用 return 之外的语句需要显式指定返回类型
-[] (int i) -> int {if (i < 0) return -1; else return i;};
+[] (int i) {return i < 0 ? -i : i;};	// 返回类型推断为 int // 替换为 if 语句后, 看似与上式等价, 实际返回类型是 void[] (int i) {if (i < 0) return -1; else return i;};	// 由于有 return 之外的语句, 所以推断为 void 返回类型// 使用 return 之外的语句需要显式指定返回类型[] (int i) -> int {if (i < 0) return -1; else return i;};
 ```
 
 #### 10.3.4 参数绑定
@@ -990,10 +912,7 @@ void fun()
 输出: 新的可调用对象, 参数列表不同
 
 ```C++
-auto newCallble = bind(callable, arg_list);
-// callable: 可调用对象
-// arg_list: 参数列表, 包含占位符 _n, 表示 newCallble 的第 n 个参数
-// newCallble: 新的可调用对象
+auto newCallble = bind(callable, arg_list);// callable: 可调用对象// arg_list: 参数列表, 包含占位符 _n, 表示 newCallble 的第 n 个参数// newCallble: 新的可调用对象
 ```
 
 ```C++
@@ -1075,15 +994,7 @@ bind(print, ref(os), _1, ' '); 		// ref 返回 os 的引用, 且该引用可以�
 | inserter           | 调用 insert                                                  |
 
 ```C++
-deque<int> a = ...;
-auto it = insert(a, iter);
-// 向 it 赋值会永远在 iter 迭代器之前插入元素
-
-auto it = front_insert(a);
-// 向 it 赋值会永远在容器 a 的开头插入元素
-
-auto it = back_insert(a);
-// 向 it 赋值会永远在容器 a 的末尾插入元素
+deque<int> a = ...;auto it = insert(a, iter);// 向 it 赋值会永远在 iter 迭代器之前插入元素auto it = front_insert(a);// 向 it 赋值会永远在容器 a 的开头插入元素auto it = back_insert(a);// 向 it 赋值会永远在容器 a 的末尾插入元素
 ```
 
 #### 10.4.2 iostream 迭代器
@@ -1104,15 +1015,7 @@ IO 类型对象的迭代器, **将流当作特定类型的元素序列来处理*
 * 读取的类型必须定义 `>>` 输入运算符
 
 ``` C++
-istream_iterator<int> it(cin);	// 绑定 cin 流对象, 从 cin 流读取 int 数据
-istream_iterator<int> eof;		// 尾后迭代器 end, 判断是否结束使用
-vector<int> a;
-
-while(it != eof)
-    a.push_back(*it++);			// 与普通迭代器一样, *it++ 作用是返回当前迭代器指向元素的值并递增迭代器
-
-// 等价于
-vector<int> a(it, eof);			// 用迭代器范围构造容器初始值
+istream_iterator<int> it(cin);	// 绑定 cin 流对象, 从 cin 流读取 int 数据istream_iterator<int> eof;		// 尾后迭代器 end, 判断是否结束使用vector<int> a;while(it != eof)    a.push_back(*it++);			// 与普通迭代器一样, *it++ 作用是返回当前迭代器指向元素的值并递增迭代器// 等价于vector<int> a(it, eof);			// 用迭代器范围构造容器初始值
 ```
 
 | istream_iterator 操作               | 作用                                                         |
@@ -1135,10 +1038,7 @@ vector<int> a(it, eof);			// 用迭代器范围构造容器初始值
 | *it, ++it, it++                    | 运算符存在, 但 it 无任何变化, 结果都为 it                    |
 
 ```C++
-vector<int> a = ...;
-ostream_iterator<int> it(cout, " ");
-for(auto i; a)
-    *it++ = i;		// *it++ = i 与 it = i 等价
+vector<int> a = ...;ostream_iterator<int> it(cout, " ");for(auto i; a)    *it++ = i;		// *it++ = i 与 it = i 等价
 ```
 
 #### 10.4.3 反向迭代器
@@ -1289,17 +1189,13 @@ reverse_copy(beg, end, dest);	// 将输入范围的元素逆序拷贝到 dest �
 **map**
 
 ```C++
-map<string, int> a;
-string s;
-while(cin >> s)
-    a[s]++;
+map<string, int> a;string s;while(cin >> s)    a[s]++;
 ```
 
 **set**
 
 ```C++
-set<string> a = {"One", "Two", "Three"};
-a.find("Two");
+set<string> a = {"One", "Two", "Three"};a.find("Two");
 ```
 
 ### 11.2 关联容器概述
@@ -1309,19 +1205,13 @@ a.find("Two");
 #### 11.2.1 定义关联容器
 
 ```C++
-map<string, int> m = {{"One", 1},
-                      {"Two", 2},
-                      {"Three", 3}};		// {key, value}
-set<string> s = {"One", "Two", "Three"};
+map<string, int> m = {{"One", 1},                      {"Two", 2},                      {"Three", 3}};		// {key, value}set<string> s = {"One", "Two", "Three"};
 ```
 
 **初始化 `multimap` 和 `mutliset`**
 
 ```C++
-vector<int> v = {0,0,1,1,2,2};
-set<int> s(v.cbegin(), v.cend());		// 用 v 初始化 s
-multiset<int> ms(v.cbegin(), v.cend());	// 用 v 初始化 ms, ms 允许 key 重复
-cout << s.size() << " " << ms.size() << endl;	// s 的 size 为 3, ms 的 size 为 6
+vector<int> v = {0,0,1,1,2,2};set<int> s(v.cbegin(), v.cend());		// 用 v 初始化 smultiset<int> ms(v.cbegin(), v.cend());	// 用 v 初始化 ms, ms 允许 key 重复cout << s.size() << " " << ms.size() << endl;	// s 的 size 为 3, ms 的 size 为 6
 ```
 
 #### 11.2.2 关键字类型的要求
@@ -1338,13 +1228,7 @@ cout << s.size() << " " << ms.size() << endl;	// s 的 size 为 3, ms 的 size �
 **使用关键字类型的比较函数**
 
 ```C++
-// 比较函数, 定义 "<"
-bool compare(const pair<int,int> &a, const pair<int,int> &b)
-{
-    return a.second < b.second;
-}
-set<pair<int,int>,decltype(compare)*> s(compare);	// 传入 compare 函数作为构造函数的参数
-s.insert({{1,2}, {2,4},{3,6}});
+// 比较函数, 定义 "<"bool compare(const pair<int,int> &a, const pair<int,int> &b){    return a.second < b.second;}set<pair<int,int>,decltype(compare)*> s(compare);	// 传入 compare 函数作为构造函数的参数s.insert({{1,2}, {2,4},{3,6}});
 ```
 
 #### 11.2.3 pair 类型
@@ -1409,10 +1293,7 @@ map<string, int>::value_type s;	// pair<const string, int>
 解引用关联容器的迭代器时, 得到容器的 `value_type` 的引用类型
 
 ```C++
-map<string, int> m;
-auto it = m.begin();
-cout << it -> first << " " << it -> second << endl;
-it -> second ++;
+map<string, int> m;auto it = m.begin();cout << it -> first << " " << it -> second << endl;it -> second ++;
 ```
 
 **set 的迭代器是 const**
@@ -1426,10 +1307,7 @@ it -> second ++;
 向 `set` 和 `map` 插入已存在的元素对容器没有任何影响
 
 ```C++
-vector<int> v = {2,4,6,2,4,6};
-set<int> s;
-s.insert(v.begin(), v.end());	// s 现有 3 个元素 {2,4,6}
-s.insert({1,3,5,1,3,5});		// s 现有 6 个元素 {1,2,3,4,5,6}
+vector<int> v = {2,4,6,2,4,6};set<int> s;s.insert(v.begin(), v.end());	// s 现有 3 个元素 {2,4,6}s.insert({1,3,5,1,3,5});		// s 现有 6 个元素 {1,2,3,4,5,6}
 ```
 
 **向 map 添加元素**
@@ -1437,12 +1315,7 @@ s.insert({1,3,5,1,3,5});		// s 现有 6 个元素 {1,2,3,4,5,6}
 `map` 的元素类型是 `pair`
 
 ```C++
-map<string, int> m;
-string s;
-m.insert({s,1});
-m.insert(make_pair(s,1);
-m.insert(pair<string,int>(s,1));
-m.insert(map<string,int>::value_type(s,1));
+map<string, int> m;string s;m.insert({s,1});m.insert(make_pair(s,1);m.insert(pair<string,int>(s,1));m.insert(map<string,int>::value_type(s,1));
 ```
 
 | 关联容器 insert 操作 | 作用                                                         |
@@ -1457,19 +1330,13 @@ m.insert(map<string,int>::value_type(s,1));
 **检查 insert 的返回值**
 
 ```C++
-map<string,int> m;
-string s;
-auto it = m.insert({s,1});
-if(!it.second)
-    it.first -> second ++;	// it.first 是指向插入元素的迭代器, it.first -> second 是插入元素的关联值 
+map<string,int> m;string s;auto it = m.insert({s,1});if(!it.second)    it.first -> second ++;	// it.first 是指向插入元素的迭代器, it.first -> second 是插入元素的关联值 
 ```
 
 **向 multiset 或 multimap 添加元素**
 
 ```C++
-multimap<string,int> m;
-m.insert({"a",1});
-m.insert({"a",2});
+multimap<string,int> m;m.insert({"a",1});m.insert({"a",2});
 ```
 
 > 允许重复的关联容器, 接收单个元素的 insert 返回指向插入元素的迭代器
@@ -1483,8 +1350,7 @@ m.insert({"a",2});
 | c.erase(b, e)    | 删除迭代器 b 到 e 范围内的元素, 返回 e                       |
 
 ```C++
-multimap<string, int> m = {{"a",1},{"a",2}};
-auto count = m.erase("a");		// 删除所有关键字为 "a" 的元素, count 的值为 2
+multimap<string, int> m = {{"a",1},{"a",2}};auto count = m.erase("a");		// 删除所有关键字为 "a" 的元素, count 的值为 2
 ```
 
 #### 11.3.4 map 的下标操作
@@ -1495,8 +1361,7 @@ auto count = m.erase("a");		// 删除所有关键字为 "a" 的元素, count 的
 | c.at(k)                                     | 返回关键字为 k 的关联值, 如果 k 不存在, 就抛出 out_of_range 异常 |
 
 ```C++
-map<string, int> m;
-m["a"] = 1;		// 由于 m 的关键字没有 "a" , 所以添加 pair<"a", 1> 到 m 中
+map<string, int> m;m["a"] = 1;		// 由于 m 的关键字没有 "a" , 所以添加 pair<"a", 1> 到 m 中
 ```
 
 > * map 的下标操作返回 mapped_type 对象的引用
@@ -1582,14 +1447,7 @@ um[s] = 1;
 * 但关键字为自定义类型的话, 需要专门提供 hash 模板版本
 
 ```C++
-Class c;
-int hasher(const Class &c)
-{return hash<int>()(c.int);}
-
-bool equal(const Class &c1, const Class &c2)
-{return c1.string == c2.string;}
-
-unordered_set<Class, decltype(hasher)*, decltype(equal)*> us = (1, hasher, equal);
+Class c;int hasher(const Class &c){return hash<int>()(c.int);}bool equal(const Class &c1, const Class &c2){return c1.string == c2.string;}unordered_set<Class, decltype(hasher)*, decltype(equal)*> us = (1, hasher, equal);
 ```
 
 ## 第 12 章
@@ -1652,12 +1510,7 @@ unordered_set<Class, decltype(hasher)*, decltype(equal)*> us = (1, hasher, equal
 #### 12.1.1 shared_ptr 类
 
 ```C++
-shared_ptr<string> p;		// p 可以指向 string
-shared_ptr<vector<int>> p;	// p 可以指向 vector<int>
-    
-if(p)						// p 可以直接用来判断是否为空
-    cout << 1 << endl;
-else cout << 0 << endl;
+shared_ptr<string> p;		// p 可以指向 stringshared_ptr<vector<int>> p;	// p 可以指向 vector<int>    if(p)						// p 可以直接用来判断是否为空    cout << 1 << endl;else cout << 0 << endl;
 ```
 
 **shared_ptr 和 unique_ptr 都支持的操作**
@@ -1710,11 +1563,7 @@ auto q(p);
 **shared_ptr 能自动释放相关内存**
 
 ```C++
-shared_ptr<string> fun(T arg)
-{
-    shared_ptr<string> p = make_shared<string>(arg);	// 引用计数为 1
-    return p;	// p 拷贝给调用的对象, 引用计数为 2
-}				// 销毁 p, 引用计数为 1, p 指向的内存不会被释放
+shared_ptr<string> fun(T arg){    shared_ptr<string> p = make_shared<string>(arg);	// 引用计数为 1    return p;	// p 拷贝给调用的对象, 引用计数为 2}				// 销毁 p, 引用计数为 1, p 指向的内存不会被释放
 ```
 
 **使用动态生存期资源的类**
@@ -1732,11 +1581,7 @@ shared_ptr<string> fun(T arg)
    例: 定义 Share 类的对象拷贝后共享相同数据
 
    ```C++
-   Share<string> a;	// 空 Share 对象
-   {
-       Share<string> b = {"a", "b", "c"};
-       a = b;	// a 和 b 共享相同的元素
-   }			// b 被销毁, 但 b 的数据没有被销毁, a 指向这些元素
+   Share<string> a;	// 空 Share 对象{    Share<string> b = {"a", "b", "c"};    a = b;	// a 和 b 共享相同的元素}			// b 被销毁, 但 b 的数据没有被销毁, a 指向这些元素
    ```
 
 **定义 StrBlob 类**
@@ -1851,6 +1696,7 @@ int *p = new string();	// 值初始化为空 string
   没有区别, 都是调用默认构造函数来初始化
 
 * 对于内置类型
+
   * 默认初始化的值是未定义的
   * 值初始化为0
 
@@ -1871,15 +1717,13 @@ const int *p = new const int(1);	// new 返回 const int * 类型, 值初始化�
 如果 new 失败, 会抛出 ball_alloc 异常
 
 ```C++
-int *p = new int;
-int *p = new (nothrow) int;		// 如果分配失败, 不抛出异常, 而是返回一个空指针
+int *p = new int;int *p = new (nothrow) int;		// 如果分配失败, 不抛出异常, 而是返回一个空指针
 ```
 
 **释放动态内存**
 
 ```C++
-delete p;	// 释放 p 指向的地址, p 必须指向一个动态分配的对象或是一个空指针
-// delete 执行两个动作: 销毁指向的对象, 释放对应的内存
+delete p;	// 释放 p 指向的地址, p 必须指向一个动态分配的对象或是一个空指针// delete 执行两个动作: 销毁指向的对象, 释放对应的内存
 ```
 
 **指针值和 delete**
@@ -1887,15 +1731,7 @@ delete p;	// 释放 p 指向的地址, p 必须指向一个动态分配的对象
 释放一块非 new 的内存, 或释放多次相同的指针的行为是未定义的
 
 ```C++
-int a;
-int *p1 = &a;
-int *p2 = new int;
-int *p3 = nullptr;
-delete a;	// 错误
-delete p1;	// 错误
-delete p2;	// 正确
-delete p2;	// 错误
-delete p3; 	// 正确
+int a;int *p1 = &a;int *p2 = new int;int *p3 = nullptr;delete a;	// 错误delete p1;	// 错误delete p2;	// 正确delete p2;	// 错误delete p3; 	// 正确
 ```
 
 > 编译器不能分辨出指针指向的是静态分配的对象还是动态分配的对象
@@ -1905,17 +1741,13 @@ delete p3; 	// 正确
 指向 const 对象的指针可以被 delete
 
 ```C++
-const int *p = new const int(1);
-delete p;	//释放一个 const 对象
+const int *p = new const int(1);delete p;	//释放一个 const 对象
 ```
 
 **动态对象的生存期到释放时为止**
 
 ```C++
-void fun()
-{
-    int *p = new int;
-}	// 内置指针类型 p 离开了作用域, 什么都没有发生, 所以 p 指向的内存没有被释放, 依然存在
+void fun(){    int *p = new int;}	// 内置指针类型 p 离开了作用域, 什么都没有发生, 所以 p 指向的内存没有被释放, 依然存在
 ```
 
 **delete 之后重置指针值**
@@ -1923,9 +1755,7 @@ void fun()
 空悬指针: 指向一块曾经保存过数据但现在被释放了内存的指针
 
 ```C++
-int *p = new int;
-delete p;
-p = nullptr;	// 释放 p 指向的内存后, 将 p 赋为空指针
+int *p = new int;delete p;p = nullptr;	// 释放 p 指向的内存后, 将 p 赋为空指针
 ```
 
 #### 12.1.3 shared_ptr 和 new 结合使用
@@ -1945,10 +1775,7 @@ shared_ptr<int> p(new int(1));	// p 指向值为 1 的 int
 shared_ptr 必须显式绑定内置指针
 
 ```C++
-shared_prt<int> fun()
-{
-    return shared_prt<int>(new int(1));
-}
+shared_prt<int> fun(){    return shared_prt<int>(new int(1));}
 ```
 
 如果将智能指针绑定到类类型的指针时, 需要提供专门的操作来代替 delete
@@ -2066,4 +1893,48 @@ p3 = p;					// 错误, unique_ptr 不支持赋值
 | u.reset()             | 释放 u 指向的对象                                            |
 | u.rest(nullptr)       | 释放 u 指向的对象, u 置为空                                  |
 | u.rest(q)             | 释放 u 指向的对象, u 管理 q                                  |
+
+**通过 release 和 reset 转移指针所有权**
+
+```C++
+unique_ptr<int> p1(new int(1));
+
+unique_ptr<int> p2(p1.release());	// p1 放弃管理权, 转移管理的指针给 p2, p1 置为空
+
+p2.reset(p1.release());		// p2 释放了原来指向的内存, p1 放弃了管理权, 把管理的指针转移给 p2, p1 置为空
+```
+
+**传递 unique_ptr 参数和返回 unique_ptr**
+
+不能拷贝和赋值 unique_ptr 的规则有一个例外: 
+
+**可以拷贝和赋值一个将要销毁的 unique_ptr 对象**
+
+```C++
+unique_ptr<int> fun()
+{
+    return unique<int>(new int(1));
+}
+
+unique_ptr<int> fun()
+{
+    unique<int> res(new int(1))
+    return res;
+}
+```
+
+**向 unique_ptr 传递删除器**
+
+unique_ptr 默认使用 delete 释放内存
+
+但可以**重载** unique_ptr 中默认的删除器
+
+```C++
+unique_ptr<管理的对象类型, 删除器类型> p(对象, 删除器);
+
+void end() {}	// 自定义的删除器
+unique_ptr<int, decltype(end) *> p(new int(1), end);
+```
+
+
 
