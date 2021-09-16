@@ -2121,3 +2121,19 @@ allocator 指向的对象销毁后, 可以调用 deallocate 来释放内存
 alloc,deallocate(p, 5);			// 数字必须与分配时的一致
 ```
 
+**拷贝和填充未初始化的内存**
+
+| allocator 算法                 | 说明                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
+| 在给定位置创建元素             |                                                              |
+| uninitialized_copy(b, e, b2)   | 从 b 到 e 的输入范围中拷贝元素到迭代器 b2 开始的原始内存中<br />返回最后一个构造的元素之后的位置的迭代器 |
+| uninitialized_copy_n(b, n, b2) | 从 b 指向的元素开始, 拷贝 n 个元素到 b2 开始的原始内存中<br />返回最后一个构造的元素之后的位置的迭代器 |
+| uninitialized_fill(b, e, t)    | 在 b 到 e 的范围中创建对象, 初始化值为 t                     |
+| uninitialized_fill_n(b, n, t)  | 从 b 指向的内存中创建 n 个对象, 初始化值为 t                 |
+
+```C++
+auto p = alloc.allocate(v.size() * 2);		// 分配 2 倍 v 大小的内存
+auto q = uninitialized_copy(v.begin(), v.end(), p);		// 将 v 的数据拷贝到分配的前一半空间
+uninitialized_fill_n(q, v.size(), 0);		// 在分配的后一半空间赋值为 0
+```
+
