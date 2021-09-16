@@ -2052,5 +2052,72 @@ p.release();	// p 自动调用 delete [] 销毁管理的指针
   *(p + 1) = 10;
   ```
 
-  
+
+#### 12.2.2 allocator 类
+
+new 将内存分配和对象构造组合在一起
+
+delete 将内存释放和对象析构组合在一起
+
+```C++
+string *p = new string[10];	// 第一次赋值
+
+string *q = p;
+for(int i = 0;i < 5; i++)	// 实际使用时可能只是用分配的一部分内存
+{
+    string s;
+    cin >> s;
+    *q++ = s;				// 第二次赋值
+}
+delete [] p;				// 销毁分配的内存, 该内存只使用了一部分, 且赋值了两次
+```
+
+> 更重要的是, new 这种分配内存的方式**不能对没有默认构造函数的类使用**
+
+**allocator 类**
+
+头文件 <memory\>
+
+将内存分配和对象构造分离开
+
+**类型感知**的内存分配方法, 分配的内存是**原始的, 未构造的**
+
+```C++
+allocator<string> alloc;		// alloc 是可以分配 string 对象的 allocator 对象
+auto p = alloc.allocate(5);		// 分配 5 个未初始化的 string 对象
+```
+
+| allocator 操作       | 说明                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| allocator<T\> a      | allocator 对象 a                                             |
+| a.allocate(n)        | 分配一块 n 个 T 大小的, 原始的,未构造的内存                  |
+| a.deallocate(p, n)   | 释放从 T* p 地址开始的 n 个 T 大小的内存<br />p 必须是 allocate 返回的指针<br />调用 deallocate 前, 必须对指向的每个对象调用 destory 方法来执行析构函数 |
+| a.construct(p, args) | 在 T* p 指向的内存中用 args 参数构造一个 T 对象, args 被传递给 T 的构造函数 |
+| a.destory(p)         | 对 T* p 指向的对象执行析构函数                               |
+
+**allocator 分配未构造的内存**
+
+```C++
+allocator<string> alloc;
+auto p = alloc.allocate(5);
+auto q = p;
+alloc.construct(q++);			// 构造空 string
+alloc.construct(q++, 3, 'c');	// 构造 "ccc"
+alloc.construct(q++, "hello");	// 构造 "hello"
+```
+
+使用完 allocator 指向的对象后, 要调用 destory 来为对象执行析构函数
+
+```C++
+while(q != p)
+    alloc.destory(--q);
+```
+
+> 只能对构造了的元素执行 destory 操作
+
+allocator 指向的对象销毁后, 可以调用 deallocate 来释放内存
+
+```C++
+alloc,deallocate(p, 5);			// 数字必须与分配时的一致
+```
 
