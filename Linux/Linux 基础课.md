@@ -1063,3 +1063,104 @@ scp -P 22 source destination
 scp ~/.vimrc ~/.tmux.conf myserver:
 ```
 
+## git
+
+### 基本概念
+
+* 工作区: 仓库的目录, `.git` 所在的目录(`.git/../`)
+
+* 暂存区: 文件暂时存放的区域, `.git/index` 文件
+
+  > 类似缓存区, 当到达一定程度时把暂存区的所有内容 commit 为新的节点
+  >
+  > 工作区和暂存区独立于各个分支
+
+* 版本库: 管理代码的文件夹, `.git/` 文件夹
+* 版本的结构: 树形结构, 每个节点代表一个代码版本
+
+### 常用命令
+
+#### 1. 配置命令
+
+1. `git config --global user.name xxx`
+
+   > 设置全局用户名, 在 ~/.gitconfig 文件中记录
+
+2. `git config --global user.email xxx@xxx.com`
+
+   > 设置全局邮箱地址, 在 ~/.gitconfig 文件中记录
+
+3. `git init`
+
+   > 将当前目录配置为 git 仓库, 在 .git/ 中记录
+
+4. `git clone 用户@域名:路径/XXX.git/`
+
+   > 将远程仓库 `XXX.git/` 克隆到当前目录下
+
+5. `git remote add origin 用户名@域名:路径/XXX.git`
+
+   > 将本地仓库关联到远程仓库 origin
+
+#### 2. 信息查看命令
+
+1. `git status`      查看仓库状态
+
+2. `git diff XX`      查看工作区的文件与暂存区该文件的区别
+
+3. `git log`      查看当前分支的所有节点(**逆序输出**)
+
+   > git log --pretty=oneline
+
+4. `git reflog`      查看 `HEAD` 指针的移动历史(**逆序输出**)
+
+#### 3. 常用命令
+
+1. `git add XX`      将工作区的 XX 文件添加到暂存区
+   * `git add .`      将工作区的所有文件添加到暂存区
+
+2. `git commit -m "备注信息"`      将暂存区的所有内容提交到当前分支
+
+3. `git push`      将当前分支推送到远程仓库
+
+   * `git push -u/--set-upstream`      第一次推送, 添加跟踪用的索引 
+
+   * `git push origin branch`
+
+     > 将本地分支 branch 推送到远程仓库 origin
+
+4. `git pull`      将远程仓库的当前分支与本地仓库的当前分支合并
+   * `git pull origin branch`      将远程仓库 origin 的 branch 分支合并到本地仓库的当前分支
+
+5. `git rm XX`      将 XX 文件从工作区和暂存区删除
+
+   ```C++
+   git rm XX	// 删除工作区和暂存区的 XX 文件
+   等价于
+   rm XX		// 删除工作区的 XX 文件
+   git add XX	// 将删除 XX 文件的操作提交到暂存区, 相当于删除暂存区的 XX 文件
+       
+   ```
+
+   * `git rm --cached XX`      将文件从暂存区删除, 本质是在索引中删除
+
+     > 工作区的 XX 文件还保留着
+
+6. `git reset --hard HEAD^` 或 `git reset --hard HEAD~`
+
+   > HEAD 指向父亲节点, 版本回滚到上一版本
+   >
+   > 并清空工作区和暂存区的修改, 即清空没有 commit 的所有修改
+
+   * `git reset --hard HEAD^^`      回滚两个版本
+   * `git reset --hard HEAD~10`      回滚 10 个版本
+   * `git reset --hard 版本号`      回滚到指定版本, 版本号是节点 hash 值的前 7 位
+
+7. `git restore XX`      清空工作区 XX 文件相对于暂存区的修改
+
+   * `git restore --staged XX`      将暂存区的 XX 文件设为 unstage 状态
+
+#### 4. 分支命令
+
+
+
