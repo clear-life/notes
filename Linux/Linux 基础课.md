@@ -1130,7 +1130,7 @@ scp ~/.vimrc ~/.tmux.conf myserver:
      > 将本地分支 branch 推送到远程仓库 origin
 
 4. `git pull`      将远程仓库的当前分支与本地仓库的当前分支合并
-   * `git pull origin branch`      将远程仓库 origin 的 branch 分支合并到本地仓库的当前分支
+   * `git pull origin branch_name`      将远程仓库 origin 的 branch_name 分支合并到本地仓库的当前分支
 
 5. `git rm XX`      将 XX 文件从工作区和暂存区删除
 
@@ -1162,5 +1162,55 @@ scp ~/.vimrc ~/.tmux.conf myserver:
 
 #### 4. 分支命令
 
+**git checkout**
 
+1. `git checkout branch_name`
+
+   > 切换到 branch_name 分支
+
+2. `git checkout -b branch_name`
+
+   > 创建并切换到 branch_name 分支
+
+3. `git checkout -t origin/branch_name`
+
+   > 将远程仓库 origin 的 branch_name 分支拉取到本地
+
+**git branch**
+
+1. `git branch`      查看所有分支和当前所处分支
+2. `git branch branch_name`      创建 branch_name 分支
+3. `git branch -d branch_name`      删除 branch_name 分支
+
+4. `git branch --set-upstream-to=origin/branch_name1 branch_name2`
+
+   > 将远程仓库 origin 的 branch_name1 分支与本地仓库的 branch_name2 分支对应
+
+**git merge**
+
+`git merge branch_name`      将 branch_name 分支合并到当前分支
+
+**git push**
+
+1. `git push --set-upstream origin branch_name`
+
+   > 将当前分支设为远程仓库 origin 的 branch_name 分支, 然后 push
+
+2. `git push -d origin branch_name`      删除远程仓库 origin 的 branch_name 分支
+
+**git stash**
+
+1. `git stash`      将工作区和暂存区的修改存入栈中
+
+2. `git stash apply`
+
+   > 将栈顶存储的修改恢复到当前分支, 但不删除栈顶元素
+
+3. `git stash drop`      删除栈顶元素
+
+4. `git stash pop`    
+
+   > 将栈顶元素恢复到当前分支, 并删除栈顶元素
+
+5. `git stash list`      查看栈中所有元素
 
