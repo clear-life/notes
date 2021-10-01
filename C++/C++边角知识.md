@@ -22,5 +22,16 @@ memset(a, 128, sizeof(a));	// 从 a 开始的 sizeof(a) 个字节为 10000000 , 
 
 
 
+**isdigit**
 
+判断字符 c 是否是 0 ~ 9 之间的数字
+
+```cpp
+if(isdigit(char c)
+   cout << "是数字" << endl;
+else
+   cout << "不是数字" << endl;
+```
+
+ 
 
