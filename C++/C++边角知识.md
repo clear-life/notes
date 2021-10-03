@@ -35,3 +35,11 @@ else
 
  
 
+**加速输入输出**
+
+```cpp
+ios::sync_with_stdio(false);	// 设置不兼容 stdio
+cin.tie(0);						// 解除 cin 和 cout 的绑定, 加快效率
+cout.tie(0);
+```
+
