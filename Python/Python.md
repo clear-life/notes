@@ -20,7 +20,9 @@ a = [x**2 for x in range(-3, 3) if x >= -1]
 string.strip(',')	# 删除字符串头尾的 ','
 ```
 
+**str.endswith('xxx')**
 
+判断字符串 str  是否以 'xxx' 为结尾
 
 ### 装饰器
 
