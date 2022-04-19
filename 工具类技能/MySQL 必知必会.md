@@ -64,29 +64,29 @@ limit x offset b 从偏移 b 开始的不多于 x 行
 order by 列名1, 列名2, 列名3		排序(默认升序), 列名可以是任意的列
 desc 		降序
 where 		过滤
+
+union 		组合查询, 默认去除重复行
+union all	不去除重复行
 ```
 
 
 
 ## 增删改查
 
-### 查
+### select
 
 ```mysql
-select 列名1, 列名2, 列名3, ...
-from 表名
-limit b, x;		# 从 b 开始的不多于 x 行, 下标从 0 开始
-
-select *
-from 表名;
-
 select distinct 列名
 from 表名;		# 返回不重复的值
 
-select 列名
+select 列名1, 列名2, 列名3, ...
 from 表名
 where 条件
 order by 列名 desc
-limit x;
+limit b, x;		# 从 b 开始的不多于 x 行, 下标从 0 开始
+
+select 列, from 表, where 条件
+选完之后排个序 order
+排序后输出哪几列
 ```
 
