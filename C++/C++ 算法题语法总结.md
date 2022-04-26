@@ -43,6 +43,18 @@ else
 
 
 
+**范围 for 循环**
+
+```C++
+map<int, int> mp;
+for(auto [a, b] : mp)
+    cout << a << " " << b << endl;
+
+for(auto &[a, b] : mp)
+```
+
+
+
 ## STL
 
 ### 常用容器
