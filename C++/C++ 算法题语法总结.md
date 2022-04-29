@@ -29,6 +29,10 @@ if(isdigit(char c)
    cout << "是数字" << endl;
 else
    cout << "不是数字" << endl;
+
+// 将字符 c 转化为小写/大写字母, 如果 c 是其余字符, 则不变
+tolower(c);
+toupper(c);
 ```
 
 
@@ -202,13 +206,13 @@ top		// 返回栈顶元素
 ```C++
 #include <set>
 insert()	// 插入
-find()		// 查找
+find()		// 查找某个数, 返回一个迭代器
 count()		// 返回某个数的个数
 erase()		// 删除元素
     输入数 x, 删除所有 x
     输入迭代器, 删除迭代器对应的元素
-lower_bound(x)	// 返回 >= x 的最小数的迭代器, 不存在就返回 endl 迭代器
-upper_bound(x)	// 返回 > x 的最小数的迭代器, 不存在就返回 endl 迭代器
+lower_bound(x)	// 返回 >= x 的最小数的迭代器, 不存在就返回 end 迭代器
+upper_bound(x)	// 返回 > x 的最小数的迭代器, 不存在就返回 end 迭代器
 ```
 
 
