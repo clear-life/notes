@@ -391,3 +391,36 @@ os.cpu_count() CPU数量
 os.urandon(n) 返回 n 字节长度的随机字符串,一般用于加解密运算
 ```
 
+
+
+## matplotlib
+
+### matplotlib.pyplot
+
+```python
+import matplotlib.pyplot as plt
+```
+
+
+
+**默认配置**
+
+```python
+plt.plot(X, Y)	# 绘制曲线
+plt.show()		# 显示图像
+```
+
+
+
+**plt.plot**
+
+```python
+plot(X, Y, color="blue", linewidth=2.5, linestyle="-", label="name")	
+# X: X 轴坐标
+# Y: Y 轴坐标
+# color: 线条颜色
+# linewidth: 线条宽度
+# linestyle: 线条样式
+# label: 线条标签
+```
+
