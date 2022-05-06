@@ -110,3 +110,5 @@ void bfs()
 [岛屿数量](https://leetcode-cn.com/problems/number-of-islands/)	连通块数量计算: dfs, bfs, 并查集
 
 [打开转盘锁](https://leetcode-cn.com/problems/open-the-lock/)	入队时访问元素效率高
+
+[路径总和](https://leetcode-cn.com/problems/path-sum/)	入队元素为结构体
