@@ -1,5 +1,69 @@
 # BFS
 
+## 思路(伪代码)
+
+**一次循环访问一个结点**
+
+> 出队时访问结点
+
+```C++
+queue q
+q.push(起点)
+
+while(q.size())
+{
+    auto u = q.front(); q.pop();
+    visit(u)	// 结点出队时访问, 好处是不用考虑边界情况(即不用在加入起点时访问起点), 坏处是慢一点点和多遍历一层
+    for v  in  u 的邻接点
+        if v 未遍历过	// 有些时候不用加上是否遍历过的判断, 即使遍历过了我依然要再遍历一次
+            q.push(v)
+}
+```
+
+**一次循环访问一层结点**
+
+> 出队时访问结点
+
+```C++
+queue q
+q.push(起点)
+    
+while(q.size())
+{
+    int len = q.size();
+    
+    while(len--)
+    {
+        auto u = q.front(); q.pop();
+        visit(u)
+        for v  in  u 的邻接点
+            if v 未遍历过
+                q.push(v)
+	}
+}
+```
+
+**入队时访问结点**
+
+```C++
+queue q
+visit(起点)
+q.push(起点)
+    
+while(q.size())
+{
+    auto u = q.front(); q.pop();
+    for v  in  u 的邻接点
+        if v 未遍历过
+            visit(v)
+            q.push(v)
+}
+```
+
+
+
+
+
 ## 数组模拟
 
 ```C++
@@ -36,6 +100,8 @@ void bfs()
 ```
 
 ## 题库
+
+[二叉树的层序遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/)	一次遍历访问一层结点
 
 [走迷宫](https://www.acwing.com/problem/content/846/)	一个起点的 bfs
 
