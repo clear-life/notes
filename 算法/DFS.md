@@ -1,5 +1,13 @@
 # DFS
 
+用 dp 的思想来考虑递归
+
+**树形 dp**
+
+自底向上: 用子树信息组合出父节点信息
+
+自顶向下: 子树信息由父结点信息得出, 父结点向子节点传递信息
+
 ## 思路(伪代码)
 
 ```C++
@@ -54,4 +62,4 @@ void dfs(TreeNode* node, int d)
 
 [对称二叉树](https://leetcode-cn.com/problems/symmetric-tree/)	逻辑判断递归
 
-[路径总和](https://leetcode-cn.com/problems/path-sum/)	dfs bfs
+[路径总和](https://leetcode-cn.com/problems/path-sum/)	dfs bfs, 自定向下
