@@ -33,6 +33,13 @@ else
 // 将字符 c 转化为小写/大写字母, 如果 c 是其余字符, 则不变
 tolower(c);
 toupper(c);
+   
+stoi(str, st, k);	// 将从 str 字符串 st 位置及以后的部分看作 k 进制并转化为十进制的数字
+   
+// 将十六进制补码字符串转化为十进制整数, 32 位
+long long a = stoll(s, 0, 16);
+long long res = a;
+if(a >= 1ll << 31) res = a - (1ll << 32);
 ```
 
 
