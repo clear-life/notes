@@ -24,11 +24,14 @@ cout.tie(0);
 ```C++
 strlen(C 风格字符数组的某个起始位置)		// 返回从起始位置开始的长度, 头文件 cstring
     
-// 判断字符 c 是否是 0 ~ 9 之间的数字
-if(isdigit(char c)
-   cout << "是数字" << endl;
-else
-   cout << "不是数字" << endl;
+// 判断是否是数字和小写字母
+isdigit(c)	// 数字
+islower(c)	// 小写字母
+isupper(c)	// 大写字母
+isalpha(c)	// 字母
+isalnum(c)	// 字母和数字
+
+string.substr(pos, len)	// 从 pos 开始的 len 个长度的子字符串
 
 // 将字符 c 转化为小写/大写字母, 如果 c 是其余字符, 则不变
 tolower(c);
