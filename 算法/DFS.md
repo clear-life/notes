@@ -10,16 +10,55 @@
 
 ## 思路(伪代码)
 
+和一般的 bfs 一样, dfs 也是出队时访问
+
 ```C++
 void dfs(int u)
 {
-    visit(u)
+    visit(u)	// 相当于出队
         
     for v  in  u 的邻接点
         if v 未遍历过
-            dfs(v)
+            dfs(v)	// 相当于入队
+        else
+            做出相应操作
 }
 ```
+
+希望遍历每个点的所有邻接点时用, 无论邻接点是否遍历过
+
+```C++
+type dfs(int u)
+{
+    if u 遍历过 
+        return 相应的值
+        
+    visit(u)	// 相当于出队
+        
+    for v  in  u 的邻接点
+        dfs(v)	// 相当于入队
+}
+```
+
+显示用栈实现 DFS
+
+```C++
+stk.push(root)
+while(stk.size())
+{
+    auto u = stk.top(); stk.pop();
+    visit(u);
+    st[u] = true;
+    
+    for v  in  u 的邻接点
+        if v 未遍历过
+            stk.push(v)
+        else
+            ...
+}
+```
+
+
 
 [二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)	
 
@@ -63,3 +102,5 @@ void dfs(TreeNode* node, int d)
 [对称二叉树](https://leetcode-cn.com/problems/symmetric-tree/)	逻辑判断递归
 
 [路径总和](https://leetcode-cn.com/problems/path-sum/)	dfs bfs, 自定向下
+
+[克隆图](https://leetcode-cn.com/problems/clone-graph/)	dfs 重复判断可以在访问时判断, 模板增加重复点的处理逻辑
