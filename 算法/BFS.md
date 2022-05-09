@@ -112,3 +112,5 @@ void bfs()
 [打开转盘锁](https://leetcode-cn.com/problems/open-the-lock/)	入队时访问元素效率高
 
 [路径总和](https://leetcode-cn.com/problems/path-sum/)	入队元素为结构体
+
+[二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)	层序遍历序列化与层序遍历反序列化
