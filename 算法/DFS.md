@@ -104,3 +104,6 @@ void dfs(TreeNode* node, int d)
 [路径总和](https://leetcode-cn.com/problems/path-sum/)	dfs bfs, 自定向下
 
 [克隆图](https://leetcode-cn.com/problems/clone-graph/)	dfs 重复判断可以在访问时判断, 模板增加重复点的处理逻辑
+
+[二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)	dfs 可以返回子树的状态
+
