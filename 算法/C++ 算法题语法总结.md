@@ -189,6 +189,9 @@ pop_back() pop_front()
 #### priority_queue
 
 ```C++
+// 初始化
+priority_queue<int> q(v.begin(), v.end());	// v 是容器
+
 // 默认大顶堆
 push()	// 插入元素
 pop		// 弹出堆顶元素
