@@ -240,6 +240,13 @@ lower_bound()/upper_bound()
     
 map<string, int> m;
 m["yjq"] = 1;	// [] 随机访问
+
+// 遍历map
+map<int, int> mp;
+for(auto [a, b] : mp)
+    cout << a << " " << b << endl;
+
+for(auto &[a, b] : mp)
 ```
 
 
