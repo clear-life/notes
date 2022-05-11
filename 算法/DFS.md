@@ -50,7 +50,7 @@ while(stk.size())
     visit(u);
     st[u] = true;
     
-    for v  in  u 的邻接点
+    for v  in  u 的邻接点	// 跟递归实现的方式要反着来(如果考虑顺序的话, 如果不考虑就无所谓)
         if v 未遍历过
             stk.push(v)
         else
