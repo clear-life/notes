@@ -226,6 +226,37 @@ erase()		// 删除元素
     输入迭代器, 删除迭代器对应的元素
 S.lower_bound(x)	// 返回 >= x 的最小数的迭代器, 不存在就返回 end 迭代器
 S.upper_bound(x)	// 返回 > x 的最小数的迭代器, 不存在就返回 end 迭代器
+    
+
+// 初始化
+unordered_set<int> set;
+
+// 插入
+set.insert(key);
+
+// 删除
+set.erase(key) 		// 删除所有值为 key 的元素
+set.erase(iterator)	// 删除迭代器对应的值
+set.erase(set.find(key))	// 删除一个值为 key 的元素
+   
+// 查询
+set.find(key)		// 返回值为 key 的一个元素的迭代器
+
+// 查询元素的个数
+set.count(key)
+
+// 集合大小
+set.size()
+
+// 遍历集合
+for(auto it = set.begin(); it != set.end(); it++)
+    cout << *it << " ";
+
+// 清空
+set.clear()
+    
+// 查看集合是否为空
+set.empty()
 ```
 
 
