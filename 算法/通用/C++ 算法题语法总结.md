@@ -252,6 +252,9 @@ set.size()
 for(auto it = set.begin(); it != set.end(); it++)
     cout << *it << " ";
 
+for(auto x : set)
+    cout << x << " ";
+
 // 清空
 set.clear()
     
@@ -281,6 +284,46 @@ for(auto [a, b] : mp)
     cout << a << " " << b << endl;
 
 for(auto &[a, b] : mp)
+```
+
+#### unordered_map
+
+```C++
+#include <unordered_map>
+
+// 初始化 
+unordered_map<int, int> hash
+
+// 插入
+hash.insert(make_pair(k, v))
+hash.insert({k, v})
+    
+// 更新(如果没有就插入)
+hash[k] = v
+    
+// 查询
+hash[k]
+    
+// 根据 key 删除元素
+hash.erase(key)
+ 
+// 计数
+hash.count(key)
+    
+// size
+hash.size()
+    
+// 遍历
+for(auto &[k, v] : hash)
+    cout << v << " "
+for(auto it = hash.begin(); it != hash.end(); i++)
+    k = it->first, v = it->second
+
+// 清空
+hash.clear()
+
+// 是否为空
+hash.empty()
 ```
 
 
