@@ -107,3 +107,4 @@ void dfs(TreeNode* node, int d)
 
 [二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)	dfs 可以返回子树的状态
 
+[二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)	重要, dfs 序列化与 dfs 反序列化
