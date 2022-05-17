@@ -219,6 +219,18 @@ pop		// 弹出堆顶元素
 top		// 返回堆顶元素
     
 priority_queue<int, vector<int>, greater<int>> heap;	// 定义小顶堆
+
+// 自定义比较函数
+struct cmp
+{
+    bool operator()(const int a, const int b) 
+    {
+        return a < b;
+	}
+}
+priority_queue<int, vector<int>, cmp> heap;		// cmp 作为一个类型
+
+sort(v.begin(), v.end(), cmp());				// cmp 作为一个函数
 ```
 
 
