@@ -31,6 +31,9 @@ isupper(c)	// 大写字母
 isalpha(c)	// 字母
 isalnum(c)	// 字母和数字
 
+// 获取一行字符, 包含空格
+getline(cin, s);
+    
 string.substr(pos, len)	// 从 pos 开始的 len 个长度的子字符串
 
 // 将字符 c 转化为小写/大写字母, 如果 c 是其余字符, 则不变
@@ -45,6 +48,21 @@ long long res = a;
 if(a >= 1ll << 31) res = a - (1ll << 32);
 ```
 
+**stringstream**
+
+字符串流
+
+```C++
+#include <sstream>
+
+string s, word;			// s 中可以含空白符
+stringstream ssin(s);	// 字符串流绑定到 s 上
+while(ss >> word)		// ss 会把 s 中每个单词输入到 word 上
+{
+    ...
+}
+```
+
 
 
 #### `<algorithm>`
@@ -52,7 +70,10 @@ if(a >= 1ll << 31) res = a - (1ll << 32);
 ```C++
 // 最值
 *max_element(v.begin(), v.end());	
-*min_element(v.begin(), v.end());	
+*min_element(v.begin(), v.end());
+
+// 累加
+accumulate(v.begin(), v.end(), 初值);
 ```
 
 
