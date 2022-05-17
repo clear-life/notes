@@ -58,6 +58,26 @@ while(stk.size())
 }
 ```
 
+### 回溯
+
+出队时访问
+
+```C++
+dfs(int u)
+{
+    st[u] = true;
+    visit(u)
+        
+   	for v  in  u 的邻接点	// 跟递归实现的方式要反着来(如果考虑顺序的话, 如果不考虑就无所谓)
+        if v 未遍历过
+            dfs(v)
+        else
+            ...
+            
+    st[u] = false;
+}
+```
+
 
 
 [二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)	
