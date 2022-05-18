@@ -131,6 +131,6 @@ void dfs(TreeNode* node, int d)
 
 [克隆图](https://leetcode-cn.com/problems/clone-graph/)	dfs 重复判断可以在访问时判断, 模板增加重复点的处理逻辑
 
-[二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)	dfs 可以返回子树的状态
+[二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)	dfs 可以返回子树的状态, 返回值用状态码表示
 
 [二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)	重要, dfs 序列化与 dfs 反序列化
