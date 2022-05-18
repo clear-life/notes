@@ -78,7 +78,7 @@ dfs(int u)
 }
 ```
 
-
+**递归终止条件**: **遍历完所有结点**, 有时候**递归到空结点**等价于该终止条件
 
 [二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)	
 
@@ -116,6 +116,12 @@ void dfs(TreeNode* node, int d)
     if(node->right) dfs(node->right, d + 1);
 }
 ```
+
+**后序遍历与 dp**
+
+自顶向下的 dp 思想: 假定子问题的解得到了, 然后由子问题的解组合出原问题的解
+
+后序遍历视角下的 dp : 先递归得到所有子树的解, 然后遍历根节点得到整棵树的解
 
 ## 题库
 
