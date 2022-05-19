@@ -120,3 +120,13 @@ void bfs()
 [路径总和](https://leetcode-cn.com/problems/path-sum/)	入队元素为结构体
 
 [二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)	层序遍历序列化与层序遍历反序列化
+
+# 提高课知识
+
+**BFS**: 1. 求**最小**  2. 基于**迭代**
+
+## 应用
+
+### flood fill 算法
+
+尽量用 bfs 实现, 因为 dfs 有可能爆栈
