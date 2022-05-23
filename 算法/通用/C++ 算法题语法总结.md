@@ -178,15 +178,14 @@ memset(a, -1, sizeof a);	// a 数组的值都被初始化为 {-1, -1}
 #### string
 
 ```C++
-string a = "ab"
-a += "b"
-a += 'c'
+string s = "ab"
+s += "b"
+s += 'c'
     
-a.substr(1, 2)		// 返回从下标为 1 开始, 长度为 2 的子串
-a.substr(1)
-a.length()			// 返回字符串长度
+s.substr(1, 2)		// 返回从下标为 1 开始, 长度为 2 的子串
+s.substr(1)
     
-a.c_str()			// 返回对应 C 字符串的首地址
+s.find(c)		// 返回字符串 s 中字符 c 的第一个位置, 失败返回 s.npos
 ```
 
 
