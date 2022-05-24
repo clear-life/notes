@@ -78,6 +78,10 @@ while(ss >> word)		// ss 会把 s 中每个单词输入到 word 上
 *max_element(v.begin(), v.end());	
 *min_element(v.begin(), v.end());
 
+// min max
+min(a, b) max(a, b)	// a 和 b 的类型必须要相同
+// a 是 int, b 是 double/ size_type 都不行, 必须进行强制类型转换
+
 // 累加
 accumulate(v.begin(), v.end(), 初值);
 ```
