@@ -121,6 +121,8 @@ void bfs()
 
 [二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)	层序遍历序列化与层序遍历反序列化
 
+[单词接龙](https://leetcode.cn/problems/word-ladder/)	双向广搜必须一次扩展一层
+
 # 提高课知识
 
 **BFS**: 1. 求**最小**  2. 基于**迭代**
