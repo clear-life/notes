@@ -123,6 +123,8 @@ void bfs()
 
 [单词接龙](https://leetcode.cn/problems/word-ladder/)	双向广搜必须一次扩展一层
 
+[蛇梯棋](https://leetcode.cn/problems/snakes-and-ladders/)	待研究
+
 # 提高课知识
 
 **BFS**: 1. 求**最小**  2. 基于**迭代**
