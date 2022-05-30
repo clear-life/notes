@@ -137,6 +137,20 @@ void dfs(TreeNode* node, int d)
 
 [太平洋大西洋水流问题](https://leetcode.cn/problems/pacific-atlantic-water-flow/)	flood fill 算法
 
+[找到最终的安全状态](https://leetcode.cn/problems/find-eventual-safe-states/)	判断有向图的每个结点是否有回路
+
+> 1. 结点有回路: 从该结点出发的所有路径中 [存在回路 / 存在一条路径没有终点]
+>
+> 2. 结点没有回路: 从该节点出发的所有路径 [都没有回路 / 终点都是出度为 0 的点]
+>
+> 证: 
+>
+> 假定从某点出发的所有路径都没有回路, 却存在一条路径没有终点
+>
+> 那么选定一个点 u, 其出度不为 0, 任选一个点邻边 v, 继续走下去, 同样操作 v
+>
+> 于是存在回路, 矛盾
+
 ## 算法提高课
 
 **点的模型**
