@@ -123,6 +123,18 @@ void dfs(TreeNode* node, int d)
 
 后序遍历视角下的 dp : 先递归得到所有子树的解, 然后遍历根节点得到整棵树的解
 
+## 应用
+
+**二分图**
+
+等价判定条件:
+
+1. 二分图
+2. 二染色
+3. 不存在奇数环
+
+染色法判断二分图
+
 ## 题库
 
 [对称二叉树](https://leetcode-cn.com/problems/symmetric-tree/)	逻辑判断递归
