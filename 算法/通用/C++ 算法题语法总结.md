@@ -190,7 +190,9 @@ memset(a, -1, sizeof a);	// a 数组的值都被初始化为 {-1, -1}
 #### string
 
 ```C++
+// 初始化
 string s = "ab"
+string s(10, 'a')	// s 是十个 'a'
 s += "b"
 s += 'c'
     
