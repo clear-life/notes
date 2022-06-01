@@ -123,6 +123,101 @@ void dfs(TreeNode* node, int d)
 
 后序遍历视角下的 dp : 先递归得到所有子树的解, 然后遍历根节点得到整棵树的解
 
+## 分类
+
+dfs 题目, 或者说**树与图**相关的题目, 都可以划分为这几类
+
+**分类依据: 是否需要遍历全图**
+
+1. **可行解**
+
+   在图中只需要找到**一个满足要求的结点**就可以结束了
+
+   此类问题常需要**设置 dfs 函数的返回值为 bool 类型, 表明是否找到解**
+
+   ```C++
+   bool dfs(int u)
+   {
+       if(u == target) return true;
+       
+       for v in adj[u]
+           if(dfs(v)) return true;
+       
+      	return false;
+   }
+   ```
+
+2. **最优解**或**所有解**
+
+   在图中需要**遍历完所有的结点**才能确定**最优解**和**所有满足条件的解**
+
+   因此此类问题**不需要设置 dfs 函数的返回值**
+
+   ```C++
+   void dfs(int u)
+   {
+       if(u 满足条件)
+       {
+           最优解: 更新最优解
+           所有解: 添加 u 到结果里
+           return;
+   	}
+       for v in adj[u]
+           dfs(v)
+   }
+   ```
+
+**分类依据: 为排列或组合方式枚举**
+
+1. **排列**
+
+   排列方式枚举元素, 元素之前有顺序关系
+
+   > 默认为不重复枚举, 即每个元素只使用一次
+
+   ```C++
+   bool st[N]
+   int path[N]
+   void dfs(int u)
+   {
+       if(u == n) return;
+      
+       for(int i = 1; i <= n; i++)
+           if(!st[i])
+           {
+               st[i] = true;
+               path[u] = i;
+               dfs(u + 1);
+               st[i] = false;
+           }
+   }
+   
+   dfs(0)
+   ```
+
+2. **组合**
+
+   组合方式枚举元素, 元素之间不考虑顺序
+
+   > 默认为不重复枚举, 即每个元素只使用一次
+
+   ```C++
+   int path[N]
+       
+   void dfs(int u, int start)
+   {
+       if(u == n) return;
+       
+       for(int i = start; i <= n; i++)
+       {
+   		path[u] = i;
+           dfs(u + 1, i + 1);
+       }
+   }
+   ```
+
+   
+
 ## 应用
 
 **二分图**
