@@ -338,6 +338,8 @@ void dfs(int k)
 
 [子集 II](https://leetcode.cn/problems/subsets-ii/)	有重复元素的幂集
 
+[活字印刷](https://leetcode.cn/problems/letter-tile-possibilities/)	排列式枚举去重
+
 > 1. 结点有回路: 从该结点出发的所有路径中 [存在回路 / 存在一条路径没有终点]
 >
 > 2. 结点没有回路: 从该节点出发的所有路径 [都没有回路 / 终点都是出度为 0 的点]
