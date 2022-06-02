@@ -274,6 +274,44 @@ void dfs(int k)
 
 ```
 
+**组合枚举去重**
+
+```C++
+// 思路 1 : 相等元素规定好次序, 如果上一相同元素未使用, 就不枚举当前的相同元素了
+void dfs(int k)
+{
+    if(k == n) return;
+    
+    dfs(k + 1);
+    
+    if(k && arr[k] == arr[k - 1] && !st[k - 1]) return;
+    
+    st[k] = true;
+    dfs(k + 1);
+    st[k] = false;
+}
+
+// 思路 2 : 枚举每个元素的次数, 这样就没有重复问题了
+void dfs(int k)
+{
+    if(k == n) return;
+    
+    // cnt 是第 k 个元素的次数
+    for(int i = 0; i <= cnt; i++)
+    {
+        dfs(j);		// j 是下一个不同元素
+        path.push_back(k);
+    }
+    
+    // 恢复现场
+    for(int i = 0; i <= cnt; i++)
+    {
+        dfs(j);		// j 是下一个不同元素
+        path.push_back(k);
+    }
+}
+```
+
 
 
 ## 题库
