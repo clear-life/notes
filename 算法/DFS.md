@@ -248,6 +248,10 @@ dfs 题目, 或者说**树与图**相关的题目, 都可以划分为这几类
 
 [课程表 II](https://leetcode.cn/problems/course-schedule-ii/)	dfs 实现 拓朴排序, 还需要判断环
 
+[全排列 II](https://leetcode.cn/problems/permutations-ii/)	不重复枚举, 枚举了某个元素后, 跳过后面所有的相同元素
+
+[组合总和](https://leetcode.cn/problems/combination-sum/)	组合枚举, 不考虑顺序
+
 > 1. 结点有回路: 从该结点出发的所有路径中 [存在回路 / 存在一条路径没有终点]
 >
 > 2. 结点没有回路: 从该节点出发的所有路径 [都没有回路 / 终点都是出度为 0 的点]
