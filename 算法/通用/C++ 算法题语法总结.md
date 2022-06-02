@@ -106,6 +106,20 @@ for(auto [a, b] : mp)
 for(auto &[a, b] : mp)
 ```
 
+### 位运算
+
+**异或**
+
+相同为 0, 不同为 1
+
+```C++
+// 将某位取反    
+int reverse(int x, int k)
+{
+	return x ^ (1 << k);
+}
+```
+
 
 
 ## STL

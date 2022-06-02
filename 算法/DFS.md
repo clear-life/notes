@@ -244,7 +244,9 @@ dfs 题目, 或者说**树与图**相关的题目, 都可以划分为这几类
 
 [太平洋大西洋水流问题](https://leetcode.cn/problems/pacific-atlantic-water-flow/)	flood fill 算法
 
-[找到最终的安全状态](https://leetcode.cn/problems/find-eventual-safe-states/)	判断有向图的每个结点是否有回路
+[找到最终的安全状态](https://leetcode.cn/problems/find-eventual-safe-states/)	判断有向图的每个结点是否有回路, dfs  判断环
+
+[课程表 II](https://leetcode.cn/problems/course-schedule-ii/)	dfs 实现 拓朴排序, 还需要判断环
 
 > 1. 结点有回路: 从该结点出发的所有路径中 [存在回路 / 存在一条路径没有终点]
 >
