@@ -230,6 +230,52 @@ dfs 题目, 或者说**树与图**相关的题目, 都可以划分为这几类
 
 染色法判断二分图
 
+## 相关技巧
+
+**去重枚举出的重复情况**
+
+**排列枚举去重**
+
+```C++
+bool st[N];
+int arr[N];
+sort(arr, arr + n);		// 需要对需要枚举的集合排好序
+
+void dfs(int k)
+{
+    if(k == n) return;
+    
+    for(int i = 0; i < n; i++)
+        // 第一种去重方式: 相等元素在一个位置只枚举一次, 后面的相等元素跳过去, 跳到下一个与当前已枚举元素不相等的元素
+        if(!st[i])
+        {
+            st[i] = true;
+            dfs(k + 1);
+            st[i] = false;
+            
+            // 当一个元素枚举到位置 k 后, 跳过后面的相等元素可以去重
+            int j = i + 1;
+            while(j < n && s[j] == s[i]) j++;
+            i = j - 1;
+		}
+    
+    	// 第二种去重方式: 给相等元素间规定好次序, 每次枚举都枚举第一个未使用的元素
+    	// 如果上一个元素与当前元素相等, 且上一个元素未使用, 则当前元素不能被使用
+    	if(!st[i])
+        {
+            // 如果 i 不是第一个元素, 且当前元素与上一元素相等, 且上一元素未使用, 则不枚举当前元素
+            if(i && s[i] == s[i - 1] && !st[i - 1]) continue;
+        	st[i] = true;
+            dfs(k + 1);
+            st[i] = false;
+        }
+}
+
+
+```
+
+
+
 ## 题库
 
 [对称二叉树](https://leetcode-cn.com/problems/symmetric-tree/)	逻辑判断递归
@@ -251,6 +297,8 @@ dfs 题目, 或者说**树与图**相关的题目, 都可以划分为这几类
 [全排列 II](https://leetcode.cn/problems/permutations-ii/)	不重复枚举, 枚举了某个元素后, 跳过后面所有的相同元素
 
 [组合总和](https://leetcode.cn/problems/combination-sum/)	组合枚举, 不考虑顺序
+
+[子集 II](https://leetcode.cn/problems/subsets-ii/)	有重复元素的幂集
 
 > 1. 结点有回路: 从该结点出发的所有路径中 [存在回路 / 存在一条路径没有终点]
 >
