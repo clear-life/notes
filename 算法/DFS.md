@@ -326,7 +326,7 @@ void dfs(int k)
 
 [二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)	重要, dfs 序列化与 dfs 反序列化
 
-[太平洋大西洋水流问题](https://leetcode.cn/problems/pacific-atlantic-water-flow/)	flood fill 算法
+[太平洋大西洋水流问题](https://leetcode.cn/problems/pacific-atlantic-water-flow/)	flood fill 算法, 位运算表示状态
 
 [找到最终的安全状态](https://leetcode.cn/problems/find-eventual-safe-states/)	判断有向图的每个结点是否有回路, dfs  判断环
 
@@ -339,6 +339,8 @@ void dfs(int k)
 [子集 II](https://leetcode.cn/problems/subsets-ii/)	有重复元素的幂集
 
 [活字印刷](https://leetcode.cn/problems/letter-tile-possibilities/)	排列式枚举去重
+
+[边界着色](https://leetcode.cn/problems/coloring-a-border/)	连通分量边界问题
 
 > 1. 结点有回路: 从该结点出发的所有路径中 [存在回路 / 存在一条路径没有终点]
 >
