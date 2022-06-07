@@ -68,9 +68,9 @@ while(q.size())
 
 
 
+## 算法实现
 
-
-## 数组模拟
+**数组模拟**
 
 ```C++
 int h[N], e[N], ne[N], idx;
@@ -100,10 +100,75 @@ void bfs()
 }
 ```
 
-## 链表实现
+## 题型
+
+**[最短路个数](https://www.luogu.com.cn/problem/P1144)**
 
 ```C++
+#include <iostream>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+const int N = 1e6 + 10, M = 4e6 + 10, MOD = 1e5 + 3;
+
+int h[N], e[M], ne[M], idx;
+int dist[N];
+int cnt[N];
+bool st[N];
+
+int n, m;
+
+void add(int a, int b)
+{
+    e[idx] = b, ne[idx] = h[a], h[a] = idx++;
+}
+
+int main()
+{
+    cin >> n >> m;
+    memset(h, -1, sizeof h);
+    for(int i = 0; i < m; i++)
+    {
+        int a, b;
+        cin >> a >> b;
+        add(a, b), add(b, a);
+    }
+    
+    queue<int> q;
+    q.push(1);
+    st[1] = true;
+    dist[1] = 0;
+    cnt[1] = 1;
+    
+    while(q.size())
+    {
+        auto u = q.front(); q.pop();
+        
+        // 此时, u 的上一层已经遍历完, u 的 cnt 和 dist 已经确定
+        // 可以用 u 的状态来更新下一层 u 的所有邻接点的状态了
+        for(int i = h[u]; i != -1; i = ne[i])
+        {
+            int v = e[i];
+            if(!st[v])
+            {
+                st[v] = true;
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+            // 无论如何, 此时 v 的 dist 已经确定, 可以用来判断 v 是否是 u 的下一层结点
+            if(dist[v] == dist[u] + 1) cnt[v] = (cnt[u] + cnt[v]) % MOD;
+        }
+    }
+    
+    for(int i = 1; i <= n; i++) cout << cnt[i] << endl;
+    
+    return 0;
+}
 ```
+
+
 
 ## 题库
 
