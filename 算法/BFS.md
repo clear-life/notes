@@ -113,12 +113,11 @@ using namespace std;
 
 const int N = 1e6 + 10, M = 4e6 + 10, MOD = 1e5 + 3;
 
-int h[N], e[M], ne[M], idx;
-int dist[N];
-int cnt[N];
-bool st[N];
-
 int n, m;
+int h[N], e[M], ne[M], idx;
+
+int dist[N], cnt[N];
+bool st[N];
 
 void add(int a, int b)
 {
@@ -138,9 +137,9 @@ int main()
     
     queue<int> q;
     q.push(1);
+    
     st[1] = true;
-    dist[1] = 0;
-    cnt[1] = 1;
+    dist[1] = 0, cnt[1] = 1;
     
     while(q.size())
     {
