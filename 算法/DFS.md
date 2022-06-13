@@ -261,6 +261,17 @@ res 分两种类型: **最优解**  和  **可行解**
 ```C++
 最优解对返回值的影响: void dfs()
 可行解对返回值的影响: bool dfs() 表明是否找到解
+    
+可行解 dfs 模板
+bool dfs(u)
+{
+    if(u == tar) return true;
+        
+    for ...
+        if(dfs(v)) return true;
+    
+    return false;
+}
 ```
 
 **2. 需要返回的信息**
