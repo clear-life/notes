@@ -450,6 +450,43 @@ void dfs(int u)		// 元素 u 应该放到哪个位置
 
 染色法判断二分图
 
+**DFS 求最小步数**
+
+**1. 全局变量法**
+
+用全局变量记录最小步数, 每到递归最底层就更新最小步数
+
+```C++
+int res;
+
+void dfs(u)
+{
+    if(u == n) 
+    {
+        res = min(res, ...);
+        return;
+    }
+    
+    ...
+}
+
+cout << res << endl;
+```
+
+**2. 迭代加深**
+
+从小到大枚举最小步数作为递归的最大层数
+
+```C++
+int max_depth;
+
+max_depth = 0;
+while(!dfs()) max_depth++;
+cout << max_depth << endl;
+```
+
+
+
 ## 相关技巧
 
 **去重枚举出的重复情况**
