@@ -18,9 +18,18 @@ c = getchar()	// cstdio 获取一个字符, 可以是空白符, 常用来吸收�
 <cstring> memset(a, -1/0/0x3f, sizeof(a));	// 按字节赋值
    
 // 加速输入输出
-ios::sync_with_stdio(false);	// 设置不兼容 stdio
+ios::sync_with_stdio(0);	// 设置不兼容 stdio
 cin.tie(0);						// 解除 cin 和 cout 的绑定, 加快效率
 cout.tie(0);
+
+
+// 不固定输入
+#include <sstream>
+
+string line;			// line 用于保存一行输入
+getline(cin, line);		// 接收一行字符, 包含空白符
+stringstream ssin(line);// 用 line 初始化字符流 ssin
+while(ssin >> a[n]) n++;// 用字符流按 a[n] 的类型输入给 a[n], 不包括空白符
 ```
 
 
