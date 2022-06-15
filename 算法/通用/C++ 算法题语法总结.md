@@ -56,6 +56,7 @@ tolower(c);
 toupper(c);
    
 stoi(str, st, k);	// 将从 str 字符串 st 位置及以后的部分看作 k 进制并转化为十进制的数字
+stoi(str)	// 将 str 转化为数字, 默认从 0 开始, 转化为十进制数
    
 // 将十六进制补码字符串转化为十进制整数, 32 位
 long long a = stoll(s, 0, 16);
