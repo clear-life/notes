@@ -65,10 +65,10 @@ if(a >= 1ll << 31) res = a - (1ll << 32);
 ```C++
 #include <sstream>
 
-string s, word;			// s 中可以含空白符
-getline(cin, s);
-stringstream ssin(s);	// 字符串流绑定到 s 上
-while(ss >> word)		// ss 会把 s 中每个单词输入到 word 上
+string line, word;		
+getline(cin, line);		// geline 可以输入空白符
+stringstream ssin(line);// 字符串流绑定到 line 上
+while(ssin >> word)		// ss 会把 s 中每个单词输入到 word 上
 {
     ...
 }
