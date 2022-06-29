@@ -136,6 +136,18 @@ int reverse(int x, int k)
 | &      | 按位与   |
 | &&     | 逻辑与   |
 
+## 注意事项
+
+不能在使用容器 size的同时, 改变容器 size
+
+```C++
+for(int i = 0; i < arr.size(); i++)
+{
+    ...
+    arr.push_back(..);
+}
+```
+
 
 
 ## STL
