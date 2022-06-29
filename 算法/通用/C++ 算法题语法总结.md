@@ -66,6 +66,7 @@ if(a >= 1ll << 31) res = a - (1ll << 32);
 #include <sstream>
 
 string s, word;			// s 中可以含空白符
+getline(cin, s);
 stringstream ssin(s);	// 字符串流绑定到 s 上
 while(ss >> word)		// ss 会把 s 中每个单词输入到 word 上
 {
