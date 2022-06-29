@@ -529,7 +529,7 @@ cout << max_depth << endl;
 
 **去重枚举出的重复情况**
 
-**排列枚举去重**
+### 排列枚举去重
 
 ```C++
 bool st[N];
@@ -569,7 +569,7 @@ void dfs(int k)
 
 ```
 
-**组合枚举去重**
+### 组合枚举去重
 
 ```C++
 // 思路 1 : 相等元素规定好次序, 如果上一相同元素未使用, 就不枚举当前的相同元素了
@@ -604,6 +604,22 @@ void dfs(int k)
         dfs(j);		// j 是下一个不同元素
         path.push_back(k);
     }
+}
+```
+
+### DFS 套 DFS
+
+dfs 嵌套另一个 dfs 时, 一定要弄明白两个 dfs 函数的具体功能, 就像 dp 问题定义好 $A_{ij}$ 的含义一样
+
+[二叉树中的列表](https://leetcode.cn/problems/linked-list-in-binary-tree/)	
+
+```C++
+dfs1 的定义
+bool dfs1(ListNode* head, TreeNode* root)	// 在 root 为根的子树中, 起点为 root, 能否匹配的上 head 链表
+    
+bool dfs2(ListNode* head, TreeNode* root)	// 在 root 为根的子树中, 以某个结点为起点, 能够匹配的上 head 链表
+{
+    return dfs1(head, root) || dfs2(head, root->left) || dfs2(head, root->next);
 }
 ```
 
