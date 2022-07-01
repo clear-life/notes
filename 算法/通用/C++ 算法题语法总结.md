@@ -76,29 +76,6 @@ while(ssin >> word)		// ss 会把 s 中每个单词输入到 word 上
 
 
 
-#### `<algorithm>`
-
-```C++
-// 最值
-*max_element(v.begin(), v.end());	
-*min_element(v.begin(), v.end());
-
-// min max
-min(a, b) max(a, b)	// a 和 b 的类型必须要相同
-// a 是 int, b 是 double/ size_type 都不行, 必须进行强制类型转换
-
-// 累加
-accumulate(v.begin(), v.end(), 初值);
-
-// 去除重复元素
-arr[N] = {...}
-
-sort(arr, arr + n);		// 去重前必须排序, 因为去重是把相邻重复元素去掉
-auto end = unique(arr, arr + n);	// 去除相邻的重复元素, 其实是重复元素的位置被后面的元素覆盖了, 返回最后一个不重复元素的下一位置, 也就是重复元素区域的第一个位置, 类型是迭代器
-int len = end - arr;	// end 迭代器减去数组首地址就是去重后数组的大小
-int len = unique(arr, arr + n) - arr;	// 一条语句实现去重 + 计算数组大小的功能
-```
-
 
 
 **范围 for 循环**
@@ -153,7 +130,40 @@ for(int i = 0; i < arr.size(); i++)
 
 ## STL
 
-### 常用容器
+### <algorithm\>
+
+```C++
+// 最值
+*max_element(v.begin(), v.end());	
+*min_element(v.begin(), v.end());
+
+// min max
+min(a, b) max(a, b)	// a 和 b 的类型必须要相同
+// a 是 int, b 是 double/ size_type 都不行, 必须进行强制类型转换
+
+// 累加
+accumulate(v.begin(), v.end(), 初值);
+
+// 去除重复元素
+arr[N] = {...}
+
+sort(arr, arr + n);		// 去重前必须排序, 因为去重是把相邻重复元素去掉
+auto end = unique(arr, arr + n);	// 去除相邻的重复元素, 其实是重复元素的位置被后面的元素覆盖了, 返回最后一个不重复元素的下一位置, 也就是重复元素区域的第一个位置, 类型是迭代器
+int len = end - arr;	// end 迭代器减去数组首地址就是去重后数组的大小
+int len = unique(arr, arr + n) - arr;	// 一条语句实现去重 + 计算数组大小的功能
+
+// lower_bound >=
+lower_bound(first, last, val);		// >= val 的第一个元素
+lower_bound(first, last, val, cmp);	// >= val 的第一个元素, cmp 指定大小关系
+
+// upper_bound >
+upper_bound(first, last, val);		// > val 的第一个元素
+upper_bound(first, last, val, cmp);	// > val 的第一个元素, cmp 指定大小关系
+```
+
+
+
+### 容器
 
 **vector**: 变长数组, 倍增思想
 
