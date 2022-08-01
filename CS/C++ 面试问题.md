@@ -5,6 +5,7 @@
 #### new
 
 ```C++
+// 变量
 int *p = new int;	// 默认初始化: 内置类型和组合类型的值未定义, 类类型调用默认构造函数
 int *p = new int();	// 值初始化
 delete p;
@@ -60,3 +61,44 @@ int main()
 }
 ```
 
+#### malloc
+
+```C++
+void* malloc(size_t size);	// size 以字节为单位
+
+int *p = (int *) malloc(n * sizeof(int));	
+free(p);
+```
+
+#### new 和 malloc 比较
+
+``` C++
+int *p = new int;
+void* malloc(size_t size);	// size 以字节为单位
+```
+
+new 更高级, malloc 更底层
+
+new 做的更全面, malloc 做的更基本
+
+**1. 输入**
+
+new: **类型**, 自动计算字节数
+
+malloc: **字节数**
+
+**2. 输出**
+
+new: **类型**
+
+malloc: **void ***
+
+| 比较     | new                                          | malloc             |
+| -------- | -------------------------------------------- | ------------------ |
+| 输入     | 类型, 自动计算字节数                         | 字节数             |
+| 输出     | 类型                                         | void *             |
+| 类型     | 运算符                                       | 库函数             |
+| 分配失败 | 抛出异常                                     | 返回 NULL          |
+| 过程     | 先底层调用 malloc 申请内存, 然后调用构造函数 | 向操作系统申请内存 |
+
+> delete 先调用析构函数, 再底层调用 free 释放内存
