@@ -102,3 +102,34 @@ malloc: **void ***
 | 过程     | 先底层调用 malloc 申请内存, 然后调用构造函数 | 向操作系统申请内存 |
 
 > delete 先调用析构函数, 再底层调用 free 释放内存
+
+```C++
+#include <iostream>
+
+using namespace std;
+
+
+int main()
+{
+    // int *p = (int *) malloc(16);
+    int n = 101;
+    // for(int i = 0; i < n; i++) p[i] = i;
+    // for(int i = 0; i < n; i++) cout << p[i] << " ";
+    // cout << endl;
+
+    // while(p)
+    //     free(p);
+
+    int *q = new int[100];
+    for(int i = 0; i < n; i++) q[i] = i;
+    for(int i = 0; i < n; i++) cout << q[i] << " ";
+    cout << endl;
+
+    delete [] q;
+
+    cout << "YES" << endl;
+
+    return 0;
+}
+```
+
