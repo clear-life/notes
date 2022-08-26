@@ -71,6 +71,38 @@
 | 指针 | 指针的大小     | 从指针开始, 到 '\0' 结束有几个字符 |
 | 参数 | 类型或变量     | char*                              |
 
+### memcpy
+
+一次拷贝一个字节
+
+```C++
+void* memcpy(void *des, const void *src, size_t n)
+{
+    if(des == nullptr || src == nullptr)
+        return nullptr;
+    if(des == src)
+        return des;
+    
+    char *a = static_cast<char*>(des);
+    const char *b = static_cast<const char*>(src);
+    
+    if(a > b && a < b + n)
+        for(size_t i = n - 1; i != -1; i--)
+            a[i] = b[i];
+    else
+        for(size_t i = 0; i < n; i++)
+            a[i] = b[i];
+}
+```
+
+一次拷贝四个字节
+
+```C++
+
+```
+
+
+
 ### const
 
 **const:** 修饰的值不能被修改, 只读. 必须在定义时初始化
@@ -416,7 +448,7 @@ new 做的更全面, malloc 做的更基本
 
 ### placement new
 
-placement new 是传入可 选参数 `placement_params` 的 new, 但并不申请内存, **只调用构造函数**
+placement new 是传入可选参数 `placement_params` 的 new, 但并不申请内存, **只调用构造函数**
 
 作用:  申请内存后, **可以重复构造和析构该内存**, **节省多次申请和释放内存的开销**
 
@@ -580,6 +612,10 @@ vector 有两个重要参数: size 和 capasity
 **reserve(n)**: **设置 capasity 不少于 n**
 
 **resize(n)**: **设置 size 为 n**, 多的擦去, 少的补上
+
+### string
+
+
 
 ## 智能指针
 
