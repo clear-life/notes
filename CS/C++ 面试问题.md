@@ -119,6 +119,7 @@ void* memcpy(void *des, const void *src, size_t n)
 
 1. **底层 const 指针**必须**由底层 const 指针接收**
 2. **const_cast** 只能将**底层 const 指针**改为**普通指针**
+3. **底层 const** 可以用来**区分函数重载**, 顶层 const 不能
 
 ### 四种类型转换符
 
@@ -482,9 +483,25 @@ C++ 中, 只有在**执行代码**时才会对**静态变量初始化**
 
 ### static 成员变量
 
-static 成员属于整个类, 在类外分配空间(static 区)
+static 成员属于整个类, 在**类外分配空间**(static 区)
 
-static 成员在初始化时分配内存, 声明时加上 static, 初始化时不能加 static
+static 成员在**初始化时分配内存**, 声明时加上 static, 初始化时不能加 static
+
+static 成员必须初始化, 且**只能在类外初始化**
+
+**staitc 全局变量**只能作用于本文件, **不能跨文件使用**
+
+### static 成员函数
+
+**目的**: 处理 static 成员变量
+
+static 成员函数**没有 this 指针**, **只能访问 static 成员**(数据成员和函数成员), 无论是否创建对象, 都能调用 static 成员函数
+
+**staitc 成员函数不能设为虚函数**
+
+因为 static 成员函数**没有 this 指针**, 不能访问 vptr, 继而**不能访问虚表**
+
+> vptr 只能通过 this 访问
 
 # 动态内存
 
