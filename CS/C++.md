@@ -847,143 +847,85 @@ class C : public A, public B
 
 **命名冲突**, 不知道来自哪个父类, 容易出现**二义性**, 需要**显式指明**来自哪个类
 
-### static 成员函数
-
-static 成员函数**没有 this 指针**, **只能访问 static 成员**
-
 # 动态内存
 
 ### new 和 malloc
 
-**new 过程**
+**new**
 
-1. **operator new** 函数**申请内存**
-2. **构造函数初始化**对象 
+1. **申请内存**: **operator new 函数**
+2. **初始化**: **构造函数**
 
-**delete 过程**
+**delete**
 
-1. **析构函数释放资源**
-2. **operator delete** 函数**释放内存**
+1. **析构**: **析构函数**
+2. **释放内存**: **operator delete 函数**
 
-**内置类型**
-
-内置类型没有构造函数和析构函数, 所以没有这两步  
-
-**new [] 和 delete []**
+> 内置类型没有构造函数和析构函数
 
 **new []**
 
-在前四个字节写入数组大小 n, `operator new[]` 申请内存后, 调用 n 次构造函数
+**前四个字节**写入数组大小 n, `operator new[]` 申请内存后, 调用 **n 次构造函数**
 
 **delete []**
 
-从前四个字节取出数组大小 n, 调用 n 次析构函数后, `operator delete[]`释放内存 
+**前四个字节**取出数组大小 n, 调用 **n 次析构函数**后, `operator delete[]`释放内存 
 
 ```C++
 class A
 {
-public:
-    A()
-    { 
-        cout << "A 的构造函数" << endl; 
-    }
-    
-    ~A()
-    { 
-        cout << "A 的析构函数" << endl;
-    }
+    A();
+    ~A();
 
-    void * operator new(size_t sz)
-    {
-        A* p = (A*) malloc(sizeof(A));
-        cout << "申请内存" << endl;
-
-        return p;
-    }
-
-    void operator delete(void * p)
-    {
-        free(p);
-        cout << "释放内存" << endl;
-    }
+    void * operator new(size_t sz);
+    void operator delete(void * p);
 };
-
-A *p = new A;
-// 申请内存
-// A 的构造函数
-
-delete p;
-// A 的析构函数
-// 释放内存
 ```
 
 **malloc**
 
 ```C++
-void* malloc(size_t size);	// size 以字节为单位
+void* malloc(size_t sz);	// sz 以字节为单位
 ```
 
 **new 和 malloc 比较**
 
-new 更高级, malloc 更底层
+new 封装的更好, malloc 更底层
 
-new 做的更全面, malloc 做的更基本
-
-| 比较         | new                                          | malloc                               |
-| ------------ | -------------------------------------------- | ------------------------------------ |
-| 类型         | **运算符**                                   | **函数**                             |
-| 输入         | **类型**, 自动计算字节数                     | **字节数**                           |
-| 输出         | **类型**, 类型安全                           | **void ***, 类型不安全, 需要**强转** |
-| 分配失败     | 抛出**异常**                                 | 返回 **NULL**                        |
-| 内存不够     | 不可以重新分配                               | 可以重新分配(realloc)                |
-| 过程         | 先底层调用 malloc 申请内存, 然后调用构造函数 | 向操作系统申请内存                   |
-| 申请内存位置 | **自由存储区** free store (堆/静态存储区/空) | **堆**                               |
+| 比较         | new                                          | malloc                 |
+| ------------ | -------------------------------------------- | ---------------------- |
+| 类型         | **运算符**                                   | **函数**               |
+| 输入         | **类型**                                     | **字节数**             |
+| 输出         | **类型**, 类型安全                           | **void ***, 类型不安全 |
+| 分配失败     | 抛出**异常**                                 | 返回 **NULL**          |
+| 内存不够     | 不可以重新分配                               | 可以重新分配(realloc)  |
+| 过程         | 先调用 malloc 申请内存, 再调用构造函数初始化 | 向操作系统申请内存     |
+| 申请内存位置 | **自由存储区**(堆/静态存储区/空)             | **堆**                 |
 
 ### new operator 和 operator new
 
-**new** 运算符
+new operator 指 **new 运算符**
 
-1. 函数 **operator new** **申请内存**
-2. **构造函数**初始化内存
+operator new 指 **operator new 函数**
 
-**delete** 运算符
+* new 第一步用 operator new 实现, operator new 一般用 malloc 实现
 
-1. **析构函数**释放资源
-2. 函数 **operator delete 释放内存**
-
-> operator new 一般用 malloc 实现
->
-> operator delete 一般用 free 实现
-
-|        | new 运算符                                               | 函数 operator new                      |
-| ------ | -------------------------------------------------------- | -------------------------------------- |
-| 类型   | 内置运算符, 无法改变行为                                 | 函数, 可以重载, 底层掉通过 malloc 实现 |
-| 编译器 | **改写成两个函数**: 一个 operator new 函数, 一个构造函数 |                                        |
+* new 无法重载, operator new 可以重载
 
 ### placement new
 
-placement new 是传入可选参数 `placement_params` 的 new, 但并不申请内存, **只调用构造函数**
+placement new 传入一块内存的地址, **只调用构造函数**
 
-作用:  申请内存后, 可以**重复构造和析构**该内存, **节省**多次申请和释放**内存的开销**
+> 少了申请内存和释放内存的步骤
+>
+> 第一次申请内存, 最后一次释放内存
+>
+> 中间是**重复构造和析构**, 节省开销
 
 ```C++
-class A
-{
-public:
-    A()
-    { 
-        cout << "A 的构造函数" << endl; 
-    }
-    
-    ~A()
-    { 
-        cout << "A 的析构函数" << endl;
-    }
-};
-
 char *mem = new char[n * sizeof(A)];	// 申请内存
 
-A *p = new (mem) A;		// placement new, 调用构造函数
+A *p = new (mem) A;		// placement new, 只调用构造函数
 
 p->~A();				// 显示调用析构函数
 
@@ -992,15 +934,15 @@ delete [] mem;			// 释放内存
 
 ### delete [] 如何知道 delete 多大的数组
 
-new [] 类类型数组时, 在**前四个字节记录数组大小 n**, delete [] 时**取出数组大小**, **调用 n 次析构函数**, 然后调用 operator delete [] 释放内存
+new [] **类类型**数组时, 在**前四个字节**记录**数组大小 n**, delete [] 时取出数组大小, **调用 n 次析构函数**, 然后调用 operator delete [] 释放内存
 
 ### 内存泄漏
 
-由于种种原因, **没有释放内存**, 造成内存浪费
+**没有正确释放内存**, 造成内存浪费
 
 **原因**
 
-1. 没有 delete
+1. **没有 delete**
 
    ```C++
    {
@@ -1010,15 +952,13 @@ new [] 类类型数组时, 在**前四个字节记录数组大小 n**, delete []
    }
    ```
 
-2. new [] 时调用 delete
+2. **没有配对使用**
 
-   此时只会释放了第一个对象的内存空间, 正常应该调用 delete []
+   new [] 对应 delete
 
-3. new 时调用 free
+   new 对应 free
 
-   这种方式会**少一步调用析构函数**, 析构函数会释放成员变量
-
-4. 循环引用
+3. **循环引用**
 
 **防止**
 
