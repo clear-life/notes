@@ -1122,49 +1122,40 @@ class A
 {
 public:
     shared_ptr<B> _pb;	// 正确做法 weak_ptr<B>_pb;
-}
+};
 
 class B
 {
 public:
     shared_ptr<A> _pa;	// 正确做法 weak_ptr<A>_pa;
-}
+};
 
-shared_ptr<A> pa = make_shared<A>();
-shared_ptr<B> pb = make_shared<B>();
-
-cout << pa.use_count() << " " << pb.use_count() << endl;	
-
-pa->_pb = pb;
-pb->_pa = pa;
-
-cout << pa.use_count() << " " << pb.use_count() << endl;
-
-/*
-1 1
-2 2
-*/
+shared_ptr<A> pa = make_shared<A>();	// pa->A
+shared_ptr<B> pb = make_shared<B>();	// pb->B, 此时两个引用计数都为 1
+	
+pa->_pb = pb;			// pa->_pb->B	pb->B
+pb->_pa = pa;			// pb->_pa->A	pa->A, 此时两个引用计数都为 2
 ```
 
-`pa->_pb = pb` 语句会使得有两个指针指向 B 对象
+问题:
 
-一个是 `pb` 本身, 一个是 `pa->_pb`, 即 `pa` 指向地方的**指向 B 的指针**
+出了作用域后, 两个引用计数不会变为 0, 而是变为 1, 资源没有被释放
 
-于是, B 的引用计数就为 2, 但问题出在: `pa->_pb` 并不会销毁, 因为其依赖于 A 的引用计数
+结论:
 
-而 A 的引用计数同样依赖于 B 的引用计数, 于是就出现了死锁
+**指针指向的内容**不应该拥有**资源的拥有权**
 
-最终, 真正销毁的只有 `pa` 和 `pb`, `pa->_pb` 和 `pa->_pb` 都没有被销毁
+方法:
 
-正确做法, 使用 **weak_ptr**, 因为其**没有所有权**, **引用计数不会加 1**
+使用 `weak_ptr` 作为类的成员
 
 ### 实现
 
 ```C++
 class Point
 {
-    int *ptr;
-    size_t* p_count;
+    int *ptr;			// 指针
+    size_t* p_count;	// 引用计数
     
     // 构造, 析构, 拷贝构造
     Point(int *p = nullptr)
@@ -1183,14 +1174,14 @@ class Point
     Point(const Point& b)
     {
         ptr = b.ptr;
-        *p_count = b.count();
+        p_count = b.p_count;
         *p_count++;
     }
     
     // 重载赋值运算符
     Point& operator=(const Point& b)
     {
-        if(ptr == b.ptr) return *this;
+        if(this == &b || ptr == b.ptr) return *this;	// 自赋值和等价赋值情况判断
         
         if(ptr != nullptr) 
         {
@@ -1199,7 +1190,7 @@ class Point
         }
         
         ptr = b.ptr;
-        p_count = b.count;
+        p_count = b.p_count;
         *p_count++;
         
         return *this;
