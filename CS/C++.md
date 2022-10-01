@@ -228,6 +228,8 @@ volatile 表明变量随时有可能被修改, 要**直接访存取值**
 
 应用: 多线程**两个线程访问同一变量**, 一个访问内存, 一个访问寄存器
 
+volatile 能够保证**变量的可见性**, **不能保证线程安全**
+
 ### 四种类型转换符
 
 > http://c.biancheng.net/view/2343.html
@@ -296,7 +298,7 @@ decltype 推导**表达式**类型
 
 > 左值 loactor value 可寻址的值
 >
-> 右值 read value 临时对象, 只用来读的值
+> 右值 read value 临时对象, 只能用来读, 不可寻址
 
 用于**移动语义**和**完美转发**
 
@@ -329,10 +331,6 @@ fun(NULL);		// 产生二义性, void * 可以隐式转换为 int 和 char *
 2. 必须调用构造函数时
    1. 没有**无参构造函数**
    2. 调用**父类构造函数**
-
-### 移动语义
-
-将一块内存单元转移到另一个对象
 
 ### 深浅拷贝
 
@@ -1521,27 +1519,27 @@ pb->_pa = pa;			// pb->_pa->A	pa->A, 此时两个引用计数都为 2
 class Point
 {
     int *ptr;			// 指针
-    size_t* p_count;	// 引用计数
+    size_t* cnt;	// 引用计数
     
     // 构造, 析构, 拷贝构造
     Point(int *p = nullptr)
     {
         ptr = p;
-        if(p != nullptr) *p_count = 1;
-        else *p_count = 0;
+        if(p != nullptr) *cnt = 1;
+        else *cnt = 0;
     }
     
     ~Point()
     {
-        if(--*p_count == 0)
+        if(--*cnt == 0)
             delete ptr;
     }
     
     Point(const Point& b)
     {
         ptr = b.ptr;
-        p_count = b.p_count;
-        *p_count++;
+        cnt = b.cnt;
+        *cnt++;
     }
     
     // 重载赋值运算符
@@ -1551,13 +1549,13 @@ class Point
         
         if(ptr != nullptr) 
         {
-            if(--*p_count == 0) 
+            if(--*cnt == 0) 
                 delete ptr;
         }
         
         ptr = b.ptr;
-        p_count = b.p_count;
-        *p_count++;
+        cnt = b.cnt;
+        *cnt++;
         
         return *this;
     }
@@ -1575,6 +1573,16 @@ class Point
     }
 }
 ```
+
+### 线程安全
+
+**shared_ptr**
+
+**引用计数线程安全**, **指针线程不安全**
+
+* **引用计数加减**操作会自动加锁解锁, 线程安全
+* 同一 shared_ptr 被多个线程**读**, **线程安全**
+* 同一 shared_ptr 被多个线程**写**, **不线程安全**
 
 # 并发
 
