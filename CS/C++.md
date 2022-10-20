@@ -491,6 +491,40 @@ fun(2, 1.0);
 3. delete 后设为 NULL
 4. 使用智能指针
 
+### bind
+
+函数适配器, 接受一个可调用对象 `callable`, 生成一个新的可调用对象 `newCallable`
+
+**普通函数**
+
+```C++
+void fun(int a, int b, int c);
+
+auto f = bind(fun, _2, 2, _1);	
+// 新的可调用对象, 可以看作 void fun(int a = _2, int b = 2, int c = _1)
+// _1 表明是新调用对象 f 的第一个参数, _2 表明是新调用对象 f 的第二个参数
+
+f(1, 3);
+// 调用 fun(3, 2, 1)
+```
+
+**类成员函数**
+
+绑定对象的 `this` 指针
+
+```C++
+class A
+{
+public:
+    void fun(int a, int b, int c);
+}
+
+A a;
+auto f = bind(&A::fun, &a, _2, 2, _1);
+```
+
+
+
 # 面向对象
 
 **封装**, **继承**, **多态**
