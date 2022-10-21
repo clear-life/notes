@@ -1,4 +1,20 @@
-## 并发
+# 通用
+
+### RAII
+
+RAII(**R**esource **A**cquisition **I**s **I**nitialization) 资源获取即初始化
+
+**局部对象管理资源**: 局部对象指**栈中对象**, 资源即操作系统**有限的资源**如内存, 网络套接字
+
+**利用局部对象自动销毁的特性防止忘记释放资源**: 
+
+1. 获取: **构造函数获取**
+2. 使用
+3. 销毁: **析构函数释放**
+
+### 
+
+# 并发
 
 ### 并发概念
 
@@ -80,6 +96,18 @@ std::thread t(fun);		// 启动线程, fun: 任何可调用对象
 
 ### 线程的汇合与分离
 
+* 线程汇合: join
+
+  > 阻塞调用线程,  被调线程执行完后, join 才返回
+
+* 线程分离: detach
+
+  > 分离的线程所有权转移给 C++ 运行时库(runtime library)
+  >
+  > C++ 运行时库保证了, 线程结束时正确回收资源
+
+> 无论是 join 还是 detach, 运行后都会切断线程与 thread 对象的关联
+
 **已执行完代码**但尚未 `join` 的线程**仍被视为正在执行的线程**，因此是 **`joinable`** 的
 
 因为可能会手动调用 `join`, 而 `!joinable()` 状态的线程是不能 `join` 的
@@ -93,7 +121,25 @@ if(t.joinable())
 
 但若在 `t.joinable()` 返回 `true` 之后, `t.join()` 调用前, 线程执行完, 导致 `!joinable` 就会引发异常
 
-**std::thread 对象销毁时是 joinable 的,  则 thread 的析构函数会调用 std::terminate() 终止线程**
+### thread
+
+```C++
+~thread()
+{
+    if(joinable())
+        std::terminate();	// 终止线程
+}
+```
+
+若 std::thread 对象销毁时是 joinable 的,  则 thread 的析构函数会调用 std::terminate() 终止线程
+
+### std::terminate
+
+异常处理失败时, 调用 std::terminate() 终止程序
+
+std::terminate() 默认调用 std::terminate_handler()
+
+std::terminate_handler() 默认调用 std::abort()
 
 ### 可调用对象与 std::function
 
@@ -101,11 +147,46 @@ if(t.joinable())
 
 ### 不能 joinable 的情况
 
-thread 对象**没有关联线程**
+std::thread 对象**没有关联线程**
 
-1. thread 对象默认构造
-2. thread 对象被 move 过, 所有权转交给别的对象了
+1. std::thread 对象默认构造
+2. std::thread对象被 move 过, 所有权转交给别的对象了
 3. 线程被 join 或 detach 过
+
+### 定义线程后不执行 join 或 detach 会出错
+
+根本原因在于 **std::thread 不完全符合 RAII 原则**
+
+thread 构造时符合**资源获取**, 但**析构时不能自动进行资源销毁**
+
+**因为 join 和 detach 都有其缺点**, 需要手动选择其中一个执行, 不然就出错
+
+* join 可能造成死锁
+* detach 可能会指向销毁的变量
+
+### RAII 实现 thread 
+
+保证 thread 析构时能够释放资源(执行完线程函数)
+
+```C++
+class j_thread
+{
+    std::thread& t;
+public:
+    j_thread(std::thread& _t) : t(_t) {}	// RAII 获取资源
+    ~j_thread()								// RAII 释放资源
+    {
+        if(t.joinable())
+            t.join();
+    }
+    
+    // 禁用拷贝构造和赋值操作
+    j_thread(const j_thread &)=delete;
+    j_thread& operator=(const j_thread &)=delete;
+}
+```
+
+
 
 ### 线程创建时的二义性
 
