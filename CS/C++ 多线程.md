@@ -1,208 +1,132 @@
-### 线程与进程
+## 并发
 
-共享**代码段, 堆段**, 独占**栈段**
+### 并发概念
+
+**并发**: 多个活动同时独立运行
+
+上下文切换: 保存 CPU 状态和 PC(程序计数器)
+
+**并发方式**: 多进程和多线程
+
+**并发作用**: **分离关注点**和**性能提升**
+
+* 分离关注点(业务分离): 合并相关代码, 隔离无关代码
+
+  > 一个线程负责用户界面管理, 另一个负责播放视频
+
+* 性能提升: 多任务并行运行
+
+  > 单个任务本身并没有提升性能
+
+**增强性能的并发方式**:
+
+1. **单一任务分解为多个部分**并行执行
+2. 数据并行, 即**单一算法对多份数据**并行执行
+
+**何时不用并发**: 
+
+1. **代码更难理解**, 编写维护成本高, 容易出错
+2. **性能提升不大**
+3. **线程的资源**(内核资源和栈空间)消耗
+4. **上下文切换**的消耗
+
+### Hello Concurrent World
 
 ```C++
+#include <iostream>
+#include <thread>
+
 void fun()
 {
-	cnt++;    
+    std::cout << "Hello Concurrent World" << std::endl;
+}
+
+int main()
+{
+    std::thread t(fun);
+    t.join();
 }
 ```
 
-`cnt++` 翻译为汇编语言有三步:
+**起始函数**: 每个线程从起始函数开始执行
 
-1. 取数 `mov 0x3f %eax`
-2. 计算 `add 1 %eax`
-3. 存回 `mov %eax 0x3f `
+> 主线程的起始函数是 main 函数
+>
+> main 函数结束后, 整个进程结束, 未执行完的线程直接结束 
 
-**有线程 A 和 B**
+**`std::thread t(fun)`** : 构造 thread 对象 t 并关联线程, 起始函数为 `fun`, `fun` 应为**可调用对象**, 线程开始执行
 
-线程 A 在**第二步**完成后切换到线程 B
+**join**: 线程与主线程**汇合**
 
->  此时内存中 cnt 的值为 0, 寄存器中的值为 1
+## 线程管控
 
-线程 B 执行完三步, 存回内存的值为 1
+### main 线程
 
-再切换到线程 A 执行存回操作, 存回内存的值也为 1
+由 C++ 运行时系统启动
 
-**问题:** 本应该加两次的 cnt 只加了一次, 原因在于**多线程对临界区访问**造成的问题
+### 线程的启动与结束
 
-### bind
-
-函数适配器, 接受一个可调用对象 `callable`, 生成一个新的可调用对象 `newCallable`
-
-**普通函数**
+线程开始: 以起始函数为入口, 构建 `std::thread` 对象时启动
 
 ```C++
-void fun(int a, int b, int c);
-
-auto f = bind(fun, _2, 2, _1);	
-// _1 表明是新调用对象 f 的第一个参数, _2 表明是新调用对象 f 的第二个参数
-
-f(1, 3);
-// 调用 fun(3, 2, 1)
+std::thread t(fun);		// 启动线程, fun: 任何可调用对象
 ```
 
-**类成员函数**
+线程结束: 函数返回时, 对应的线程结束
 
-绑定对象的 `this` 指针
+### std::abort()
+
+异常终止进程, 不调用析构函数
+
+### 线程的汇合与分离
+
+**已执行完代码**但尚未 `join` 的线程**仍被视为正在执行的线程**，因此是 **`joinable`** 的
+
+因为可能会手动调用 `join`, 而 `!joinable()` 状态的线程是不能 `join` 的
+
+虽然可以这样写:
+
+```C++
+if(t.joinable())
+    t.join();
+```
+
+但若在 `t.joinable()` 返回 `true` 之后, `t.join()` 调用前, 线程执行完, 导致 `!joinable` 就会引发异常
+
+### 可调用对象与 std::function
+
+[C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
+
+### 不能 joinable 的情况
+
+thread 对象**没有关联线程**
+
+1. thread 对象默认构造
+2. thread 对象被 move 过, 所有权转交给别的对象了
+3. 线程被 join 或 detach 过
+
+### 线程创建时的二义性
+
+存在二义性的 C++ 语句, 只要能被解释为函数声明, 编译器就一定解释为**函数声明**
 
 ```C++
 class A
 {
 public:
-    void fun(int a, int b, int c);
-}
+    void operator()();
+};
 
-A a;
-auto f = bind(&A::fun, &a, _2, 2, _1);
-```
-
-### std::move
-
-**将左值转化为右值引用**, 转移对象的所有权
-
-### 右值引用
-
-引用方式使用右值，**右值引用变量本身是左值**
-
-过程: 生成一个匿名变量, 然后引用该变量
-
-```assembly
-int&& a = 1;
-mov dword ptr [rbp+24h],1	; 匿名变量
-lea rax,[rbp+24h]  			; 匿名变量的地址
-mov qword ptr [a],rax		; a 的本质是指针
-```
-
-**判断左值引用和右值引用**
-
-```C++
-if(std::is_lvalue_reference<decltype(v)>::value) 
-    cout << "左值引用" << endl;
-if(std::is_rvalue_reference<decltype(v)>::value)
-    cout << "右值引用" << endl;
-```
-
-### 汇编
-
-引用本质就是指针
-
-```assembly
-int b = 1;
-mov dword ptr [b],1  	; dword ptr [b] 双字节指针，内存地址为 b 的数据
-
-
-; 左值引用
-int& a = b;
-lea rax,[b]  		
-mov qword ptr [a],rax 	; a 的本质是 b 的指针
-
-; 指针
-int* a = &b;
-lea rax,[b]  
-mov qword ptr [a],rax  ; a 是 b 的指针
-
-; 右值引用
-int&& a = 1;
-mov dword ptr [rbp+24h],1; 匿名变量
-lea rax,[rbp+24h]  		; 匿名变量的地址
-mov qword ptr [a],rax	; a 的本质还是指针
-
-; 右值
-int a = b + 1;
-mov eax,dword ptr [b]  
-inc eax  				; 右值就是在寄存器里的值
-mov dword ptr [a],eax 	
-```
-
-结论:
-
-1. **左值引用和右值引用的本质都是指针**
-2. **右值本质是寄存器的值**
-3. 右值引用**生成一个匿名变量**，然后用指针指向该匿名变量
-
-### 寄存器寻址方式
-
-1. 立即寻址	立即数
-2. 寄存器寻址 寄存器
-3. 直接寻址     寄存器存 = 地址
-4. 段寄存器/基址寄存器 + 变址寄存器 + 偏移量 = 地址
-
-### 完美转发
-
-> [现代C++之万能引用、完美转发、引用折叠](https://zhuanlan.zhihu.com/p/99524127)
-
-函数模板往下传递参数时，**保留被转发参数的左、右值属性**
-
-> 左值依然是左值，右值依然是右值
-
-**1. 左右值接收**
-
-**函数模板**中的**右值引用**是**万能引用**， 既能接收右值，也能接收左值
-
-> 万能引用表示: 既可能是 && 又可能是 & 
->
-> 若一个变量或者参数被声明为**T&&**，其中T是**被推导**的类型，该变量或者参数就是一个万能引用。
-
-```C++
-template <typename T>
-void fun(T&& t)
+int main()
 {
-    fun2(t);
+    A a;
+    thread t(a());
+    t.join();
 }
-```
-
-**引用折叠**
-
-`A&& &&` 变为 `A&&`
-
-`A& &&` 变为 `A&`     
-
-**2. 传递左右值属性**
-
-模板函数 `forward<T>()` 连同左右值属性传递给函数
-
-```C++
-template <typename T>
-void fun(T&& t)
-{
-    fun2(forward<T>(t));
-}
-```
-
-```C++
-#include <iostream>
-
-using namespace std;
-
-template<typename T>
-void print(T& t) {
-    cout << "左值" << endl;
-}
-template<typename T>
-void print(T&& t) {
-    cout << "右值" << endl;
-}
-
-template<typename T>
-void TestForward(T&& v) {
-    if (std::is_lvalue_reference<decltype(v)>::value)
-        cout << "左值引用" << endl;
-    if (std::is_rvalue_reference<decltype(v)>::value)
-        cout << "右值引用" << endl;
-    print(v);                   // 无论如何都传递左值
-    print(std::forward<T>(v));  // 传递实参的左右值属性
-    print(std::move(v));        // 无论如何都传递右值
-    cout << endl;
-}
-
-int main() {
-    int&& x = 1;
-    TestForward(x);             // 右值引用变量本身是左值
-    int y = 2;
-    TestForward(y);
-    return 0;
-}
+/*
+thread t(a()); 被解释为函数声明
+thread: 返回类型
+t: 函数名
+a(): 函数指针
+*/
 ```
 
