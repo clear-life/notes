@@ -491,38 +491,6 @@ fun(2, 1.0);
 3. delete 后设为 NULL
 4. 使用智能指针
 
-### bind
-
-函数适配器, 接受一个可调用对象 `callable`, 生成一个新的可调用对象 `newCallable`
-
-**普通函数**
-
-```C++
-void fun(int a, int b, int c);
-
-auto f = bind(fun, _2, 2, _1);	
-// 新的可调用对象, 可以看作 void fun(int a = _2, int b = 2, int c = _1)
-// _1 表明是新调用对象 f 的第一个参数, _2 表明是新调用对象 f 的第二个参数
-
-f(1, 3);
-// 调用 fun(3, 2, 1)
-```
-
-**类成员函数**
-
-绑定对象的 `this` 指针
-
-```C++
-class A
-{
-public:
-    void fun(int a, int b, int c);
-}
-
-A a;
-auto f = bind(&A::fun, &a, _2, 2, _1);
-```
-
 
 
 # 面向对象
@@ -1726,3 +1694,131 @@ void fun()
 再切换到线程 A 执行存回操作, 存回内存的值也为 1
 
 **问题:** 本应该加两次的 cnt 只加了一次, 原因在于**多线程对临界区访问**造成的问题
+
+# C++ 新特性
+
+### bind
+
+函数适配器, 接受一个可调用对象 `callable`, 生成一个新的可调用对象 `newCallable`
+
+**普通函数**
+
+```C++
+void fun(int a, int b, int c);
+
+auto f = bind(fun, _2, 2, _1);	
+// 新的可调用对象, 可以看作 void fun(int a = _2, int b = 2, int c = _1)
+// _1 表明是新调用对象 f 的第一个参数, _2 表明是新调用对象 f 的第二个参数
+
+f(1, 3);
+// 调用 fun(3, 2, 1)
+```
+
+**类成员函数**
+
+绑定对象的 `this` 指针
+
+```C++
+class A
+{
+public:
+    void fun(int a, int b, int c);
+}
+
+A a;
+auto f = bind(&A::fun, &a, _2, 2, _1);
+```
+
+### 右值引用
+
+引用方式使用右值，引用变量本身是左值
+
+```C++
+int&& a = 1;	// a 是左值
+a = 2;		
+```
+
+> [从汇编语言角度剖析右值引用和左值引用的本质](https://blog.csdn.net/qq_33113661/article/details/89040579)
+
+判断是左值引用还是右值引用
+
+```C++
+if(std::is_lvalue_reference<decltype(v)>::value) 
+    cout << "左值引用" << endl;
+if(std::is_rvalue_reference<decltype(v)>::value)
+    cout << "右值引用" << endl;
+```
+
+
+
+### 完美转发
+
+函数模板往下传递参数时，**保留被转发参数的左、右值属性**
+
+> 左值依然是左值，右值依然是右值
+
+**1. 左右值接收**
+
+**函数模板**中的**右值引用**是**万能引用**， 既能接收右值，也能接收左值
+
+```C++
+template <typename T>
+void fun(T&& t)
+{
+    fun2(t);
+}
+```
+
+**引用折叠**
+
+`A&& &&` 变为 `A&&`
+
+`A& &`, `A& &&`, `A&& &` 变为 `A&`     
+
+**2. 传递左右值属性**
+
+模板函数 `forward<T>()` 连同左右值属性传递给函数
+
+```C++
+template <typename T>
+void fun(T&& t)
+{
+    fun2(forward<T>(t));
+}
+```
+
+```C++
+#include <iostream>
+
+using namespace std;
+
+template<typename T>
+void print(T& t) {
+    cout << "左值" << endl;
+}
+template<typename T>
+void print(T&& t) {
+    cout << "右值" << endl;
+}
+
+template<typename T>
+void TestForward(T&& v) {
+    if (std::is_lvalue_reference<decltype(v)>::value)
+        cout << "左值引用" << endl;
+    if (std::is_rvalue_reference<decltype(v)>::value)
+        cout << "右值引用" << endl;
+    print(v);                   // 无论如何都传递左值
+    print(std::forward<T>(v));  // 传递实参的左右值属性
+    print(std::move(v));        // 无论如何都传递右值
+    cout << endl;
+}
+
+int main() {
+    int&& x = 1;
+    TestForward(x);             // 右值引用变量本身是左值
+    int y = 2;
+    TestForward(y);
+    return 0;
+}
+```
+
