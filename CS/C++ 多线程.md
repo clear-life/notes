@@ -93,6 +93,8 @@ if(t.joinable())
 
 但若在 `t.joinable()` 返回 `true` 之后, `t.join()` 调用前, 线程执行完, 导致 `!joinable` 就会引发异常
 
+**std::thread 对象销毁时是 joinable 的,  则 thread 的析构函数会调用 std::terminate() 终止线程**
+
 ### 可调用对象与 std::function
 
 [C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
@@ -126,7 +128,55 @@ int main()
 thread t(a()); 被解释为函数声明
 thread: 返回类型
 t: 函数名
-a(): 函数指针
+a(): 函数指针类型, 指向的函数没有参数, 返回 A 类型对象
+
+a() 原意是生成临时的匿名函数对象
+解决办法:
+1. 为临时函数对象命名
+thread t((a()))
+2. 统一初始化语法
+thread t{a()}
 */
 ```
 
+### 线程有引用或指针
+
+线程持有**主线程局部变量的引用或指针**时, 会访问已经销毁的变量
+
+```C++
+#include <iostream>
+#include <thread>
+
+using namespace std;
+
+struct A
+{
+    int& a;
+public:
+    A(int& _a) : a(_a) {}
+    void operator()()
+    {
+         cout << a << endl;
+    }
+};
+
+int main()
+{
+    int x = 1;
+
+    A a(x);
+    std::thread t(a);
+
+    t.detach();
+}
+```
+
+**解决办法**:
+
+1. 线程完全自含
+
+   通过数据复制, 使得线程拥有完整的数据
+
+2. 线程汇合
+
+   join 确保主线程结束前, 执行完该线程
