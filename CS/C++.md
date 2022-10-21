@@ -1749,7 +1749,50 @@ if(std::is_rvalue_reference<decltype(v)>::value)
     cout << "右值引用" << endl;
 ```
 
+### 汇编
 
+引用本质就是指针
+
+```assembly
+int b = 1;
+mov dword ptr [b],1  	; dword ptr [b] 双字节指针，内存地址为 b 的数据
+
+
+; 左值引用
+int& a = b;
+lea rax,[b]  		
+mov qword ptr [a],rax 	; a 的本质是 b 的指针
+
+; 指针
+int* a = &b;
+lea rax,[b]  
+mov qword ptr [a],rax  ; a 是 b 的指针
+
+; 右值引用
+int&& a = 1;
+mov dword ptr [rbp+24h],1; 匿名变量
+lea rax,[rbp+24h]  		; 匿名变量的地址
+mov qword ptr [a],rax	; a 的本质还是指针
+
+; 右值
+int a = b + 1;
+mov eax,dword ptr [b]  
+inc eax  				; 右值就是在寄存器里的值
+mov dword ptr [a],eax 	
+```
+
+结论:
+
+1. **左值引用和右值引用的本质都是指针**
+2. **右值本质是寄存器的值**
+3. 右值引用**生成一个匿名变量**，然后用指针指向该匿名变量
+
+### 寄存器寻址方式
+
+1. 立即寻址	立即数
+2. 寄存器寻址 寄存器
+3. 直接寻址     寄存器存 = 地址
+4. 段寄存器/基址寄存器 + 变址寄存器 + 偏移量 = 地址
 
 ### 完美转发
 
