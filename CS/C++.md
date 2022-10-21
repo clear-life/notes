@@ -1753,6 +1753,8 @@ if(std::is_rvalue_reference<decltype(v)>::value)
 
 ### 完美转发
 
+> [现代C++之万能引用、完美转发、引用折叠](https://zhuanlan.zhihu.com/p/99524127)
+
 函数模板往下传递参数时，**保留被转发参数的左、右值属性**
 
 > 左值依然是左值，右值依然是右值
