@@ -482,3 +482,164 @@ int main()
 2. 线程汇合
 
    join 确保主线程结束前, 执行完该线程
+
+# 线程间共享数据
+
+## mutex
+
+### std::mutex
+
+### std::recursive_mutex
+
+### std::time_mutex
+
+### std::recursive_timed_mutex
+
+## lock
+
+### std::lock_guard
+
+### std::unique_lock
+
+### 使用互斥
+
+```C++
+#include <mutex>
+
+std::list<int> l;
+std::mutex m;
+
+void add(int x)
+{
+    std::lock_guard<std::mutex> guard(m);
+
+    l.push_back(x);
+}
+
+bool find(int x)
+{
+    std::lock_guard<std::mutex> guard(m);
+    
+    return std::find(l.begin(), l.end(), x) != l.end();
+}
+```
+
+### 不得向锁外传递受保护数据的指针和引用
+
+显而易见, **函数返回值不能**是**受保护数据的指针和引用**
+
+同样地, **函数内不能向锁外**传递**受保护数据的指针和引用**
+
+```C++
+#include <iostream>
+#include <mutex>
+
+using namespace std;
+
+class A
+{
+public:
+    int a;
+    A(int x = 1) : a(x) {}
+};
+
+class Warp
+{
+private:
+    A data;
+    std::mutex m;
+
+public:
+    template<typename Fun>
+    void test(Fun fun)
+    {
+        std::lock_guard<std::mutex> l(m);
+        fun(data);			// 锁内向锁外传递指针
+    }
+};
+
+A* unprotected;				// 指向受保护的数据
+void fun(A& data)			// 恶意函数
+{
+    unprotected = &data;
+}
+
+int main()
+{
+    Warp w;
+    w.test(fun);
+
+    cout << unprotected->a << endl;	// 访问受保护的数据
+}
+```
+
+### std::mutex
+
+* 互斥量, 保护共享数据
+
+* **非递归互斥**:
+
+  1. 调用线程从 `lock` 开始, 到 `unlock` 为止占有 `mutex`
+
+  2. 线程占有 `mutex` 时, 其他线程若试图要 `mutex` 的所有权, 则将阻塞/返回
+
+     > mutex 相当于临界区, 占有 mutex 就是进入临界区, 没有 mutex 就是出临界区
+
+  3. 调用 `lock` 前必须不占有 `mutex`
+
+     > 递归下一层后, 由于已经占有 `mutex`, 会被阻塞, 所以不能保证递归的正常进行
+     >
+     > 只能锁一层
+
+* std::mutex **不能复制, 也不能移动**
+
+**方法:**
+
+* `lock` 加锁, 若不能则阻塞
+* `try_lock` 尝试加锁, 若不能就返回 `false`
+* `unlock` 解锁
+
+### std::recursive_mutex 
+
+递推锁
+
+> 多把相同锁, 多层锁
+
+```C++
+std::recursive_mutex m;
+
+void fun(int u)
+{
+    std::lock_guard<std::recursive_mutex > guard(m);
+    
+    if (u == 0)
+        return;
+    cout << u << endl;
+    fun(u - 1);
+}
+
+int main()
+{
+    std::thread t(fun, 3);
+    t.join();
+}
+```
+
+### std::lock_guard<>
+
+实现 mutex RAII 思想, 构造时加锁, 析构时解锁
+
+> 增强版: std::scoped_lock<>
+
+```C++
+std::mutex m;
+
+void fun(int u)
+{
+    std::lock_guard<std::mutex> guard(m);
+    ...
+}
+```
+
+
+
