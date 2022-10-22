@@ -310,17 +310,82 @@ class j_thread
 public:
     j_thread() noexcept=default;
     
-    template<typename Callable, typename ... Args>
-    explicit j_thread(std::thread& _t) : t(_t) {}	// RAII 获取资源
-    ~j_thread()								// RAII 释放资源
+    // 构造函数 RAII 获取资源
+    j_thread(j_thread&& j) noexcept: t(std::move(j.t)) {}
+    
+    explicit j_thread(std::thread _t) noexcept: t(std::move(_t)) {}
+    
+    template<typename Callable, typename Args>
+    explicit j_thread(Callable&& fun, Args&& args) : 	
+    	t(std::forward<Callable>(fun), std::forward<Args>(args)) {}
+    
+    // 线程转移
+    j_thread& operator=(j_thread&& j) noexcept
     {
-        if(t.joinable())
-            t.join();
+        if(joinable())
+            join();
+        t = std::move(j.t);
+        
+        return *this;
+    }
+    
+    j_thread& operator=(std::thread _t) noexcept
+    {
+        if(joinable())
+            join();
+        t = std::move(_t);
+        
+        return *this;
+    }
+    
+    // 析构函数 RAII 释放资源
+    ~j_thread()	noexcept							
+    {
+        if(joinable())
+            join();
     }
     
     // 禁用拷贝构造和赋值操作
     j_thread(const j_thread &)=delete;
     j_thread& operator=(const j_thread &)=delete;
+    
+    // 常用操作
+    void swap(j_thread& j) noexcept
+    {
+        t.swap(j.t);
+    }
+    
+    std::thread::id get_id() const noexcept
+    {
+        return t.get_id();
+	}
+    
+    // 模仿 thread 操作
+    bool joinable() const noexcept
+    {
+        return t.joinable();
+	}
+    
+    void join()
+    {
+        t.join();
+	}
+    
+    void detach()
+    {
+        t.detach();
+	}
+    
+    // 模仿 thread
+    std::thread& as_thread() noexcept
+    {
+        return t;
+    }
+    
+    const std::thread& as_thread() const noexcept
+    {
+        return t;
+    }
 }
 ```
 
