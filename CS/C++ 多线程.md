@@ -122,6 +122,26 @@ thread 析构前必须不再关联线程, 不然就出错
 
 * 分离线程的所有权转移给 C++ 运行时库(runtime library), 保证线程结束时正确回收资源
 
+### 线程数量
+
+最大线程数量由**硬件支持的最大数量**和**算法要求的最大数量**共同决定, 取二者的较小值
+
+> 注意主线程本身占一个名额
+>
+> **std::thread::hardware_concurrency()** 硬件支持的最大并发线程数
+
+### 线程 ID
+
+线程 ID 唯一识别线程, **全序关系**
+
+> 0 表示无关联
+
+**std::thread::id** 线程 ID
+
+**std::this_thread::get_id()** 当前线程的 ID
+
+**std::thread::get_id()** thread 对象关联线程的 ID
+
 ## 线程函数传参
 
 ### 参数传递
@@ -172,25 +192,11 @@ int main()
 }
 ```
 
-### 线程数量
+### 可调用对象与 std::function
 
-最大线程数量由**硬件支持的最大数量**和**算法要求的最大数量**共同决定, 取二者的较小值
+[C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
 
-> 注意主线程本身占一个名额
->
-> **std::thread::hardware_concurrency()** 硬件支持的最大并发线程数
 
-### 线程 ID
-
-线程 ID 唯一识别线程, **全序关系**
-
-> 0 表示无关联
-
-**std::thread::id** 线程 ID
-
-**std::this_thread::get_id()** 当前线程的 ID
-
-**std::thread::get_id()** thread 对象关联线程的 ID
 
 ## joinable
 
@@ -405,10 +411,6 @@ thread t{a()}
 */
 ```
 
-### 可调用对象与 std::function
-
-[C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
-
 ### 线程中的引用和指针
 
 线程持有**主线程局部变量的引用或指针**时, 可能会访问已经销毁的变量
@@ -423,7 +425,7 @@ void fun(int& a)
 int main()
 {
     int x = 1;
-    std::thread t(fun, std::ref(x));	
+    std::thread t(fun, std::ref(x));	// 引用传递给线程函数
 
     t.join();
 }
