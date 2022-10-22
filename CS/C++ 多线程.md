@@ -172,10 +172,6 @@ int main()
 }
 ```
 
-
-
-
-
 ### 线程数量
 
 最大线程数量由**硬件支持的最大数量**和**算法要求的最大数量**共同决定, 取二者的较小值
@@ -413,45 +409,33 @@ thread t{a()}
 
 [C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
 
-### 线程有引用或指针
+### 线程中的引用和指针
 
-线程持有**主线程局部变量的引用或指针**时, 会访问已经销毁的变量
+线程持有**主线程局部变量的引用或指针**时, 可能会访问已经销毁的变量
 
 ```C++
-#include <iostream>
-#include <thread>
-
-using namespace std;
-
-struct A
+void fun(int& a)
 {
-    int& a;
-public:
-    A(int& _a) : a(_a) {}
-    void operator()()
-    {
-         cout << a << endl;
-    }
-};
+    a = 2;
+    cout << a << endl;
+}
 
 int main()
 {
     int x = 1;
+    std::thread t(fun, std::ref(x));	
 
-    A a(x);
-    std::thread t(a);
-
-    t.detach();
+    t.join();
 }
 ```
 
 **解决办法**:
 
-1. 线程完全自含
+1. 线程**完全自含**
 
    通过数据复制, 使得线程拥有完整的数据
 
-2. 线程汇合
+2. 线程**汇合**
 
    join 确保主线程结束前, 执行完该线程
 
