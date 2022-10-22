@@ -23,7 +23,21 @@ RAII(**R**esource **A**cquisition **I**s **I**nitialization) 资源获取即初�
 > 例:
 > unique_ptr
 
+### noexcept
 
+表明函数不会抛出异常, 编译器直到不会抛出异常后, 会**更加进行代码优化**
+
+### delete 两次指针
+
+第二次 delete 可能会释放另一个变量或指针申请的内存空间
+
+### 左值, 纯右值, 将亡值
+
+### explicit
+
+* explicit 显式的
+
+* **禁用隐式类型转换**
 
 # 并发
 
@@ -195,6 +209,27 @@ int main()
 
 若 std::thread 对象销毁时是 joinable 的,  则 thread 的析构函数会调用 std::terminate() 终止线程
 
+**std::thread 支持移动操作**
+
+只要**赋值运算符右边是右值**, 且**左边对象支持移动操作**, 就能自动进行**移动赋值**操作
+
+```C++
+void fun();
+
+std::thread t1 = std::thread(fun);	// 临时对象, 移动赋值
+std::thread t2 = std::move(t1);		// 移动赋值, 线程转移给 t2
+t2 = std::thread(fun);	// 转移前, t2 已关联线程, 因此 t2 的析构函数中会调用 std::terminate() 终止线程
+```
+
+### 移动赋值运算符
+
+```C++
+template<typename T>
+T& operator=(T&& t) noexcept {};
+```
+
+### join 和 detach
+
 ### std::terminate
 
 异常处理失败时, 调用 std::terminate() 终止程序
@@ -202,6 +237,8 @@ int main()
 std::terminate() 默认调用 std::terminate_handler()
 
 std::terminate_handler() 默认调用 std::abort()
+
+**线程的堆栈不会被销毁**, 造成内存泄漏
 
 ### std::move
 
@@ -269,9 +306,12 @@ thread 构造时符合**资源获取**, 但**析构时不能自动进行资源�
 ```C++
 class j_thread
 {
-    std::thread& t;
+    std::thread t;
 public:
-    j_thread(std::thread& _t) : t(_t) {}	// RAII 获取资源
+    j_thread() noexcept=default;
+    
+    template<typename Callable, typename ... Args>
+    explicit j_thread(std::thread& _t) : t(_t) {}	// RAII 获取资源
     ~j_thread()								// RAII 释放资源
     {
         if(t.joinable())
