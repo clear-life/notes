@@ -59,6 +59,8 @@ mutable 修饰的变量永远可变, 不受 const 函数的限制
 
 ### 类模板参数推导
 
+### 函数指针
+
 # 并发
 
 ### 并发概念
@@ -388,7 +390,7 @@ void fun();
 
 std::thread t1 = std::thread(fun);	// 临时对象
 std::thread t2 = std::move(t1);		// std::move 将左值转化为右值
-t2 = std::thread(fun);	// 转移前, t2 已关联线程, 因此 t2 的析构函数中会调用 std::terminate() 终止线程
+t2 = std::thread(fun);	// 移动赋值, 转移前, t2 已关联线程, 所以 t2 是 joinable, 出错! 
 ```
 
 **移动赋值运算符**
