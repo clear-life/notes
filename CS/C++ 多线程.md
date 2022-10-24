@@ -152,12 +152,6 @@ RAII 方法析构 join 的 thread
 
 # 线程管控
 
-### main 线程
-
-* C++ 运行时系统启动
-* 起始函数为 main 函数
-* main 函数结束后, 整个进程结束, 未执行完的线程直接结束 
-
 ## std::thread
 
 ### 构造
@@ -166,8 +160,7 @@ RAII 方法析构 join 的 thread
 
 * thread 对象 t 关联线程
 * **可调用对象** fun: 起始函数
-* 构建 thread 后, 线程从起始函数开始执行
-* 函数执行完后, 线程结束, 但仍是 joinable
+* 构建 thread 后, 线程从起始函数开始执行, 函数执行完后, 线程结束
 
 ### 析构
 
@@ -247,27 +240,18 @@ std::thread t(&A::fun, &a);
 生成一个 `reference_wrapper` 对象, 使被封装的对象**引用传递**给线程函数
 
 ```C++
-void fun(int &a)
-{
-    cout << a << endl;
-    a = 2;
-}
+void fun(int &a);
 
 int main()
 {
-    int a = 1;
-    std::thread t( fun, std::ref(a) );	// a 按引用传递赋给 fun
-    
-    t.join();
-    cout << a << endl;
+    int a;
+    std::thread t(fun, std::ref(a));	// a 按引用传递赋给 fun
 }
 ```
 
 ### 可调用对象与 std::function
 
 [C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
-
-
 
 ## joinable
 
@@ -300,6 +284,8 @@ int main()
 **因为 join 和 detach 都有其缺点**, 需要手动选择其中一个执行
 
 * join 可能造成死锁
+  * A 的 join 放 B 中, B 的 join 放 A 中, 二者都在等待对方完成
+
 * detach 可能会指向销毁的变量
 
 ### RAII 实现 thread 
@@ -392,14 +378,6 @@ public:
 }
 ```
 
-### 不能 joinable 的情况
-
-std::thread 对象**没有关联线程**
-
-1. std::thread 对象默认构造
-2. std::thread对象被 move 过, 所有权转交给别的对象了
-3. 线程被 join 或 detach 过
-
 ## 移动操作
 
 ### 移动赋值
@@ -487,18 +465,12 @@ thread t{a()}
 线程持有**主线程局部变量的引用或指针**时, 可能会访问已经销毁的变量
 
 ```C++
-void fun(int& a)
-{
-    a = 2;
-    cout << a << endl;
-}
+void fun(int& a);
 
 int main()
 {
     int x = 1;
     std::thread t(fun, std::ref(x));	// 引用传递给线程函数
-
-    t.join();
 }
 ```
 
@@ -514,15 +486,23 @@ int main()
 
 # 线程间共享数据
 
-## mutex
+### mutex
 
-### std::mutex
+**std::mutex**
 
-### std::recursive_mutex
+普通锁
 
-### std::time_mutex
+**std::recursive_mutex**
 
-### std::recursive_timed_mutex
+递归锁
+
+**std::time_mutex**
+
+延迟锁
+
+**std::recursive_timed_mutex**
+
+递归延迟锁
 
 ## lock
 
