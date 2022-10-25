@@ -88,6 +88,15 @@ RAII 方法析构 join 的 thread
 
 `constexpr` 修饰的目标必须具有在**编译阶段就计算出结果**的能力
 
+### [[nodiscard]]
+
+修饰函数返回值, 表明该值不能被忽略
+
+```C++
+std::thread t(fun);
+t.joinable();	// warning:放弃具有 "nodiscard" 属性的函数的返回值
+```
+
 # 并发
 
 ### 并发概念
@@ -744,15 +753,25 @@ void fun(int u)
 
 **1. 加锁**
 
+线程 A 和 B 都需要对互斥 A 和 B 上锁
+
 若**线程 A 对互斥 A 上锁**, **线程 B 对互斥 B 上锁**, 二者都需要对对方上锁
 
-**2. thread**
+**2. lock 两次**
+
+同一 mutex lock 两次会死锁: 自己锁住自己, 自己等待自己 unlock
+
+**3. 互相 join**
 
 **thread A 调用 thread B.join**, **thread B 调用 thread A.join**, 二者都在等待对方结束
 
-**3. lock 两次**
+**4. 自己 join 自己**
 
-同一 mutex lock 两次会死锁: 自己锁住自己, 自己等待自己 unlock
+thread t 在内部调用 t.join(), 相当于**自己阻塞自己**, **自己等待自己执行完**
+
+> thread A 调用 thread B.join 会阻塞 thread A, 直到 thread B 执行完
+
+
 
 ### 防范死锁的准测
 
