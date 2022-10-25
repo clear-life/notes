@@ -586,6 +586,10 @@ std::thread t2(fun);
 
 **std::recursive_timed_mutex** 递归延迟锁
 
+## RAII 实现互斥锁
+
+构造时加锁, 析构时解锁
+
 ## lock
 
 ### std::lock_guard
