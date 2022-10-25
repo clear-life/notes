@@ -403,6 +403,8 @@ fun(NULL);		// 产生二义性, void * 可以隐式转换为 int 和 char *
 
 **std::initializer_list**
 
+好处: 解决 thread 构造时的二义性
+
 什么时候**必须用到列表初始化**
 
 1. **const **和**引用**
