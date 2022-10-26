@@ -6,7 +6,7 @@ RAII(**R**esource **A**cquisition **I**s **I**nitialization) 资源获取即初�
 
 **栈中局部对象管理资源**: 资源即操作系统**有限的资源**如内存, 网络套接字
 
-**利用局部对象自动销毁的特性防止忘记释放资源**: 
+利用**局部对象自动销毁**的特性**防止忘记释放资源**: 
 
 1. 获取: **构造函数获取**
 2. 使用
@@ -23,10 +23,7 @@ RAII(**R**esource **A**cquisition **I**s **I**nitialization) 资源获取即初�
 ### 支持移动操作
 
 * **unique_ptr**
-
 * **thread**
-
-* 
 
 ### delete 两次指针
 
@@ -49,6 +46,40 @@ RAII(**R**esource **A**cquisition **I**s **I**nitialization) 资源获取即初�
 ```C++
 template<typename... T>		// 0~n 个独立模板参数
 void fun(T... args)			// 参数包: 带省略号的参数
+```
+
+### std::move
+
+将**左值转化为右值**方便进行移动操作
+
+> move 本身并不进行移动操作, 只是将左值转化为右值, 右值是移动的前提
+
+**移后源对象**应是**未定义值**, 但**析构是安全的**, 也最好这么做
+
+### std::ref()
+
+生成一个 `reference_wrapper` 对象, 使被封装的对象**引用传递**给线程函数
+
+### 异常处理顺序
+
+```C++
+int main(void)
+{
+    A a;	// 1.构造
+    try {
+        throw(std::string("error!"));  // 2. 抛出异常, 跳过 try 块后面的代码, 跳到对应的 catch
+        a.fun();						
+    }
+    catch (string s) {    
+        cout << s << endl;  // 3. 异常处理   
+    }
+    catch (...) {          // 其他类型异常
+        cout << "..." << endl;
+    }
+
+    cout << "return 0!" << endl;    // 4. 执行后面的代码
+    return 0;				// 5. 析构
+}
 ```
 
 ## C++11, C++14, C++17, C++20
@@ -85,6 +116,8 @@ null 就是 0, nullptr 表示空指针
 
 存储说明符, 尽可能存储到寄存器, **C++17弃用**
 
+**nodiscard**
+
 ### C++20
 
 **std::jthread**
@@ -112,6 +145,25 @@ t.joinable();	// warning:放弃具有 "nodiscard" 属性的函数的返回值
 * 使库能够使用移动构造函数
 
 * 编译器会优化的更好
+
+```C++
+/*
+noexcept:
+1. 修饰函数表示不抛出异常
+2. 接收常量表达式, 根据结果表明会不会抛出异常
+*/
+
+void func() noexcept;               // 不抛出异常
+void func() noexcept(常量表达式);    // 常量表达式为 true, 函数为 noexcept, 否则为 non-noexcept
+
+template<>
+void func() noexcept(noexcept(T()));
+// noexcept(T()) 的结果由 T() 是否抛出异常决定, 不抛出为 true, 否则为 false
+// func 是否为 noexcept 由 noexcept(T()) 决定
+
+```
+
+
 
 ### explicit
 
@@ -240,17 +292,89 @@ thread 析构前必须不再关联线程, 不然就出错
 
 * detach 可能会指向销毁的变量
 
+**简单封装 `thread`**
+
+```C++
+class thread_guard
+{
+	std::thread& t;		// 引用类型
+public:
+	explicit thread_guard(std::thread& _t) : t(_t) {}
+	~thread_guard()
+	{
+		if (t.joinable());
+			t.join();
+	}
+
+	thread_guard(thread_guard const&) = delete;
+	thread_guard& operator=(thread_guard const&) = delete;
+};
+```
+
+
+
 ### join
 
 **线程汇合**
 
-A 调用 B.join() 后, A 被阻塞, 直至 B 执行完
+A 调用 B.join() 后, A 被阻塞, 直至 B 执行完, 同时 B 的**线程 id 和句柄**设为 0 
 
 ### detach
 
 **线程分离**
 
 分离线程的所有权转移给 C++ 运行时库(runtime library), 保证线程结束时正确回收资源
+
+同时**线程 id 和句柄**设为 0
+
+### 移动
+
+std::thread 支持**移动**操作
+
+> 只要**赋值运算符右边是右值**, 且**左边对象支持移动操作**, 就能自动进行**移动赋值**操作
+
+```C++
+void fun();
+
+std::thread t1 = std::thread(fun);	// 临时对象
+std::thread t2 = std::move(t1);		// std::move 将左值转化为右值
+t2 = std::thread(fun);	// 移动赋值, 转移前, t2 已关联线程, 所以 t2 是 joinable, 出错! 
+```
+
+**参数与返回值的移动**
+
+```C++
+// std::thread 做参数
+
+void f(std::thread t);	// 函数原型
+
+void fun();
+f(std::thread(fun));	// 传入临时对象
+
+std::thread t(fun);
+f(std::move(t));		// 左值 move 后传入, t 为移后源对象
+
+
+// std::thread 做返回值
+std::thread f()
+{
+	void fun();
+	return std::thread(fun);    // 临时对象
+}
+
+std::thread f()
+{
+	void fun();
+	std::thread t(fun);
+	return t;                   // 即将消亡的对象
+}
+```
+
+**移动赋值运算符**
+
+```C++
+T& operator=(T&& t) noexcept {};
+```
 
 ### std::thread::id
 
@@ -262,6 +386,116 @@ A 调用 B.join() 后, A 被阻塞, 直至 B 执行完
 
 **std::thread::get_id()** thread 对象关联线程的 ID
 
+### thread 源码
+
+```C++
+struct _identifier
+{ 
+    void* _HANDLE;     // Win32 HANDLE
+    unsigned int _Id;
+};
+
+class thread
+{
+private:
+    _identifier _Thr;
+
+public:
+    thread() noexcept : _Thr{} {}                   // 默认构造
+
+    template<class _Fn, class... _Args>
+    explicit thread(_Fn&& _Fx, _Args&&... _Ax)      // fun 与 args 构造 thread
+    { 
+        _Start(std::forward<_Fn>(_Fx), std::forward<_Args>(_Ax)...);
+    }
+
+    ~thread() noexcept  // 析构
+    {
+        if (joinable()) {
+            std::terminate();
+        }
+    }
+
+    // 移动构造
+    // 移动线程标识(句柄和线程 id)(原来的转移给自己, 原来变为空)
+    thread(thread&& _Other) noexcept : _Thr(std::exchange(_Other._Thr, {})) {}  
+
+    // 移动赋值
+    thread& operator=(thread&& _Other) noexcept 
+    {
+        if (joinable()) 
+        {
+            std::terminate();
+        }
+
+        _Thr = std::exchange(_Other._Thr, {});
+        return *this;
+    }
+
+    // 删除拷贝构造和赋值函数
+    thread(const thread&) = delete;
+    thread& operator=(const thread&) = delete;
+
+    // 交换 thread 标识
+    void swap(thread& _Other) noexcept {
+        std::swap(_Thr, _Other._Thr);
+    }
+
+    // joinable, join 和 detach
+    bool joinable() const noexcept 
+    {
+        return _Thr._Id != 0;
+    }
+
+    void join() 
+    {
+        if (!joinable())                                        // 1. 是否为 joinable
+        {
+            _Throw_Cpp_error(_INVALID_ARGUMENT);
+        }
+
+        if (_Thr._Id == _Thrd_id())                             // 2. 是否是当前线程执行 join
+        {
+            _Throw_Cpp_error(_RESOURCE_DEADLOCK_WOULD_OCCUR);   // 会发生资源死锁
+        }
+
+        if (_Thrd_join(_Thr, nullptr) != _Thrd_success)         // 3. 是否执行成功     
+        {       
+            _Throw_Cpp_error(_NO_SUCH_PROCESS);                 // 没有该线程
+        }
+
+        _Thr = {};      // 不再关联线程
+    }
+
+    void detach() 
+    {
+        if (!joinable()) 
+        {
+            _Throw_Cpp_error(_INVALID_ARGUMENT);
+        }
+
+        _Check_C_return(_Thrd_detach(_Thr));
+        
+        _Thr = {};
+    }
+
+    unsigned int get_id() const noexcept
+    {
+        return _Thr._Id;
+    }
+
+    // 返回句柄
+    void* native_handle() noexcept  // return Win32 HANDLE as void *
+    { 
+        return _Thr._HANDLE;
+    }
+
+    // 硬件支持的线程数
+    static unsigned int hardware_concurrency() noexcept;
+};
+
+```
+
 ## 线程函数传参
 
 ### 参数传递
@@ -271,6 +505,7 @@ thread 构造函数按**值传递**方式传递**线程函数的参数**, 与**�
 * thread 构造函数**值传递的副本**被当成**临时变量**, 向线程函数传递参数
 
 ```C++
+// 传递引用类型
 void fun(int, char&);
 std::thread t(fun, 1, 'a');		// 构造函数默认值传递
 // 编译不通过, 因为值传递的副本不能作为左值被 fun 接收
@@ -291,9 +526,65 @@ A a;
 std::thread t(&A::fun, &a);
 ```
 
-### std::ref()
+### 可变模板参数
 
-生成一个 `reference_wrapper` 对象, 使被封装的对象**引用传递**给线程函数
+thread 的构造函数是**可变模板参数**
+
+可变模板参数的用法:
+
+**1. 递归函数**
+
+```C++
+// 递归终止函数 1
+void fun()
+{
+}
+
+// 递归终止函数 2
+template<typename T>
+void fun(T t)
+{
+	cout << t << endl;
+}
+
+// 展开函数
+template<typename T, typename ...Args>
+void fun(T head, Args... rest)
+{
+	cout << head << endl;
+	fun(rest...);
+}
+
+int main()
+{
+	fun(4, 3, 2, 1);
+	return 0;
+}
+```
+
+**2. 逗号表达式**
+
+```C++
+template<typename T>
+void print(T t)         // 处理参数包的参数
+{
+    cout << t << endl;
+}
+
+template<typename ...Args>
+void fun(Args... args)  // 访问参数包的每个参数
+{
+    int arr[] = {(print(args), 0)...};  // 利用逗号和初始化列表的特性
+}
+
+int main()
+{
+	fun(4, 3, 2, 1);
+	return 0;
+}
+```
+
+
 
 ### 可调用对象与 std::function
 
@@ -328,22 +619,24 @@ std::thread t(&A::fun, &a);
 
 ### RAII 实现 thread 
 
-保证 thread **析构时能够释放资源**
+把 `j_thread` 当成具有自动析构 `join` 的  `thread ` 看待
 
 ```C++
-class j_thread
+class j_thread      // j_thread 当作 thread 来用
 {
     std::thread t;
 public:
-    j_thread() noexcept=default;
+    // j_thread 与 thread 同生共死
+    // j_thread 存在, 则 thread 存在, 否则就不存在
+    j_thread() noexcept=default;    
     
     // 构造函数 RAII 获取资源
-    j_thread(j_thread&& j) noexcept: t(std::move(j.t)) {}	// 移动构造+
+    j_thread(j_thread&& j) noexcept: t(std::move(j.t)) {}           // j_thread 移动构造
     
-    explicit j_thread(std::thread _t) noexcept: t(std::move(_t)) {}
+    explicit j_thread(std::thread &&_t) noexcept: t(std::move(_t)) {} // thread 移动构造
     
     template<typename Callable, typename Args>
-    explicit j_thread(Callable&& fun, Args&& args) : 	
+    explicit j_thread(Callable&& fun, Args&& args) : 	            // 构造 thread
     	t(std::forward<Callable>(fun), std::forward<Args>(args)) {}
     
     // 移动赋值
@@ -416,36 +709,6 @@ public:
 }
 ```
 
-## 移动操作
-
-### 移动赋值
-
-std::thread 支持**移动**操作
-
-> 只要**赋值运算符右边是右值**, 且**左边对象支持移动操作**, 就能自动进行**移动赋值**操作
-
-```C++
-void fun();
-
-std::thread t1 = std::thread(fun);	// 临时对象
-std::thread t2 = std::move(t1);		// std::move 将左值转化为右值
-t2 = std::thread(fun);	// 移动赋值, 转移前, t2 已关联线程, 所以 t2 是 joinable, 出错! 
-```
-
-**移动赋值运算符**
-
-```C++
-T& operator=(T&& t) noexcept {};
-```
-
-### std::move
-
-将**左值转化为右值**方便进行移动操作
-
-> move 本身并不进行移动操作, 只是将左值转化为右值, 右值是移动的前提
-
-**移后源对象**应是**未定义值**, 但**析构是安全的**, 也最好这么做
-
 ## 异常情况
 
 ### std::terminate
@@ -499,6 +762,17 @@ thread t{a()}
 
 线程持有**主线程局部变量的引用或指针**时, 可能会访问已经销毁的变量
 
+```C++
+void fun(int& x);	// 线程函数有指针和引用参数, 隐患: 线程内可能会访问已经销毁的局部变量
+
+int main()
+{
+	int x;
+	std::thread t(fun, std::ref(x));	
+	t.detach();
+}
+```
+
 **解决办法**:
 
 1. 线程**完全自含**
@@ -522,6 +796,18 @@ thread t{a()}
 **不变量**类似循环不变量, 是**数据的断言**
 
 * 多线程的问题是破坏**不变量**, 典型场景是需要**改动多份数据**
+
+```C++
+// 双向链表 A ↔ B ↔ C
+// 不变量: 若 A -> B, 则 B -> A
+void delete_node(Node B)
+{
+    n->pre->next = n->next;     // A -> C
+                                // 此时A B C 之间的不变量被破坏, 其余线程访问 A B C 时就出问题了
+    n->next->pre = n->pre;      // C -> A
+    delete n;
+}
+```
 
 ### 条件竞争
 
@@ -604,15 +890,56 @@ std::thread t2(fun);
 
 > 同一线程 lock 两次, 会导致死锁: 自己阻塞自己, 自己等待自己解锁
 
+```C++
+std::mutex m;
+
+m.lock();
+m.lock();		// 死锁
+cout << "test" << endl;
+m.unlock();
+m.unlock();
+```
+
 ### try_lock() 非阻塞
 
 1. 若 mutex 为 0, 则置为1 后返回 true
 2. 若 mutex 为 1, 则返回 false, **不被阻塞**
 
+```C++
+std::mutex m;
+
+m.try_lock()	// 尝试加锁成功
+
+m.try_lock())	// 尝试加锁失败
+    
+cout << "test" << endl;
+
+m.unlock();
+```
+
 ### unlock
 
 1. 若 mutex 为 1, 则置为 0
 2. 若 mutex 为 0, 则返回
+
+```C++
+// unlock 两次对本身而言没有问题
+// 但对别的线程而言, 其本应被阻塞, 却因为多 unlock 了一次而不被阻塞进入临界区
+// 所以第二次 unlock 不会成功
+std::mutex m;
+
+m.lock();
+cout << "test" << endl;
+m.unlock();
+m.unlock();     // 不会成功
+
+m.lock();
+m.lock();       // 依旧会阻塞
+cout << "test" << endl;
+m.unlock();
+```
+
+
 
 ### 例1: 一个 mutex 锁住两个操作
 
@@ -672,9 +999,9 @@ void fun(int u)
 {
     std::lock_guard<std::recursive_mutex > guard(m);
     
+    cout << u << endl;
     if (u == 0)
         return;
-    cout << u << endl;
     fun(u - 1);
 }
 
@@ -744,6 +1071,68 @@ int main()
     return 0;
 }
 ```
+
+### 线程安全接口的设计
+
+**线程安全的栈容器类**
+
+```C++
+#include <mutex>
+#include <stack>
+
+using namespace std;
+
+struct empty_stack : std::exception
+{
+    const char* what() const throw();
+};
+
+
+template<typename T>
+class threadsafe_stack
+{
+private:
+    std::stack<T> stk;
+    mutable std::mutex m;
+public:
+    threadsafe_stack();
+    threadsafe_stack(const threadsafe_stack& other)
+    {
+        std::lock_guard<std::mutex> l(other.m);     // mutable 保证了 m 在任何情况下都能被修改
+        stk = other.stk;                            // 函数体内复制在 mutex 的保护范围内
+    }
+    threadsafe_stack& operator=(const threadsafe_stack&) = delete;
+
+    void push(T x)
+    {
+        std::lock_guard<std::mutex> l(m);
+        stk.push(std::move(x));
+    }
+
+    void pop(T& x)      // 传入引用
+    {
+        std::lock_guard<std::mutex> l(m);
+        if (stk.empty())
+            throw empty_stack();
+        x = stk.top();
+        stk.pop();
+    }
+
+    std::shared_ptr<T> pop()    // 返回指针
+    {
+        std::lock_guard<std::mutex> l(m);
+        if (stk.empty())
+            throw empty_stack();
+        std::shared_ptr<T> const res(std::make_shared<T>(stk.top()));
+        stk.pop();
+        return res;
+    }
+
+    bool empty() const;
+};
+```
+
+
 
 ### std::unique_lock
 
