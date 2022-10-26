@@ -53,6 +53,32 @@ void fun(T... args)			// 参数包: 带省略号的参数
 
 ## C++11, C++14, C++17, C++20
 
+### C++11
+
+**1. 类型推导**
+
+**2. 右值引用**
+
+用于**移动语义**和**完美转发**
+
+**3. 智能指针**
+
+**4. 范围 for 循环**
+
+**5. nullptr**
+
+解决二义性
+
+null 就是 0, nullptr 表示空指针
+
+**6. 列表初始化**
+
+**std::initializer_list**
+
+好处: 解决 thread 构造时的二义性
+
+**7. 可变模板参数**
+
 ### C++17
 
 **register**
@@ -532,7 +558,23 @@ std::thread t2(fun);
 
 ## std::mutex
 
-**互斥锁**, 0 表示已被线程拥有, 1 表示空闲
+**互斥锁**, 0 表示已被线程占有, 1 表示空闲
+
+### std::mutex
+
+**非递归互斥**:
+
+1. 调用线程从 `lock` 开始, 到 `unlock` 为止占有 `mutex`, 此时其他线程会被阻塞/返回false
+
+   > mutex 相当于临界区, 占有 mutex 就是进入临界区, 没有 mutex 就是出临界区
+
+2. 调用 `lock` 前必须不占有 `mutex` (**非递归**)
+
+   > 两次 lock 会死锁
+   >
+   > 递归下一层后, 由于已经占有 `mutex`, 会被阻塞, 所以不能保证递归的正常进行
+   >
+   > 只能锁一层
 
 ### lock() 阻塞
 
@@ -552,29 +594,13 @@ std::thread t2(fun);
 1. 若 mutex 为 1, 则置为 0
 2. 若 mutex 为 0, 则返回
 
-### 锁
-
-**std::mutex** 普通锁
-
-**std::recursive_mutex** 递归锁
-
-**std::time_mutex** 延迟锁
-
-**std::recursive_timed_mutex** 递归延迟锁
-
-## RAII 实现互斥锁
-
-构造时加锁, 析构时解锁
-
-## lock
-
-### 使用互斥
+### 例子
 
 ```C++
 #include <mutex>
 
 std::list<int> l;
-std::mutex m;
+std::mutex m;		// 使 add 和 find 操作互斥 
 
 void add(int x)
 {
@@ -591,6 +617,20 @@ bool find(int x)
 }
 ```
 
+
+
+### mutex 类型
+
+**std::mutex** 普通锁
+
+**std::recursive_mutex** 递归锁
+
+**std::time_mutex** 延迟锁
+
+**std::recursive_timed_mutex** 递归延迟锁
+
+## lock
+
 ### 不得向锁外传递受保护数据的指针和引用
 
 显而易见, **函数返回值不能**是**受保护数据的指针和引用**
@@ -605,29 +645,7 @@ void protect(函数指针 fun)
 }
 ```
 
-### std::mutex
 
-* 互斥量, 保护共享数据
-
-* **非递归互斥**:
-
-  1. 调用线程从 `lock` 开始, 到 `unlock` 为止占有 `mutex`
-
-  2. 线程占有 `mutex` 时, 其他线程若试图要 `mutex` 的所有权, 则将阻塞/返回
-
-     > mutex 相当于临界区, 占有 mutex 就是进入临界区, 没有 mutex 就是出临界区
-
-  3. 调用 `lock` 前必须不占有 `mutex`
-
-     > 递归下一层后, 由于已经占有 `mutex`, 会被阻塞, 所以不能保证递归的正常进行
-     >
-     > 只能锁一层
-
-**方法:**
-
-* `lock` 加锁, 若不能则阻塞
-* `try_lock` 尝试加锁, 若不能就返回 `false`
-* `unlock` 解锁
 
 ### std::recursive_mutex 
 
@@ -662,16 +680,38 @@ int main()
 > 增强版: std::scoped_lock<>
 
 ```C++
-std::mutex m;
-
-void fun(int u)
+int main()
 {
-    std::lock_guard<std::mutex> guard(m);
-    ...
+    std::mutex m;
+    std::lock_guard<std::mutex> l(m);
+    
+    cout << "test" << endl;
+
+    return 0;
 }
 ```
 
+### 类模板参数推导
+
+自动推断模板参数类型
+
+```C++
+int main()
+{
+    std::mutex m;
+    std::lock_guard l(m);	// 自动推断出 m 的类型为 std::mutex
+    
+    cout << "test" << endl;
+
+    return 0;
+}
+```
+
+
+
 ### std::unique_lock
+
+
 
 ### 锁的粒度
 
