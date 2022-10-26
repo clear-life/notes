@@ -1148,9 +1148,43 @@ public:
 };
 ```
 
+### std::lock_guard 源码
+
+```C++
+template <class T>
+class lock_guard 
+{ 
+public:
+    // 构造加锁
+    explicit lock_guard(T& _Mtx) : m(_Mtx)   // 参数为 mutex 
+    {
+        m.lock();
+    }
+
+    // 不上锁
+    lock_guard(T& _Mtx, adopt_lock_t) : m(_Mtx) {}   // std::adopt_lock 是 std::adopt_lock_t 类的实例
+
+    // 析构解锁
+    ~lock_guard() noexcept 
+    {
+        m.unlock();
+    }
+
+    lock_guard(const lock_guard&) = delete;
+    lock_guard& operator=(const lock_guard&) = delete;
+
+private:
+    T& m;
+};
+```
+
 ### std::lock
 
 一次性锁住多个互斥, 不发生死锁 
+
+> 仅仅是一个模板函数, 功能是一次性加锁
+>
+> 解锁仍需手动解锁
 
 * 要么全部成功加锁
 * 要么未成功加锁, 那么已经加锁的会解锁, 然后抛出异常
