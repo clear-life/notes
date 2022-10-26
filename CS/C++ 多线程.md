@@ -568,10 +568,6 @@ std::thread t2(fun);
 
 ## lock
 
-### std::lock_guard
-
-### std::unique_lock
-
 ### 使用互斥
 
 ```C++
@@ -674,6 +670,8 @@ void fun(int u)
     ...
 }
 ```
+
+### std::unique_lock
 
 ### 锁的粒度
 
