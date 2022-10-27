@@ -1244,7 +1244,15 @@ friend void swap(A& l, A& r)
 
 ### std::unique_lock
 
-灵活加锁
+更灵活的管理互斥
+
+```C++
+std::mutex m;
+std::unique_lock<std::mutex> l(m);						// lock, 相当于 lock_guard<std::mutex>
+std::unique_lock<std::mutex> l(m, std::adopt_lock);		// 假定已 lock
+std::unique_lock<std::mutex> l(m, std::defer_lock);		// 不 lock, 当作析构 unlock 的 mutex 使用
+std::unique_lock<std::mutex> l(m, std::try_to_lock);	// 尝试 lock
+```
 
 ## 死锁
 
