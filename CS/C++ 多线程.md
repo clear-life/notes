@@ -1508,7 +1508,7 @@ void fun()
 }
 ```
 
-#### 4. local static
+### 4. local static
 
 C++11 标准保证了 `local static` 变量初始化的正确执行, 即
 
@@ -1521,5 +1521,43 @@ int& get_instance()
     static int x = 1;	// 线程安全且只执行一次
     return x;
 }
+```
+
+## 保护甚少更新的数据结构
+
+`std::shared_mutex`
+
+排他锁: 排他写 `std::lock_guard<std::shared_mutex>`
+
+共享锁: 共享读 `std::shared_lock<std::shared_mutex>`
+
+```C++
+#include <map>
+#include <mutex>
+#include <string>
+#include <shared_mutex>
+
+class A
+{
+	std::map<std::string, std::string> dns;
+	mutable std::shared_mutex m;                        // 共享 mutex
+
+public:
+	std::string find(std::string& key) const
+	{
+		std::shared_lock<std::shared_mutex> l(m);       // 共享
+
+		std::map<std::string, std::string>::const_iterator const it = dns.find(key);
+		
+		return (it == dns.end()) ? std::string() : it->second;
+	}
+
+	void update(std::string const& key, std::string const& val)
+	{
+		std::lock_guard<std::shared_mutex> l(m);        // 排他
+
+		dns[key] = val;
+	}
+};
 ```
 
