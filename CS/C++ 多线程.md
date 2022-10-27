@@ -1254,6 +1254,46 @@ std::unique_lock<std::mutex> l(m, std::defer_lock);		// 不 lock, 当作析构 u
 std::unique_lock<std::mutex> l(m, std::try_to_lock);	// 尝试 lock
 ```
 
+**std::unique_lock 支持移动操作**
+
+可以**转移互斥的归属权**
+
+```C++
+#include <mutex>
+
+std::unique_lock<std::mutex> get_lock()
+{
+    extern std::mutex m;
+    std::unique_lock<std::mutex> l(m);
+
+    // prepare
+
+    return l;
+}
+
+void fun()
+{
+    std::unique_lock<std::mutex> l(get_lock());
+    
+    // do something, 持有互斥
+}
+```
+
+可以**灵活加锁解锁**
+
+```C++
+void fun()
+{
+    std::mutex m;
+    std::unique_lock<std::mutex> l(m);  // 构造时 lock
+    // 访问共享数据
+    l.unlock();     // 手动解锁
+    // 不访问共享数据
+    l.lock();       // 手动加锁
+    // 访问共享数据
+}   // 析构解锁
+```
+
 ## 死锁
 
 ### 死锁的四个必要条件
