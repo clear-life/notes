@@ -1508,3 +1508,18 @@ void fun()
 }
 ```
 
+#### 4. local static
+
+C++11 标准保证了 `local static` 变量初始化的正确执行, 即
+
+* 只有一个线程会执行初始化
+* 初始化完成之前, 其余线程不会越过去
+
+```C++
+int& get_instance()
+{
+    static int x = 1;	// 线程安全且只执行一次
+    return x;
+}
+```
+
