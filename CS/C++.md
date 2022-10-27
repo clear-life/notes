@@ -977,8 +977,6 @@ cout << fun().get() << endl;
 */
 ```
 
-
-
 ### 移动构造与拷贝构造区别
 
 |      | 拷贝构造 | 移动构造 |
@@ -1004,15 +1002,47 @@ cout << fun().get() << endl;
 
 ### 限制对象的建立方式
 
-**1. 只能建立在堆上**
+**只能建立在栈上**
 
-**不能将构造函数设为私有**, 因为静态建立和动态建立**都需要调用构造函数**
+让 `operator new 和 operator delete` 不能被编译器调用
 
-**将析构函数设为私有**, 编译器就**不能调用析构函数来释放对象**, 就不能在栈上创建对象
+```C++
+class A
+{
+private:
+    void* operator new(size_t) {}
+    void operator delete(void*) {}
+}
+```
 
-**2. 只能建立在栈上**
+**只能建立在堆上**
 
-将 `operator new()` 设为私有
+让**构造和析构函数**不能被编译器调用
+
+```C++
+class A
+{
+private:
+    A(){}
+    ~A(){}
+    
+public:
+    static A* get()
+    {
+        A* p = new A;
+        return p;
+    }
+    
+    static void del(A* p)
+    {
+        delete p;
+    }
+}
+```
+
+### 编译器与构造函数,析构函数
+
+* **编译器只能调用 `public` 构造函数和析构函数**, **不能调用 `private` 构造函数和析构函数**
 
 ### 类默认生成哪几个成员函数
 

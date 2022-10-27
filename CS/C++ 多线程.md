@@ -1006,7 +1006,7 @@ void protect(函数指针 fun)
 
 ### std::recursive_mutex 
 
-允许同一线程重复加锁
+允许**同一线程**对**某互斥的同一实例多次加锁** 
 
 ```C++
 std::recursive_mutex m;
@@ -1435,5 +1435,76 @@ int main()
 
 ```
 
+## 延迟初始化
 
+### 1. 互斥
+
+问题: 
+
+* 第一次使用时没问题, 正常上锁并初始化
+* 但初始化之后, 每次还需要上锁, 导致并发效率不高
+
+```C++
+std::shared_ptr<T> p;
+std::mutex m;
+
+void fun()		// 访问数据, 若未初始化则需要初始化
+{
+    std::unique_lock<std::mutex> l(m);
+    if(!p)      
+    {
+        p.reset(new T);
+    }
+    l.unlock();
+
+    p->do_something();	// 访问数据
+}
+```
+
+### 2. 双重检验锁定
+
+进行两次检验
+
+```C++
+std::shared_ptr<T> p;
+std::mutex m;
+
+void fun()
+{
+    if(!p)      // 保证了只会进行一次初始化
+    {
+        std::unique_lock<std::mutex> l(m);
+        if(!p)
+        {
+            p.reset(new T);
+        }
+        l.unlock();
+    }
+
+    p->do_something();     
+} 
+```
+
+### 3. std::once_flag 类和 std:: call_once() 函数
+
+`std::once_flag` 实例存储同步数据, 一个实例对应一次初始化
+
+`std:: call_once()` 函数在一个 `std::once_flag` 实例上只会调用一次 `init` 可调用对象
+
+```C++
+std::shared_ptr<int> p;
+std::once_flag flag;
+
+void init()	// 初始化函数
+{
+    p.reset(new int(0));
+}
+void fun()
+{
+    // std::call_once 只会执行一次
+    std::call_once(flag, init);	// flag 相当于标志位, 表明是否调用过 init 函数
+    
+    // 访问数据
+}
+```
 
