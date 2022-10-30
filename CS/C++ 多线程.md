@@ -1778,3 +1778,10 @@ public:
 };
 ```
 
+## future
+
+**模拟一次性事件**, 事件发生后, **与事件关联的所有 `future` 实例会同时就绪**, 可以**访问与事件关联的数据**
+
+* **std::furure** 一个事件只能关联一个 `std::furure` 实例
+
+* **std::shared_future** 一个事件可以关联多个 `std::shared_future` 实例
