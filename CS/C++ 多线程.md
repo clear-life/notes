@@ -1785,3 +1785,112 @@ public:
 * **std::furure** 一个事件只能关联一个 `std::furure` 实例
 
 * **std::shared_future** 一个事件可以关联多个 `std::shared_future` 实例
+
+### future 使用
+
+```C++
+#include <iostream>
+#include <future>
+
+using namespace std;
+
+int fun()
+{
+    return 1;
+}
+
+int main()
+{
+    std::future<int> f = std::async(fun);	// future 实例含有关联事件的数据
+
+    cout << f.get() << endl;
+}
+```
+
+### future 源码
+
+```C++
+template <class T>
+class future
+{ // class that defines a non-copyable asynchronous return object that holds a value
+public:
+    T get() 
+    {
+        // 阻塞到事件完毕, 返回关联事件的数据
+        future _Local{std::move(*this)};
+        return std::move(_Local._Get_value());
+    }
+
+    shared_future<T> share() noexcept {
+        return shared_future<T>(std::move(*this));
+    }
+
+    future(const future&) = delete;
+    future& operator=(const future&) = delete;
+};
+```
+
+### std::async 源码
+
+```C++
+template <class _Func, class... _Args>
+future<_Invoke_result_t<decay_t<_Func>, decay_t<_Args>...>> 	// 返回类型
+    async(_Func&& func, _Args&&... args) 
+{
+    // manages a callable object launched with default policy
+    return std::async(launch::async | launch::deferred, 		// 默认策略
+                      std::forward<_Func>(func), 
+                      std::forward<_Args>(args)...);
+}
+```
+
+### std::async 传参
+
+**运行策略**:
+
+* `std::launch::deferred`  延后执行, 直至 `future` 调用 `wait()` 或 `get()`, **在二者的内部运行任务函数**
+
+  > 有可能永远不执行任务函数
+
+* `std::launch::async`  另起线程
+
+* `std::launch::deferred | std::launch::async`  自行选择, default
+
+```C++
+#include <string>
+#include <future>
+
+struct X
+{
+    std::string fun(std::string const&);
+};
+
+X x;
+auto f1 = std::async(&X::fun, &x, "hello");     // x.fun()
+auto f2 = std::async(&X::fun, x, "goodbye");    // x 值传递生成副本 t, t.fun()
+
+
+struct Y
+{
+    double operator()(double);
+};
+
+Y y;
+auto f3 = std::async(std::launch::deferred, Y(), 1.0);                   // Y() 默认构造生成匿名变量 t, t.operator()
+auto f4 = std::async(std::launch::async, std::ref(y), 1.0);           // 引用传递, y.operator()
+
+
+X fun(X&);      // 函数 fun
+auto f6 = std::async(fun,std::ref(x));      // fun()
+
+
+class move_only // 只有移动操作的类
+{
+public:
+    void operator()();
+};
+auto f5 = std::async(move_only());          // 默认构造生成副本, 然后移动构造在 std::sync() 内产生临时对象 t, t.operator()
+```
+
+
+
