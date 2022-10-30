@@ -1527,9 +1527,9 @@ int& get_instance()
 
 `std::shared_mutex`
 
-排他锁: 排他写 `std::lock_guard<std::shared_mutex>`
+**排他锁**: 排他写 `std::lock_guard<std::shared_mutex>`
 
-共享锁: 共享读 `std::shared_lock<std::shared_mutex>`
+**共享锁**: 共享读 `std::shared_lock<std::shared_mutex>`
 
 ```C++
 #include <map>
@@ -1566,3 +1566,103 @@ public:
 ## 条件变量
 
 **头文件** `<condition_variable>`
+
+**条件变量**: **与某一条件关联**, 条件成立时, 通过条件变量**唤醒所有等待线程**继续执行
+
+* **std::condition_variable**: 仅与 **std::mutex** 一起使用
+
+* **std::condition_variable_any**: 任何互斥
+
+### 使用条件变量
+
+```C++
+std::mutex m;									// 使两个函数互斥
+std::queue<int> q;
+std::condition_variable flag;
+
+void data_prepare()
+{
+    for(int i = 0; i < 10; i++)
+    {
+        {
+            std::lock_guard<std::mutex> l(m);	// 锁住数据的 入
+            q.push(i); 
+        }		// 解锁后才通知是为了效率
+        flag.notify_one();
+    }
+}
+
+void data_process()
+{
+    while(true)
+    {
+        std::unique_lock<std::mutex> l(m);		// 锁住数据的 出
+
+        flag.wait(l, []{ return !q.empty(); });
+
+        int t = q.front();
+        q.pop();
+
+        l.unlock();
+
+        cout << t << endl;
+
+        if(q.empty())
+            break;
+    }
+}
+
+int main()
+{
+    std::thread t1(data_prepare);
+    std::thread t2(data_process);
+
+    t1.join();
+    t2.join();
+}
+```
+
+### notify_one 和 notify_all
+
+条件满足后, 通知阻塞线程
+
+* **notify_one** 唤醒一个阻塞线程
+* **notify_all** 唤醒所有阻塞线程
+
+### wait
+
+等待条件满足, **互斥的状态保持不变**, 即在 `wait` 内成对执行 `lock` 和 `unlock`
+
+**condition_variable::wait(unique_lock<mutex\>& l, Func func)**
+
+检测条件是否成立:
+
+> func 返回 true 表示成立, false 表示不成立
+
+* 若成立, `wait` 返回
+
+* 若不成立
+
+  1. `l.unlock()` 后阻塞线程
+
+  2. `notify_one()` 通知条件变量, 阻塞解除
+
+  3. `l.lock()` 后, 再次检测条件
+
+```C++
+template<typename Func>
+void condition_variable::wait(unique_lock<mutex>& l, Func func)
+{
+    while(!func())
+    {
+        l.unlock();			// 必须使用 std::unique_lock 的原因: 灵活上锁解锁
+    
+        // 阻塞, 等待条件变量通知
+        wait_for_cnd();
+
+        l.lock();
+    }
+}
+```
+
+### 用条件变量构建线程安全队列
