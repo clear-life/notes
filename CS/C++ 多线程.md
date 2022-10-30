@@ -1665,4 +1665,116 @@ void condition_variable::wait(unique_lock<mutex>& l, Func func)
 }
 ```
 
+### 虚假唤醒
+
+不是真正因为条件满足而唤醒
+
+**原因1**: 多线程争抢
+
+1. **一个生产者, 多个消费者**
+
+2. 生产一个资源后, 多个消费者都被唤醒
+3. 但只有一个消费者能得到资源, 其余线程的唤醒就是**虚假唤醒**
+
+**原因2**: 系统原因
+
+某些系统允许: 没有条件变量通知的情况下, `wait` 依然可以返回
+
+**副作用**:
+
+* 与条件判断无关的操作
+* 不限次数和时机地产生
+
+**问题**:
+
+* **副作用**多次产生, 不限次数和时机
+
+### 唤醒丢失
+
+通知了, 但没人等, 被错过了
+
 ### 用条件变量构建线程安全队列
+
+```C++
+#include <mutex>
+#include <condition_variable>
+#include <queue>
+#include <memory>
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+    mutable std::mutex m;	// 互斥必须用 mutable 修饰(const 对象)
+    std::queue<T> q;
+    std::condition_variable cond;
+
+public:
+    // 默认构造与拷贝构造
+    threadsafe_queue() {}
+    threadsafe_queue(threadsafe_queue const& other)
+    {
+        std::lock_guard<std::mutex> l(other.m);
+        q=other.q;
+    }
+
+    void push(T val)
+    {
+        std::lock_guard<std::mutex> l(m);
+        q.push(val);
+        cond.notify_one();
+    }
+
+    // 引用和指针
+    void wait_and_pop(T& val)
+    {
+        std::unique_lock<std::mutex> l(m);
+        cond.wait(l,[this]{return !q.empty();});
+
+        val = q.front();
+        q.pop();
+    }
+
+    std::shared_ptr<T> wait_and_pop()
+    {
+        std::unique_lock<std::mutex> l(m);
+        cond.wait(l,[this]{return !q.empty();});
+
+        std::shared_ptr<T> res(std::make_shared<T>(q.front()));
+        q.pop();
+
+        return res;
+    }
+
+    bool try_pop(T& val)
+    {
+        std::lock_guard<std::mutex> l(m);
+        if(q.empty())
+            return false;
+
+        val = q.front();
+        q.pop();
+
+        return true;
+    }
+
+    std::shared_ptr<T> try_pop()
+    {
+        std::lock_guard<std::mutex> l(m);
+        if(q.empty())
+            return std::shared_ptr<T>();
+
+        std::shared_ptr<T> res(std::make_shared<T>(q.front()));
+        q.pop();
+        
+        return res;
+    }
+
+    bool empty() const
+    {
+        std::lock_guard<std::mutex> l(m);
+        return q.empty();
+    }
+};
+```
+
