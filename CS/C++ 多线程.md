@@ -60,6 +60,12 @@ void fun(T... args)			// 参数包: 带省略号的参数
 
 生成一个 `reference_wrapper` 对象, 使被封装的对象**引用传递**给线程函数
 
+### 函数签名
+
+* 函数名
+* 参数列表
+* 所在类和命名空间
+
 ## 异常
 
 ### 自定义异常
@@ -1786,6 +1792,10 @@ public:
 
 * **std::shared_future** 一个事件可以关联多个 `std::shared_future` 实例
 
+**成员函数**
+
+* `get()` 获取关联事件的值
+
 ### future 使用
 
 ```C++
@@ -1813,6 +1823,7 @@ int main()
 template <class T>
 class future
 { // class that defines a non-copyable asynchronous return object that holds a value
+    // 定义不可复制的异步, 该异步返回一个拥有值的对象
 public:
     T get() 
     {
@@ -1838,6 +1849,7 @@ future<_Invoke_result_t<decay_t<_Func>, decay_t<_Args>...>> 	// 返回类型
     async(_Func&& func, _Args&&... args) 
 {
     // manages a callable object launched with default policy
+    // 管理一个可调用对象
     return std::async(launch::async | launch::deferred, 		// 默认策略
                       std::forward<_Func>(func), 
                       std::forward<_Args>(args)...);
@@ -1892,5 +1904,137 @@ public:
 auto f5 = std::async(move_only());          // 默认构造生成副本, 然后移动构造在 std::sync() 内产生临时对象 t, t.operator()
 ```
 
+## std::packaged_task<>
 
+* 关联 **future 实例**和**函数**
+* 异步运行函数, 将结果保存在 future 实例中
+
+> 函数 代指 可调用对象
+
+### std::packaged_task<>
+
+类模板
+
+**作用**
+
+调用函数, 返回值保存在 future 实例中, 令 future 准备就绪
+
+**模板参数**
+
+模板参数是**函数类型**
+
+* 函数类型**不必严格匹配**, 只要能进行**隐式类型转换**
+
+```C++
+void()		// 无输入, 无返回值
+int(int, double)	// 输入 int, double , 输出 int 
+```
+
+**成员函数**
+
+`get_future()` 返回关联的 `future` 实例
+
+`operator()` 调用**关联的函数**
+
+### std::packaged_task<> 接口
+
+```C++
+template <class _Ret, class... _Args>
+class packaged_task<_Ret(_Args...)> {
+    // class that defines an asynchronous provider that returns the result of a call to a function object
+    // 提供异步函数调用返回值的类
+public:
+    packaged_task() : _MyPromise(0) {}
+
+    template <class _Fty2, enable_if_t<!is_same_v<_Remove_cvref_t<_Fty2>, packaged_task>, int> = 0>
+    explicit packaged_task(_Fty2&& _Fnarg) : _MyPromise(new _MyStateType(_STD forward<_Fty2>(_Fnarg))) {}
+
+    ~packaged_task();
+
+    future<_Ret> get_future();
+    void operator()(_Args... _Args);
+};
+```
+
+## std::promise<T\>
+
+### std::promise<T\>
+
+**作用**
+
+在线程 A 中保存一个值, 关联的 `future` 实例就能在线程 B 获取到该值
+
+**成员函数**
+
+`get_future()` 返回关联的 `future` 实例
+
+`set_value()` 设置值
+
+**使用**
+
+```C++
+void fun1(std::promise<int> &p)
+{
+    int x = 1;
+    cout << "传入数据: " << x << endl;
+    p.set_value(x);
+}
+
+void fun2(std::future<int> &f)
+{
+    int x = f.get();
+    cout << "收到数据: " << x << endl; 
+}
+
+int main()
+{
+    std::promise<int> p;
+    std::future<int> f = p.get_future();    // f 与 p 关联
+
+    std::thread t1(fun1, std::ref(p));
+    std::thread t2(fun2, std::ref(f));
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### std::promise<T\> 接口
+
+```C++
+template <class _Ty>
+class promise 
+{ // class that defines an asynchronous provider that holds a value
+// 定义一个异步方式提供值的类
+public:
+    promise() : _MyPromise(new _Associated_state<_Ty>) {}
+
+    template <class _Alloc>
+    promise(allocator_arg_t, const _Alloc& _Al) : _MyPromise(_Make_associated_state<_Ty>(_Al)) {}
+
+    promise(promise&& _Other);
+
+    promise& operator=(promise&& _Other);
+
+    ~promise();
+
+
+    future<_Ty> get_future() {
+        return future<_Ty>(_MyPromise._Get_state_for_future(), _Nil{});
+    }
+
+    void set_value(const _Ty& _Val) {
+        _MyPromise._Get_state_for_set()._Set_value(_Val, false);
+    }
+
+    void set_value(_Ty&& _Val) {
+        _MyPromise._Get_state_for_set()._Set_value(_STD forward<_Ty>(_Val), false);
+    }
+
+private:
+    _Promise<_Ty> _MyPromise;
+};
+```
 
