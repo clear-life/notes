@@ -1804,6 +1804,9 @@ public:
   >
   > get() 调用后, 存储的异常被重新抛出
 
+* `valid()` 判断 `future` 对象是否有效
+* `share()` 创建新的 `shared_future` 对象, 转移归属权
+
 ```C++
 #include <iostream>
 #include <future>
@@ -1879,7 +1882,7 @@ p.set_exception(std::make_exception_ptr(std::logic_error("x < 0")));
 >
 > 这种方式会导致许诺(异步方式给出值或异常)被破坏, 等待的线程永远都等不到结果
 
-## std::async
+## async()
 
 ### std::async 源码
 
@@ -1944,7 +1947,7 @@ public:
 auto f5 = std::async(move_only());          // 默认构造生成副本, 然后移动构造在 std::sync() 内产生临时对象 t, t.operator()
 ```
 
-## std::packaged_task<>
+## packaged_task<>
 
 * 关联 **future 实例**和**函数**
 * 异步运行函数, 将结果保存在 future 实例中
@@ -1996,7 +1999,7 @@ public:
 };
 ```
 
-## std::promise<T\>
+## promise<T\>
 
 ### std::promise<T\>
 
@@ -2077,6 +2080,54 @@ public:
 
 private:
     _Promise<_Ty> _MyPromise;
+};
+```
+
+## shared_future
+
+### shared_future 使用
+
+`std::shared_future` 实例由 `std::future` 实例构造得到
+
+**future 移动构造**
+
+```C++
+std::promise<int> p;
+std::future<int> f(p.get_future());
+assert(f.valid());		// 有效
+
+std::shared_future<int> sf(std::move(f));
+assert(!f.valid());		// 移动后无效
+assert(sf.valid());	
+
+
+std::shared_future<int> sf(p.get_future());	// 移动构造	
+
+
+auto sf = p.get_tuture.share();		// 移动构造, 自动推断类型
+```
+
+### std::shared_future<> 源码
+
+```C++
+template <class _Ty>
+class shared_future : public _State_manager<_Ty> 
+{
+public:
+    shared_future() noexcept {}
+    shared_future(const shared_future& _Other);
+    shared_future(future<_Ty>&& _Other);
+    shared_future(shared_future&& _Other);
+
+    shared_future& operator=(const shared_future& _Right);
+    shared_future& operator=(shared_future&& _Right);
+
+    ~shared_future();
+
+    const _Ty& get() const 
+    {
+        return this->_Get_value();
+    }
 };
 ```
 
