@@ -1786,17 +1786,23 @@ public:
 
 ## future
 
-**模拟一次性事件**, 事件发生后, **与事件关联的所有 `future` 实例会同时就绪**, 可以**访问与事件关联的数据**
+概念: **模拟一次性事件**, 事件发生后, **与事件关联的所有 `future` 实例会同时就绪**, 可以**访问与事件关联的数据**
 
-* **std::furure** 一个事件只能关联一个 `std::furure` 实例
+理解: future 储存**一个异步操作的结果**
 
-* **std::shared_future** 一个事件可以关联多个 `std::shared_future` 实例
+* **std::furure** 一个事件只能关联一个 `std::furure` 实例, 一个线程等待结果
+
+* **std::shared_future** 一个事件可以关联多个 `std::shared_future` 实例, 多个线程等待结果
+
+### future
 
 **成员函数**
 
 * `get()` 获取关联事件的值
 
-### future 使用
+  > 如果事件发生异常, 异常也会作为值保存在 future 实例中, future 同样会进入就绪状态
+  >
+  > get() 调用后, 存储的异常被重新抛出
 
 ```C++
 #include <iostream>
@@ -1840,6 +1846,40 @@ public:
     future& operator=(const future&) = delete;
 };
 ```
+
+### future 保存异常
+
+`std::async()` 和 `std::packaged_task<>` 自动保存异常
+
+`std::promise()` 通过成员函数 `set_exception()` 手动保存异常
+
+1. `try/catch`块保存异常
+
+```C++
+try
+{
+    int x = 1;
+    p.set_value(x);
+}
+catch(...)
+{
+    p.set_exception(std::current_exception());
+}
+```
+
+2. 直接保存异常
+
+   > 需要提前直到异常类型
+
+```C++
+p.set_exception(std::make_exception_ptr(std::logic_error("x < 0")));
+```
+
+> 销毁关联的 `std::packaged_task` 和 `std::promise` 对象, 会将异常 `std::future_error` **存储为异步任务的状态数据**, 值是错误代码 `std::future_errc::broken_promise`
+>
+> 这种方式会导致许诺(异步方式给出值或异常)被破坏, 等待的线程永远都等不到结果
+
+## std::async
 
 ### std::async 源码
 
@@ -1970,13 +2010,15 @@ public:
 
 `set_value()` 设置值
 
+`set_exception()` 设置异常
+
 **使用**
 
 ```C++
 void fun1(std::promise<int> &p)
 {
     int x = 1;
-    cout << "传入数据: " << x << endl;
+    cout << "传入数据: " << x << endl; 
     p.set_value(x);
 }
 
