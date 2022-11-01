@@ -2131,3 +2131,99 @@ public:
 };
 ```
 
+## <chrono\>
+
+时间的表示
+
+### 时间类
+
+* `std::chrono::steady_clock` 恒稳时钟
+* `std::chrono::system_clock` 系统时钟
+* `std::chrono::high_resolution_clock` 高精度时钟
+
+**成员**
+
+* `now()` 当前时刻
+* `time_point` 时间类型
+* `period` 计时单元
+* `static bool is_steady`  是否恒稳
+
+### 时长类
+
+`std::chrono::duration<>` 模板类
+
+**模板参数**
+
+* 数据类型
+
+  数据的存储类型
+
+* 计时单元大小
+
+  一个单位代表的**秒数**
+
+```C++
+// short 存储的分钟时长类, 一单位表示 60 秒
+std::chrono::duration<short, std::ratio<60,1>>	
+    
+// double 存储的毫秒时长类, 一单位表示 1/1000 秒
+std::chrono::duration<double,std::ratio<1,1000>>
+```
+
+**预设时长类**
+
+**nanoseconds** 纳秒  
+
+**microseconds** 微妙
+
+**milliseconds** 毫秒
+
+**seconds** 秒
+
+**minutes** 分钟
+
+**hours** 小时
+
+**成员**
+
+* `count()` 时间数值, 不考虑单位
+
+### 时间点类
+
+`std::chrono::time_point<>` 
+
+**模板参数**
+
+* 时钟类
+* 计时单元类
+
+**成员**
+
+* `time_since_epoch()` 从时钟纪元到当前的时间长度
+
+  > 时钟纪元, 时间开始的时刻, 如: 1970年1月1日0时0分0秒
+
+**时间运算**
+
+时间点 + 时长 = 时间点
+
+时间点 - 时间点 = 时长
+
+```C++
+#include <iostream>
+#include <chrono>
+
+using namespace std;
+
+int main()
+{
+	auto start = std::chrono::high_resolution_clock::now();
+	
+	fun();
+		
+	auto stop = std::chrono::high_resolution_clock::now();
+
+	cout << std::chrono::duration<double, std::chrono::seconds>(stop - start).count() << endl;
+}
+```
+
