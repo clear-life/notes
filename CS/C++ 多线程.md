@@ -66,6 +66,16 @@ void fun(T... args)			// 参数包: 带省略号的参数
 * 参数列表
 * 所在类和命名空间
 
+## 函数式编程
+
+输出只跟输入有关, 跟外部状态无关
+
+### 纯函数
+
+* 输入确定后, 输出就确定了
+* 数据自包含(不使用全局变量)
+* 不修改程序状态, 不引起副作用(不修改全局变量)
+
 ## 异常
 
 ### 自定义异常
@@ -2225,5 +2235,59 @@ int main()
 
 	cout << std::chrono::duration<double, std::chrono::seconds>(stop - start).count() << endl;
 }
+```
+
+## 线程同步实现
+
+### 函数式编程
+
+```C++
+#include <future>
+template<typename F,typename A>
+std::future<result_type> spawn_task(F&& f,A&& a)        
+{	// 返回与 packaged_task 关联的 future
+    
+    // packaged_task 关联函数 f , 函数 f 的返回值类型是 result_type
+    std::packaged_task<result_type> task(std::move(f)); 
+    
+    // packaged_task 关联 future
+    std::future<result_type> res(task.get_future());    
+
+    // 新开线程异步运行 packaged_task
+    std::thread t(std::move(task),std::move(a));        
+    t.detach();
+
+    return res;
+}
+```
+
+### CSP 通信式串行编程
+
+**有限状态自动机**, 不同状态间通过**消息队列**进行通信, 然后根据状态处理消息
+
+总体是一个类, 每个状态都是一个成员函数, 接收一个消息后, 处理完后会进入下一状态
+
+### std::experimental::future
+
+如果 future 就绪, 可以进一步通过成员函数 `then()` 处理结果
+
+```C++
+std::experimental::future<int> f;
+f = .get_future();
+
+auto f2 = f.then(fun);
+assert(!f.valid());
+assert(f2.valid());
+```
+
+**后续函数的参数**是**准备就绪的 future**
+
+```C++
+void fun(std::experimental::future<int> f);	// f 可能含有正常结果, 也可能含有异常
+```
+
+**与 std::async() 等价的函数**
+
+```C++
 ```
 
