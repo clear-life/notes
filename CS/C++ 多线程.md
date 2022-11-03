@@ -2289,5 +2289,67 @@ void fun(std::experimental::future<int> f);	// f 可能含有正常结果, 也�
 **与 std::async() 等价的函数**
 
 ```C++
+#include <experimental/future>
+template<typename Func>
+std::experimental::future<decltype(std::declval<Func>()())>
+spawn_async(Func&& func){
+    std::experimental::promise<decltype(std::declval<Func>()())> p;
+    auto res = p.get_future();
+
+    std::thread t(
+        [p=std::move(p),f=std::decay_t<Func>(func)]()
+            mutable{
+            try{
+                p.set_value_at_thread_exit(f());
+            } catch(...){
+                p.set_exception_at_thread_exit(std::current_exception());
+            }
+    });
+    t.detach();
+    
+    return res;
+}
 ```
 
+**后续函数的连锁调用**
+
+```C++
+#include <experimental/future>
+std::experimental::future<void> process_login(
+    std::string const& username,std::string const& password)
+{
+    return backend.async_authenticate_user(username,password).then(	// 确定账密
+        [](std::experimental::future<user_id> id){
+            return backend.async_request_current_info(id.get());	// 返回信息
+        }).then([](std::experimental::future<user_data> info_to_display){
+            try{
+                update_display(info_to_display.get());				// 信息展示
+            } catch(std::exception& e){
+                display_error(e);									// 异常处理
+            }
+        });
+}
+
+```
+
+### std::experimental::when_all()
+
+用 `std::experimental::when_all()` 函数等待 `future` 全部就绪，然后使用 `then()` 编排后续函数
+
+### std::experimental::when_any()
+
+运用 `std::experimental::when_any()` 函数等待多个 `future`，直到其中之一准备就绪
+
+### std::experimental::latch
+
+`std::experimental::latch` 的构造函数接收唯一一个参数，在构建该类对象时，我们需通过这个参数设定其计数器的初值
+
+每当等待的目标事件发生时，我们就在线程闩对象上调用 `count_down()`，一旦计数器减到0，它就进入就绪状态
+
+### std::experimental::barrier
+
+只有在全部线程都完成各自的处理后，才可以操作下一项数据或开始后续处理，`std::experimental::barrier` 针对的就是这种场景
+
+### std::experimental::flex_barrier
+
+`std::experimental::flex_barrier`  是 `std::experimental::barrier`的灵活版本
