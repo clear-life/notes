@@ -343,8 +343,6 @@ public:
 };
 ```
 
-
-
 ### join
 
 **线程汇合**
@@ -605,8 +603,6 @@ int main()
 }
 ```
 
-
-
 ### 可调用对象与 std::function
 
 [C++ 函数指针 与 std::function](https://zhuanlan.zhihu.com/p/547484498)
@@ -614,14 +610,6 @@ int main()
 ## joinable
 
 ### join, deatch 和 joinable
-
-* 进行 join 和 detach 操作后, **thread 对象会切断与线程的关联**, 即**不再是 joinable**
-
-  >  本质上是句柄和 id 都为 0
-
-* **thread::id 为 0**调用 **join/detach** 会调用 **std::terminate 终止程序**
-
-  > 源码是 `_Throw_Cpp_error`
 
 **已执行完代码**但尚未 `join/deatch` 的线程**仍被视为正在执行的线程**，因此是 **`joinable`** 的
 
@@ -643,25 +631,21 @@ int main()
 把 `j_thread` 当成具有自动析构 `join` 的  `thread ` 看待
 
 ```C++
-class j_thread      // j_thread 当作 thread 来用
+class j_thread      
 {
     std::thread t;
 public:
-    // j_thread 与 thread 同生共死
-    // j_thread 存在, 则 thread 存在, 否则就不存在
-    j_thread() noexcept=default;    
+    j_thread();    
     
-    // 构造函数 RAII 获取资源
-    j_thread(j_thread&& j) noexcept: t(std::move(j.t)) {}           // j_thread 移动构造
+    j_thread(j_thread && j): t(std::move(j.t)) {}           
     
-    explicit j_thread(std::thread &&_t) noexcept: t(std::move(_t)) {} // thread 移动构造
+    explicit j_thread(std::thread &&_t): t(std::move(_t)) {} 
     
     template<typename Callable, typename Args>
-    explicit j_thread(Callable&& fun, Args&& args) : 	            // 构造 thread
+    explicit j_thread(Callable&& fun, Args&& args) : 	            
     	t(std::forward<Callable>(fun), std::forward<Args>(args)) {}
     
-    // 移动赋值
-    j_thread& operator=(j_thread&& j) noexcept
+    j_thread& operator=(j_thread&& j)
     {
         if(joinable())
             join();
@@ -670,7 +654,7 @@ public:
         return *this;
     }
     
-    j_thread& operator=(std::thread _t) noexcept
+    j_thread& operator=(std::thread _t) 
     {
         if(joinable())
             join();
@@ -686,23 +670,20 @@ public:
             join();
     }
     
-    // 禁用拷贝构造和赋值操作
     j_thread(const j_thread &)=delete;
     j_thread& operator=(const j_thread &)=delete;
     
-    // 常用操作
     void swap(j_thread& j) noexcept
     {
         t.swap(j.t);
     }
     
-    std::thread::id get_id() const noexcept
+    std::thread::id get_id() const 
     {
         return t.get_id();
 	}
     
-    // 模仿 thread 操作
-    bool joinable() const noexcept
+    bool joinable() const
     {
         return t.joinable();
 	}
@@ -717,7 +698,6 @@ public:
         t.detach();
 	}
     
-    // 模仿 thread
     std::thread& as_thread() noexcept
     {
         return t;
