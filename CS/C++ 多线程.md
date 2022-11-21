@@ -358,7 +358,7 @@ A 调用 B.join() 后, A 被阻塞, 直至 B 执行完
 
 同时**线程 id 和句柄**设为 0
 
-### 移动
+### 移动操作
 
 std::thread 支持**移动**操作
 
@@ -854,9 +854,9 @@ std::thread t2(fun);
 
 ### lock() 阻塞
 
-1. 若 mutex 为 0, 则置为 1 后正常返回
+1. 若 mutex 为 1, 则置为 0 后正常返回
 
-2. 若 mutex 为 1, 则被**阻塞**, 等待 mutex 为 0
+2. 若 mutex 为 0, 则被**阻塞**, 等待 mutex 为 1
 
 > 同一线程 lock 两次, 会导致死锁: 自己阻塞自己, 自己等待自己解锁
 
@@ -872,8 +872,8 @@ m.unlock();
 
 ### try_lock() 非阻塞
 
-1. 若 mutex 为 0, 则置为1 后返回 true
-2. 若 mutex 为 1, 则返回 false, **不被阻塞**
+1. 若 mutex 为 1, 则置为 0 后返回 true
+2. 若 mutex 为 0, 则返回 false, **不被阻塞**
 
 ```C++
 std::mutex m;
@@ -889,8 +889,8 @@ m.unlock();
 
 ### unlock
 
-1. 若 mutex 为 1, 则置为 0
-2. 若 mutex 为 0, 则返回
+1. 若 mutex 为 0, 则置为 1
+2. 若 mutex 为 1, 则返回
 
 ```C++
 // unlock 两次对本身而言没有问题
