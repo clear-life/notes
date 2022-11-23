@@ -2398,3 +2398,171 @@ struct A
 
 ## 原子操作
 
+**不可分割**, 要么全部完成, 要么全部不完成, 没有半完成状态
+
+**非原子操作导致的条件竞争**:
+
+```C++
+int x = 0;
+
+A:
+{
+    x++;
+}
+
+B:
+{
+    x++;
+}
+
+x 有可能为 1
+```
+
+### STD原子类型
+
+**特点:**
+
+* **内置类型赋值**
+* 支持**隐式转换**为内置类型
+* 成员函数**返回右值,** 不返回左值
+
+**成员函数:**
+
+* **is_lock_free()**
+
+  是否不用锁
+
+  * `true`: 原子指令实现
+
+  * `false`: 锁实现
+
+* **is_always_lock_free()**
+
+  **编译期**判定是否永远不用锁
+
+  * `true`: 在**所有硬件**上以**原子指令**实现
+
+  * `false`: **运行时才能确定**是否不用锁
+
+* **load()**
+
+  读
+
+* **store()**
+
+  写
+
+**删除拷贝操作**
+
+拷贝构造和拷贝赋值都涉及两个独立对象, 先从 A 读, 再对 B 写
+
+无法原子化, 所以**删除拷贝操作**
+
+**设置内存次序**
+
+枚举类 **std::memory_order** 表示内存次序
+
+```C++
+enum memory_order 
+{
+    memory_order_relaxed,
+    memory_order_consume,
+    memory_order_acquire,
+    memory_order_release,
+    memory_order_acq_rel,
+    memory_order_seq_cst	// 默认为最严格的内存次序
+};
+```
+
+**操作划分为3类**
+
+* 存储 store 操作
+  * **relaxed**
+  * release
+  * **seq_cst**
+* 载入 load 操作
+  * **relaxed**
+  * consume
+  * acquire
+  * **seq_cst**
+* 读-改-写 read-modify-write 操作
+  * **relaxed**
+  * consume
+  * acquire
+  * release
+  * acq_rel
+  * **seq_cst**
+
+### atomic_flag
+
+最简单STD原子类型, 永远保证无锁
+
+* 两个状态: 清除 false, 设置 true
+
+**必须初始化为 false**
+
+```C++
+atomic_flag f = ATOMIC_FLAG_INIT;
+```
+
+**成员函数**
+
+* **test_and_set** 返回旧值, 设置为 true
+* **clear** 设置为 false
+
+**源码**
+
+```C++
+struct atomic_flag 
+{ 
+    bool test_and_set(const memory_order order = memory_order_seq_cst)  
+    {
+        return storage.exchange(true, order) != 0;
+    }
+
+    void clear(const memory_order order = memory_order_seq_cst)  
+    {
+        storage.store(false, order);
+    }
+
+    atomic<bool> storage;
+};
+```
+
+> != 对二值逻辑(true 和 false, 1 和 0)来说相当于异或操作
+>
+> 1 != 0    1
+>
+> 0 != 0    0
+
+**自旋锁互斥**
+
+0 表示未加锁, 1 表示加锁
+
+```C++
+atomic_flag flag = ATOMIC_FLAG_INIT;
+
+void lock()
+{
+    while(flag.test_and_set(memory_order_acquire));
+}
+
+void unlock()
+{
+    flag.clear(memory_order_release);
+}
+```
+
+### atomic<bool\>
+
+**成员函数**
+
+* **exchange()**  返回旧值, 设置新值
+
+* **compare_exchange_weak()**
+
+  比较后根据结果 exchange
+
+* **compare_exchange_strong()**
+
+  比较后根据结果 exchange
