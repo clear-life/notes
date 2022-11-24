@@ -2451,6 +2451,12 @@ x 有可能为 1
 * **store()**
 
   写
+  
+* **exchange()**
+
+* **compare_exchange_weak()**
+
+* **compare_exchange_strong()**
 
 **删除拷贝操作**
 
@@ -2559,10 +2565,115 @@ void unlock()
 
 * **exchange()**  返回旧值, 设置新值
 
+* **compare_exchange_strong()**
+
+  比较后根据结果 exchange
+
 * **compare_exchange_weak()**
 
   比较后根据结果 exchange
 
-* **compare_exchange_strong()**
+**compare_exchange_strong**
 
-  比较后根据结果 exchange
+原子值为 A, 期望值为 B, 设定值为 C
+
+* 若 A == B, 则 A = C, 返回 true
+* 若 A != B, 则 B = A, 返回 false
+
+```C++
+bool compare_exchange_strong(T& B, const T C)
+{   // A = *this
+    if(A == B)
+    {
+        A = C;
+        return true;
+    }
+    else
+    {
+        B = A;
+        return false;
+    }
+}
+```
+
+**compare_exchange_weak**
+
+允许在 A == B 时返回 false
+
+```C++
+bool compare_exchange_weak(T& B, const T C)
+{   // A = *this
+    if(A == B)
+    {
+        if(A = C 成功)
+            return true;
+        return false;		// 失败时 A 并未被修改
+    }
+    else
+    {
+        B = A;
+        return false;
+    }
+}
+```
+
+### atomic<T*>
+
+指向 T 类型的原子指针
+
+**成员函数**
+
+* **fetch_add()**	返回旧值
+* **fetch_sub()**    返回旧值
+* += 和 -=    返回新值
+* ++ 和 --
+
+### 标准整数原子类型
+
+* 常见原子操作
+
+  ```C++
+  load()
+  store()
+  exchange()
+  compare_exchange_weak()
+  compare_exchange_strong()
+  ```
+
+* 原子运算
+
+  ```C++
+  fetch_add()
+  fetch_sub()
+  fetch_and()
+  fetch_or()
+  fetch_xor()
+  ```
+
+* 复合赋值
+
+  ```C++
+  +=
+  −=
+  &=
+  |=
+  ^=
+  ```
+
+* 前后缀自增和自减
+
+  ```C++
+  ++x
+  x++
+  −−x
+  x−−
+  ```
+
+### 原子操作非成员函数
+
+* 前缀 `atomic_`
+* 后缀 `_explicit` 指定内存次序
+* 无后缀 不指定内存次序
+
+## 同步操作和强制次序
+
