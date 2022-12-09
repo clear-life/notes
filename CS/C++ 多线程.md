@@ -2792,3 +2792,408 @@ bool compare_exchange_weak(T& B, const T C)
 
    若 $w_x < r_b$, 且 $w_x < w_y$, 则 $r_b$ 的值来自 $w_x$ 或 $w_y$
 
+# 五. 基于锁的并发数据结构
+
+## 设计并发结构
+
+### 目的
+
+* 在任何情况下，**并发访问**数据结构不出问题
+* 提高**并发程度**
+
+### 线程安全的数据结构
+
+多线程环境下
+
+1. 每个线程看到的**数据结构都是自洽**的
+2. 数据不会被破坏，**不变量始终成立**，**不会出现条件竞争**
+
+### 问题
+
+* **并发访问出问题**: 并发访问数据结构的不同操作不出问题, 但**并发访问同一操作就出问题**
+
+* **并发程度低**: 多线程并发执行同种操作, 但以排他方式访问
+
+### 解决办法
+
+**思路**
+
+锁保护的范围越小, 串行化操作越少, 并发程度越高
+
+**串行化**
+
+在**锁保护的范围串行执行**, 并非并发访问
+
+**解决办法**
+
+* 数据结构的**操作应完整, 独立**, **而非零散的分解操作**
+* 在**抛出异常**的情况下, 保证不变量不被破坏
+* **限制锁的作用范围**, 尽可能避免嵌套锁
+
+### 数据结构的设计
+
+* **构造函数完成前**和**析构函数开始后**, 数据结构不会被访问
+
+* 限制**锁的作用域**
+* 数据结构的**不同部分采用不同的互斥**
+* 是否所有操作都需要保护
+* 能否通过**简单的改动**, 减少串行操作, 增加并发程度
+
+### 互斥的选择
+
+**一个互斥**
+
+* 实现简单
+* 并发程度低
+
+**多个互斥**
+
+* 实现复杂
+* 并发程度高
+* 可能引发死锁
+
+## 基于锁的线程安全的栈容器
+
+### 分析
+
+**安全访问**:
+
+* 一个互斥
+
+**并发程度**:
+
+* `pop()` 集成度高, 独立自洽
+
+**异常**:
+
+* 互斥加锁异常: 互斥加锁有可能产生异常
+
+  加锁时数据未动, `lock_guard<>` 保证即使产生异常也能正常解锁
+
+* `stk.push()` 异常: 拷贝/移动过程抛出异常
+
+  `stack<>` 保证即使 `stk.push()` 产生异常也不会出问题
+
+* `pop()` 中的 `empty_stack` 异常
+
+  并未发生数据改动, 所以是安全的异常抛出
+
+* `shared_ptr<T> res` 的创建异常: 内存不足, 或数据拷贝/移动抛出异常
+
+  `shared_ptr<>` 保证不会出现问题如内存泄漏
+
+### 代码
+
+```C++
+#include <mutex>
+#include <stack>
+#include <exception>
+
+using namespace std;
+
+struct empty_stack : exception
+{
+    const char* what() const throw();
+};
+
+
+template<typename T>
+class threadsafe_stack
+{
+private:
+    stack<T> stk;
+    mutable mutex m;
+public:
+    threadsafe_stack();
+    threadsafe_stack(const threadsafe_stack& other)
+    {
+        lock_guard<mutex> l(other.m); 
+        stk = other.stk;                            
+    }
+    threadsafe_stack& operator=(const threadsafe_stack&) = delete;
+
+    void push(T x)
+    {
+        lock_guard<mutex> l(m);
+        stk.push(move(x));	// 异常: stk 保证自身异常安全
+    }
+
+    void pop(T& x)      	// 引用式返回
+    {
+        lock_guard<mutex> l(m);
+        if (stk.empty())	
+            throw empty_stack();	// empty_stack 异常: stk 未改动, 异常安全
+        x = move(stk.top());// 拷贝/移动异常: stk 未改动, 异常安全
+        stk.pop();
+    }
+
+    shared_ptr<T> pop()    // 指针式返回
+    {
+        lock_guard<mutex> l(m);
+        if (stk.empty())
+            throw empty_stack();
+        shared_ptr<T> const res(make_shared<T>(stk.top()));	// 异常: shared_ptr 保证不会内存泄漏
+        stk.pop();			// stk.pop 保证不会异常
+        return res;
+    }
+
+    bool empty() const		// 不改动数据, 异常安全
+    {
+        lock_guard<mutex> l(m);	
+        return stk.empty();
+    }
+};
+```
+
+### 问题
+
+**死锁**
+
+`stack<>` 会使用**用户自定义的拷贝/移动操作**, 用户也可能**重载 new 运算符**
+
+插入或删除数据时, 若数据本身调用上述函数, 则会再次调用栈的成员函数, 即再次获取互斥, 而互斥早已被锁住, 导致死锁的发生
+
+**构造函数与析构函数**
+
+使用者必须保证: **构造函数完成前**和**析构函数开始后**, 其他线程不能访问数据
+
+## 基于锁和条件变量的线程安全的队列容器
+
+###  条件变量实现的线程安全的队列容器
+
+```C++
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
+using namespace std;
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+	mutable mutex m;
+	condition_variable cnd;
+	queue<T> q;
+
+public:
+	threadsafe_queue(){}
+
+	void push(T x)
+	{
+		lock_guard<mutex> l(m);
+		q.push(move(x));
+		cnd.notify_one();
+	}
+
+	void wait_and_pop(T& x)
+	{
+		unique_lock<mutex> l(m);
+		cnd.wait(l, [this] {return !q.empty(); });
+		x = move(q.front());
+		q.pop();
+	}
+
+	shared_ptr<T> wait_and_pop()
+	{
+		unique_lock<mutex> l(m);
+		cnd.wait(l, [this] {return !q.empty(); });
+
+		shared_ptr<T> res(make_shared<T>(move(q.front())));
+		q.pop();
+
+		return res;
+	}
+
+	bool try_pop(T& x)
+	{
+		lock_guard<mutex> l(m);
+		if (q.empty())
+			return false;
+
+		x = move(q.front());
+		q.pop();
+		return true;
+	}
+
+	shared_ptr<T> try_pop()
+	{
+		lock_guard<mutex> l(m);
+		if (q.empty())
+			return shared_ptr<T>();
+
+		shared_ptr<T> res(make_shared(move(q.front())));
+		q.pop();
+		return res;
+	}
+
+	bool empty() const
+	{
+		lock_guard<mutex> l(m);
+		return q.empty();
+	}
+};
+```
+
+**`notify_one` 的问题**
+
+问题描述: `notify_one` 只会唤醒一个等待线程, 若该线程**抛出异常**, 就浪费了一次 `notify_one` 的唤醒
+
+**解决办法**
+
+* 将 `notify_one` 改为 `notify_all`
+
+  后果是增大开销
+
+* `wait_and_pop` 在异常处理中再次调用 `notify_one`
+
+* 容器元素改为 `shared_ptr<>`, `shared_ptr<>` 保证了在拷贝/移动时**异常安全**
+
+### 存储 `shared_ptr<>` 的线程安全的队列容器
+
+```C++
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
+using namespace std;
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+	mutable mutex m;
+	condition_variable cnd;
+	queue<shared_ptr<T>> q;
+
+public:
+	threadsafe_queue() {}
+
+	void push(T x)
+	{
+		shared_ptr<T> p(make_shared<T>(move(x)));	// 脱离锁的保护进行内存分配
+
+		lock_guard<mutex> l(m);
+		q.push(p);
+		cnd.notify_one();
+	}
+
+	viod wait_and_pop(T& x)
+	{
+		unique_lock<mutex> l(m);
+		cnd.wait(l, [this] {return !q.empty(); });
+		
+		x = move(*q.front());
+		q.pop();
+	}
+
+	bool try_and_pop(T& x)
+	{
+		lock_guard<mutex> l(m);
+
+		if (q.empty())
+			return false;
+
+		x = move(*q.front());
+		q.pop();
+		return true;
+	}
+
+	shared_ptr<T> wait_and_pop()
+	{
+		unique_lock<mutex> l(m);
+		cnd.wait(l, [this] {return !q.empty(); });
+
+		shared_ptr<T> res = q.front();
+		q.pop();
+		return res;
+	}
+
+	shared_ptr<T> try_pop()
+	{
+		lock_guard<mutex> l(m);
+		if (q.empty())
+			return shared_ptr<T>();
+
+		shared_ptr<T> res = q.front();
+		q.pop();
+		return res;
+	}
+
+	bool empty() const
+	{
+		lock_guard<mutex> l(m);
+		return q.empty();
+	}
+};
+```
+
+**优点**
+
+`push` 操作中, 内存分配可以脱离锁的保护, 缩短互斥保护范围, 增加并发程度
+
+## 基于多互斥和条件变量实现的线程安全的队列容器
+
+### 单线程队列的实现
+
+```C++
+using namespace std;
+
+template<typename T>
+class queue
+{
+private:
+	struct node
+	{
+		T val;
+		unique_ptr<node> next;
+
+		node(T x): val(move(x)) {}
+	};
+
+	unique_ptr<node> head;
+	node* tail;		// tail 是额外的, 所以需要用原生指针
+
+public:
+	queue(): tail(nullptr) {}
+
+	queue(const queue& other) = delete;
+	queue& operator=(const queue& other) = delete;
+
+	void push(T x)
+	{
+		unique_ptr<node> p(new node(move(x)));
+
+		node* new_tail = p.get();
+
+		if (tail)
+		{
+			tail->next = move(p);
+		}
+		else
+		{
+			head = move(p);
+		}
+
+		tail = new_tail;
+	}
+
+	shared_ptr<T> try_pop()
+	{
+		if (!head)
+		{
+			return shared_ptr<T>();
+		}
+
+		shared_ptr<T> const res(make_shared<T>(move(head->val)));
+		
+		unique_ptr<node> const old_head = move(head);
+		head = move(old_head->next);
+
+		if (!head)
+			tail = nullptr;
+		return res;
+	}
+};
+```
+
