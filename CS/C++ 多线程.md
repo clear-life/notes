@@ -2852,7 +2852,7 @@ bool compare_exchange_weak(T& B, const T C)
 * 并发程度高
 * 可能引发死锁
 
-## 基于锁的线程安全的栈容器
+## 线程安全的栈容器
 
 ### 分析
 
@@ -2957,9 +2957,9 @@ public:
 
 使用者必须保证: **构造函数完成前**和**析构函数开始后**, 其他线程不能访问数据
 
-## 基于锁和条件变量的线程安全的队列容器
+## 线程安全的队列容器
 
-###  条件变量实现的线程安全的队列容器
+###  条件变量实现线程安全队列
 
 ```C++
 #include <queue>
@@ -3049,7 +3049,7 @@ public:
 
 * 容器元素改为 `shared_ptr<>`, `shared_ptr<>` 保证了在拷贝/移动时**异常安全**
 
-### 存储 `shared_ptr<>` 的线程安全的队列容器
+### 存储 `shared_ptr<>` 的线程安全队列
 
 ```C++
 #include <queue>
@@ -3132,9 +3132,11 @@ public:
 
 `push` 操作中, 内存分配可以脱离锁的保护, 缩短互斥保护范围, 增加并发程度
 
-## 基于多互斥和条件变量实现的线程安全的队列容器
+### 单线程简单队列
 
-### 单线程队列的实现
+**单线程队列的简单实现**
+
+`unique_ptr<>` 管理结点, 不再需要结点时自动删除
 
 ```C++
 using namespace std;
@@ -3194,6 +3196,277 @@ public:
 			tail = nullptr;
 		return res;
 	}
+};
+```
+
+**单线程虚节点的队列实现**
+
+虚节点位于尾部, 由 `tail` 指针指向
+
+**分离数据**:
+
+* `push()` 只访问 `tail` 指针
+* `try_pop()` 主要访问 `head` 指针, 访问一次(且不修改) `tail` 指针
+
+**优点**:
+
+`try_pop` 和 `push` 不再同时操作相同结点
+
+```C++
+#include <iostream>
+
+using namespace std;
+
+template<typename T>
+class queue
+{
+private:
+	struct node
+	{
+		shared_ptr<T> val;
+		unique_ptr<node> next;
+	};
+
+	unique_ptr<node> head;
+	node* tail;
+
+public:
+	queue(): head(new node), tail(head.get()) {}
+
+	queue(const queue& other) = delete;
+	queue& operator=(const queue& other) = delete;
+
+	void push(T x)
+	{
+		shared_ptr<T> new_val(make_shared<T>(move(x)));
+
+		unique_ptr<T> p(new node);
+
+		tail->val = new_val;
+		node* const new_tail = p.get();
+		tail->next = move(p);
+
+		tail = new_tail;
+	}
+
+	shared_ptr<T> try_pop()
+	{
+		if (head.get() == tail)
+		{
+			return shared_ptr<T>();
+		}
+
+		shared_ptr<T> res(head->data);
+
+		unique_ptr<node> old_head = move(head);
+		head = move(old_head->next);
+		
+		return res;
+	}
+};
+```
+
+### 精细粒度锁的线程安全队列
+
+**分析**
+
+* 两种互斥, 分别锁住 `head` 和 `tail`
+
+* 虚节点的设计让两个接口不容易产生冲突
+
+  > 研究虚节点设计前后不变量的变化及对应锁的变化
+
+* 
+
+```C++
+#include <mutex>
+
+using namespace std;
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+	struct node
+	{
+		shared_ptr<T> val;
+		unique_ptr<T> next;
+	};
+
+	mutex head_m;
+	mutex tail_m;
+	unique_ptr<T> head;
+	node* tail;
+
+	node* get_tail()
+	{
+		lock_guard<mutex> l(tail_m);
+		return tail;
+	}
+
+	unique_ptr<node> pop_head()
+	{
+		lock_guard<mutex> head_l(head_m);
+		if (head.get() == get_tail())
+		{
+			return nullptr;
+		}
+
+		unique_ptr<T> old_head = move(head);
+		head = move(old_head->next);
+
+		return old_head;
+	}
+
+public:
+	threadsafe_queue(): head(new node), tail(head.get()){}
+
+	threadsafe_queue(const threadsafe_queue& other) = delete;
+	threadsafe_queue& operator=(const threadsafe_queue& other) = delete;
+
+	void push(T x)
+	{
+		shared_ptr<T> new_val(make_shared<T>(move(x)));
+
+		unique_ptr<T> p(new node);
+		node* new_tail = p.get();
+
+		lock_guard<mutex> tail_l(tail_m);
+		tail->val = new_val;
+		tail->next = move(p);
+		tail = new_tail;
+	}
+
+	shared_ptr<T> try_pop()
+	{
+		unique_ptr<node> old_head = pop_head();
+		return old_head ? old_head->val : shared_ptr<T>();
+	}
+};
+```
+
+### 基于锁和条件变量并支持等待操作的线程安全队列
+
+```C++
+#include <mutex>
+#include <condition_variable>
+
+using namespace std;
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+	struct node
+	{
+		shared_ptr<T> val;
+		unique_ptr<node> next;
+	};
+
+	mutex head_m;
+	mutex tail_m;
+	condition_variable cnd;
+
+	unique_ptr<node> head;
+	node* tail;
+
+	node* get_tail()
+	{
+		lock_guard<mutex> tail_l(tail_m);
+		return tail;
+	}
+
+	unique_ptr<node> pop_head()
+	{
+		unique_ptr<node> old_head = move(head);
+		head = move(old_head->next);
+		return old_head;
+	}
+
+	unique_lock<mutex> wait_for_data()
+	{
+		unique_lock<mutex> head_l(head_m);
+		cnd.wait(head_l, [&] {return head.get() != get_tail(); });
+		return move(head_l);
+	}
+
+	unique_ptr<node> wait_pop_head()
+	{
+		unique_lock<mutex> head_l(wait_for_data());
+		return pop_head();
+	}
+
+	unique_ptr<node> wait_pop_head(T& x)
+	{
+		unique_lock<mutex> head_l(wait_for_data());
+		x = move(*head->val);
+		return pop_head();
+	}
+
+	unique_ptr<node> try_pop_head()
+	{
+		lock_guard<mutex> head_l(head_m);
+		if (head.get() == get_tail())
+		{
+			return unique_ptr<node>();
+		}
+		return pop_head();
+	}
+
+	unique_ptr<node> try_pop_head(T& x)
+	{
+		lock_guard<mutex> head_l(head_m);
+		if (head.get() == get_tail())
+		{
+			return unique_ptr<node>();
+		}
+		x = move(*head->val);
+		return pop_head();
+	}
+public:
+	threadsafe_queue() : head(new node), tail(head.get()) {}
+
+	threadsafe_queue(const threadsafe_queue& other) = delete;
+	threadsafe_queue& operator=(const threadsafe_queue& other) = delete;
+
+	void push(T x)
+	{
+		shared_ptr<T> new_val(make_shared<T>(move(x));
+		unique_ptr<node> p(new node);
+
+		{
+			lock_guard<mutex> tail_l(tail_m);
+			tail->val = new_val;
+			node* const new_tail = p.get();
+			tail->next = move(p);
+			tail = new_tail;
+		}
+
+		cnd.notify_one();
+	}
+
+	shared_ptr<T> try_pop()
+	{
+		unique_ptr<node> old_head = try_pop_head();
+		return old_head ? old_head->val : shared_ptr<T>();
+	}
+	bool try_pop(T& x)
+	{
+		unique_ptr<node> const old_head = try_pop_head(x);
+		return old_head;
+	}
+
+	shared_ptr<T> wait_and_pop()
+	{
+		unique_ptr<node> const old_head = wait_pop_head();
+		return old_head->val;
+	}
+	void wait_and_pop(T& x)
+	{
+		unique_ptr<node> const old_head = wait_pop_head(x);
+	}
+
+	bool empty();
 };
 ```
 
