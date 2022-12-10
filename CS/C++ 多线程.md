@@ -2836,6 +2836,7 @@ bool compare_exchange_weak(T& B, const T C)
 
 * 限制**锁的作用域**
 * 数据结构的**不同部分采用不同的互斥**
+* **接口设计**是否存在条件竞争
 * 是否所有操作都需要保护
 * 能否通过**简单的改动**, 减少串行操作, 增加并发程度
 
@@ -3276,8 +3277,6 @@ public:
 
   > 研究虚节点设计前后不变量的变化及对应锁的变化
 
-* 
-
 ```C++
 #include <mutex>
 
@@ -3345,7 +3344,7 @@ public:
 };
 ```
 
-### 基于锁和条件变量并支持等待操作的线程安全队列
+### 支持等待操作的线程安全队列
 
 ```C++
 #include <mutex>
@@ -3467,6 +3466,237 @@ public:
 	}
 
 	bool empty();
+};
+```
+
+## 线程安全的查找表
+
+```C++
+#include <iostream>
+#include <vector>
+#include <list>
+#include <mutex>
+
+using namespace std;
+
+template<typename Key, typename Value, typename Hash = hash<Key>>
+class threadsafe_lookup_table
+{
+private:
+	class bucket_type
+	{
+	private:
+		typedef pair<Key, Value> bucket_value;
+		typedef list<bucket_value> bucket_data;
+		typedef typename bucket_data::iterator bucket_iterator;
+
+		bucket_data data;
+		mutable shared_mutex m;
+
+		bucket_iterator find_entry_for(Key const& key) const
+		{
+			return find_if(data.begin(), data.end(), [&](bucket_value const& item) {return item.first == key});
+		}
+
+	public:
+		Value value_for(Key const& key, Value const& default_value) const
+		{
+			shared_lock<shared_mutex> l(m);
+			bucket_iterator const found_entry = find_entry_for(key);
+			return (found_entry == data.end()) ? default_value : found_entry->second;
+		}
+
+		void add_or_update_mapping(Key const& key, Value const& value)
+		{
+			unique_lock<shared_mutex> l(m);
+			bucket_iterator const found_entry = find_entry_for(key);
+
+			if (found_entry == data.end())
+			{
+				data.push_back(bucket_value(key, value));
+			}
+			else
+			{
+				found_entry->second = value;
+			}
+		}
+
+		void remove_mapping(Key const& key)
+		{
+			unique_lock<shared_mutex> l(m);
+			bucket_iterator const found_entry = find_entry_for(key);
+
+			if (found_entry != data.end())
+			{
+				data.erase(found_entry);
+			}
+		}
+	};
+
+	vector<unique_ptr<bucket_type>> buckets;
+	Hash hasher;
+
+	bucket_type& get_bucket(Key const& key) const
+	{
+		size_t const bucket_index = hasher(key) % buckets.size();
+		return *buckets[bucket_index];
+	}
+
+public:
+	typedef Key key_tepe;
+	typedef Value mapped_type;
+	typedef Hash hash_type;
+
+	threadsafe_lookup_table(
+		unsigned num_buckets = 19, Hash cosnt& hasher_ = Hash()) :
+		buckets(num_buckets), hash(hash_)
+	{
+		for (unsigned i = 0; i < num_buckets; i++)
+		{
+			buckets[i].reset(new bucket_type);
+		}
+	}
+
+	threadsafe_lookup_table(threadsafe_lookup_table const& other) = delete;
+	threadsafe_lookup_table& operator=(threadsafe_lookup_table const& other) = delete;
+
+	Value value_for(Key const& key, Value const& default_value = Value()) const
+	{
+		return get_bucket(key).value_for(key, default_value);
+	}
+
+	void add_or_update_mapping(Key const& key, Value const& value)
+	{
+		get_bucket(key).add_or_update_mapping(key, value);
+	}
+
+	void remove_mapping(Key const& key)
+	{
+		get_bucket(key).remove_mapping(key);
+	}
+
+	map<Key, Value> get_map() const
+	{
+		vector<unique_lock<shared_mutex>> locks;
+		for (unsigned i = 0; i < buckets.size(); i++)
+		{
+			locks.push_back(unique_lock<shared_mutex>(buckets[i].m));
+		}
+
+		map<Key, Value> res;
+		for (unsigned i = 0; i < buckets.size(); i++)
+		{
+			for (bucket_iterator it = buckets[i].data.begin(); it != uckets[i].data.end(); ++it)
+			{
+				res.insert(*it);
+			}
+		}
+
+		return res;
+	}
+};
+```
+
+## 支持迭代的线程安全链表
+
+```C++
+#include <mutex>
+
+using namespace std;
+
+template<typename T>
+class threadsafe_list
+{
+	struct node
+	{
+		mutex m;
+		shared_ptr<T> data;
+		unique_ptr<node> next;
+
+		node(): next() {}
+		node(T const& value): data(make_shared<T>(value)) {}
+	};
+
+	node head;
+
+public:
+	threadsafe_list() {}
+	~threadsafe_list()
+	{
+		remove_if([](node const&) {return true; });
+	}
+
+	threadsafe_list(threadsafe_list const& other) = delete;
+	threadsafe_list& operator=(threadsafe_list const& other) = delete;
+
+	void push_front(T const& value)
+	{
+		unique_ptr<node> new_node(new node(value));
+
+		lock_guard<mutex> l(head.m);
+		new_node->next = move(head.next);
+		head.next = move(new_head);
+	}
+
+	template<typename Function>
+	void for_each(Function f)
+	{
+		node* current = &head;
+		unique_lock<mutex> l(head.m);
+
+		while (node* const next = current->next.get())
+		{
+			unique_lock<mutex> next_l(next->m);
+			l.unlock();
+
+			f(*next->data);
+			current = next;
+			l = move(next_l);
+		}
+	}
+
+	template<typename Predicate>
+	shared_ptr<T> find_first_if(Predicate p)
+	{
+		node* current = &head;
+		unique_lock<mutex> l(head.m);
+		while (node* const next = current->next.get())
+		{
+			unique_lock<mutex> next_l(next->m);
+			l.unlock();
+
+			if (p(*next->data))
+			{
+				return next->data;
+			}
+
+			current = next;
+			l = move(next_l);
+		}
+	}
+
+	template<typename Predicate>
+	void remove_if(Predicate p)
+	{
+		node* current = &head;
+		unique_lock<mutex> l(head.m);
+		while (node* const next = current->next.get())
+		{
+			unique_lock<mutex> next_l(next->m);
+			if (p(*next->data))
+			{
+				unique_ptr<node> old_next = move(current->next);
+				current->next = move(next->next);
+				next_l.unlock();
+			}
+			else
+			{
+				l.unlock();
+				current = next;
+				l = move(next_l);
+			}
+		}
+	}
 };
 ```
 
