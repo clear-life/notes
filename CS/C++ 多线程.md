@@ -3377,9 +3377,7 @@ bool try_and_pop(T& x)
 
 ### 单线程简单队列
 
-**单线程队列的简单实现**
-
-`unique_ptr<>` 管理结点, 不再需要结点时自动删除
+**代码**
 
 ```C++
 using namespace std;
@@ -3390,10 +3388,10 @@ class queue
 private:
 	struct node
 	{
-		T val;
+		T data;
 		unique_ptr<node> next;
 
-		node(T x): val(move(x)) {}
+		node(T x): data(move(x)) {}
 	};
 
 	unique_ptr<node> head;
@@ -3430,7 +3428,7 @@ public:
 			return shared_ptr<T>();
 		}
 
-		shared_ptr<T> const res(make_shared<T>(move(head->val)));
+		shared_ptr<T> const res(make_shared<T>(move(head->data)));
 		
 		unique_ptr<node> const old_head = move(head);
 		head = move(old_head->next);
@@ -3442,31 +3440,43 @@ public:
 };
 ```
 
-**单线程虚节点的队列实现**
+**改进**
 
-虚节点位于尾部, 由 `tail` 指针指向
+* `unique_ptr<>` 管理节点, 保证节点自动删除
+* 头节点 `head` 和尾节点 `tail`, 方便插入删除
 
-**分离数据**:
+**问题**
 
-* `push()` 只访问 `tail` 指针
-* `try_pop()` 主要访问 `head` 指针, 访问一次(且不修改) `tail` 指针
+* 元素类型非指针
 
-**优点**:
+* 两个互斥分别保护 `head` 和 `tail` 指针, 可能导致试图锁定同一互斥, 并发程度低
 
-`try_pop` 和 `push` 不再同时操作相同结点
+  `head` 和 `tail` 有三种位置关系:
+
+  * head > tail : 不合法, 排除
+  * head = tail : 需要修改 `head->next` 和 `tail->next`, 于是需要争夺同一互斥
+  * head < tail : 不需要争夺互斥
+
+### 单线程分离数据的队列
+
+增加虚节点, 分离数据, 提高并发程度
+
+* head > tail : 不合法, 排除
+* head = tail : 此时队列为空, 不再需要访问 `head->next`, 不会争夺同一互斥
+* head < tail : 不需要争夺互斥
+
+>  虚节点位于尾部, 由 `tail` 指针指向
+
+**代码**
 
 ```C++
-#include <iostream>
-
-using namespace std;
-
 template<typename T>
 class queue
 {
 private:
 	struct node
 	{
-		shared_ptr<T> val;
+		shared_ptr<T> data;
 		unique_ptr<node> next;
 	};
 
@@ -3474,18 +3484,18 @@ private:
 	node* tail;
 
 public:
-	queue(): head(new node), tail(head.get()) {}
+	queue() : head(new node), tail(head.get()) {}
 
 	queue(const queue& other) = delete;
 	queue& operator=(const queue& other) = delete;
 
 	void push(T x)
 	{
-		shared_ptr<T> new_val(make_shared<T>(move(x)));
+		shared_ptr<T> new_data(make_shared<T>(move(x)));
 
-		unique_ptr<T> p(new node);
+		unique_ptr<node> p(new node);
 
-		tail->val = new_val;
+		tail->data = new_data;
 		node* const new_tail = p.get();
 		tail->next = move(p);
 
@@ -3503,11 +3513,25 @@ public:
 
 		unique_ptr<node> old_head = move(head);
 		head = move(old_head->next);
-		
+
 		return res;
 	}
 };
 ```
+
+**改进**:
+
+* `push()` 和 `pop()` **不再同时操作相同节点**, 即可以用**不同的互斥**分别保护 `head` 和 `tail`
+
+  > 通过简单的设计, 使得争夺互斥的情况减少, 提高并发程度
+
+  * head > tail : 不合法, 排除
+
+  * head = tail : 此时队列为空, 不再需要访问 `head->next`, 不会争夺同一互斥
+
+  * head < tail : 不需要争夺互斥
+
+* **`push()` 只访问 `tail` 指针**, **`pop()` 访问 `head` 和 `tail` 指针, 但 `tail` 只用来做比较**
 
 ### 精细粒度锁的线程安全队列
 
@@ -3520,6 +3544,7 @@ public:
   > 研究虚节点设计前后不变量的变化及对应锁的变化
 
 ```C++
+#include <iostream>
 #include <mutex>
 
 using namespace std;
@@ -3530,13 +3555,14 @@ class threadsafe_queue
 private:
 	struct node
 	{
-		shared_ptr<T> val;
-		unique_ptr<T> next;
+		shared_ptr<T> data;
+		unique_ptr<node> next;
 	};
 
 	mutex head_m;
+	unique_ptr<node> head;
+
 	mutex tail_m;
-	unique_ptr<T> head;
 	node* tail;
 
 	node* get_tail()
@@ -3545,43 +3571,45 @@ private:
 		return tail;
 	}
 
-	unique_ptr<node> pop_head()
-	{
-		lock_guard<mutex> head_l(head_m);
-		if (head.get() == get_tail())
-		{
-			return nullptr;
-		}
-
-		unique_ptr<T> old_head = move(head);
-		head = move(old_head->next);
-
-		return old_head;
-	}
-
 public:
-	threadsafe_queue(): head(new node), tail(head.get()){}
+	threadsafe_queue(): head(new node), tail(head.get()) {}
 
-	threadsafe_queue(const threadsafe_queue& other) = delete;
-	threadsafe_queue& operator=(const threadsafe_queue& other) = delete;
+	threadsafe_queue(threadsafe_queue const& other) = delete;
+	threadsafe_queue& operator=(threadsafe_queue const& other) = delete;
 
 	void push(T x)
 	{
-		shared_ptr<T> new_val(make_shared<T>(move(x)));
+		shared_ptr<T> new_data(make_shared<T>(move(x)));
+		unique_ptr<node> p(new node);
 
-		unique_ptr<T> p(new node);
-		node* new_tail = p.get();
+		node* const new_tail = p.get();
 
 		lock_guard<mutex> tail_l(tail_m);
-		tail->val = new_val;
+
+		tail->data = new_data;
 		tail->next = move(p);
+
 		tail = new_tail;
 	}
 
 	shared_ptr<T> try_pop()
 	{
-		unique_ptr<node> old_head = pop_head();
-		return old_head ? old_head->val : shared_ptr<T>();
+		unique_ptr<node> old_head;
+
+		{
+			lock_guard<mutex> head_l(head_m);
+			if (head.get() == get_tail())
+			{
+				old_head = nullptr;
+			}
+			else
+			{
+				old_head = move(head);
+				head = move(old_head->next);
+			}
+		}
+
+		return old_head ? old_head->data : shared_ptr<T>();
 	}
 };
 ```
