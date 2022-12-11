@@ -12,6 +12,42 @@ RAII(**R**esource **A**cquisition **I**s **I**nitialization) 资源获取即初�
 2. 使用
 3. 销毁: **析构函数释放**
 
+### RVO
+
+返回值优化(Return Value Optimization)
+
+**场景**
+
+```C++
+class A
+{
+    
+};
+
+A fun()
+{
+    A a;
+    ...
+    return a;
+}
+```
+
+**优化前**
+
+先调用 A 的拷贝构造函数, 再将 **a 的拷贝**作为函数返回值返回
+
+**优化后**
+
+直接将 a 作为函数返回值返回, **避免了不必要的拷贝操作**
+
+**RVO 使用**
+
+类似移动右值的场景
+
+* 一次返回
+* 返回值非引用
+* 可以用 `move` 手动启动 RVO
+
 ### 移动操作
 
 资源的所有权**转移**
@@ -1645,7 +1681,60 @@ void condition_variable::wait(unique_lock<mutex>& l, Func func)
 
 ### 唤醒丢失
 
-通知了, 但没人等, 被错过了
+问题描述: `notify_one` 只会唤醒一个等待线程, 若该线程**抛出异常**或由于其他原因没有响应唤醒, 就浪费了一次 `notify_one` 的唤醒
+
+**解决办法**
+
+* 将 `notify_one` 改为 `notify_all`
+
+  后果是增大开销
+
+* 在异常处理中再次调用 `notify_one`
+
+**唤醒丢失**
+
+```C++
+A:
+{
+    unique_lock<mutex> l(m);			
+    cnd.wait(l, [](){return flag;});	
+}
+	cnd.wait()
+    {
+        while(!flag)	a1
+            cnd.wait(l);a2
+    }
+B:
+{
+    flag = true;		b1
+    cnd.notify_one();	b2
+}
+```
+
+唤醒丢失序列: `a1  b1  b2  a2`
+
+`notify_one` 的**唤醒信号在线程 A 未阻塞时发出, 然后丢失**
+
+**解决办法**
+
+加锁
+
+```C++
+A:
+{
+    unique_lock<mutex> l(m);			
+    cnd.wait(l, [](){return flag;});	
+}
+
+B:
+{
+    {
+        unique_lock<mutex> l(m);
+        flag = true;
+    }
+    cnd.notify_one();	
+}
+```
 
 ### 用条件变量构建线程安全队列
 
@@ -2829,6 +2918,8 @@ bool compare_exchange_weak(T& B, const T C)
 
 * **不存在接口上的条件竞争**
 * **异常情况下不变量成立**
+
+  > 异常情况下, 数据不出问题
 * **限制锁的作用范围**
 
 **使用者的限制**:
@@ -2857,34 +2948,6 @@ bool compare_exchange_weak(T& B, const T C)
 
 ## 线程安全的栈容器
 
-### 分析
-
-**安全访问**:
-
-* 一个互斥
-
-**并发程度**:
-
-* `pop()` 集成度高, 独立自洽
-
-**异常**:
-
-* 互斥加锁异常: 互斥加锁有可能产生异常
-
-  加锁时数据未动, `lock_guard<>` 保证即使产生异常也能正常解锁
-
-* `stk.push()` 异常: 拷贝/移动过程抛出异常
-
-  `stack<>` 保证即使 `stk.push()` 产生异常也不会出问题
-
-* `pop()` 中的 `empty_stack` 异常
-
-  并未发生数据改动, 所以是安全的异常抛出
-
-* `shared_ptr<T> res` 的创建异常: 内存不足, 或数据拷贝/移动抛出异常
-
-  `shared_ptr<>` 保证不会出现问题如内存泄漏
-
 ### 代码
 
 ```C++
@@ -2898,7 +2961,6 @@ struct empty_stack : exception
 {
     const char* what() const throw();
 };
-
 
 template<typename T>
 class threadsafe_stack
@@ -2918,15 +2980,16 @@ public:
     void push(T x)
     {
         lock_guard<mutex> l(m);
-        stk.push(move(x));	// 异常: stk 保证自身异常安全
+        stk.push(move(x));	
     }
 
     void pop(T& x)      	// 引用式返回
     {
         lock_guard<mutex> l(m);
         if (stk.empty())	
-            throw empty_stack();	// empty_stack 异常: stk 未改动, 异常安全
-        x = move(stk.top());// 拷贝/移动异常: stk 未改动, 异常安全
+            throw empty_stack();
+        
+        x = move(stk.top());
         stk.pop();
     }
 
@@ -2935,12 +2998,12 @@ public:
         lock_guard<mutex> l(m);
         if (stk.empty())
             throw empty_stack();
-        shared_ptr<T> const res(make_shared<T>(stk.top()));	// 异常: shared_ptr 保证不会内存泄漏
-        stk.pop();			// stk.pop 保证不会异常
+        
+        shared_ptr<T> const res(make_shared<T>(stk.top()));	
+        stk.pop();			
         return res;
     }
-
-    bool empty() const		// 不改动数据, 异常安全
+	
     {
         lock_guard<mutex> l(m);	
         return stk.empty();
@@ -2948,21 +3011,128 @@ public:
 };
 ```
 
+### 接口分析
+
+```C++
+threadsafe_stack(const threadsafe_stack& other)
+{
+    lock_guard<mutex> l(other.m); 
+    stk = other.stk;                            
+}
+```
+
+* **互斥**: `other.m` 保护 `other.stk` 被读取, 没有使用 `this.m` 是因为**假定使用者在构造函数完成前没有访问数据结构**
+* **互斥作用范围**: `other.m` 作用于 `other.stk` 的复制过程
+* **条件竞争**: 构造函数不与其他接口并行执行, 不存在竞争
+* **异常**: 
+  * 加锁时可能异常: 此时数据并未改动, 所以异常安全
+  * 解锁不可能失败, 且 `lock_guard` 保证不会遗漏解锁
+  * `stack<>` 复制可能异常, 但 `stack<>` 保证不会出问题
+
+```C++
+void push(T x)
+{
+    lock_guard<mutex> l(m);
+    stk.push(move(x));	// 异常: stk 保证自身异常安全
+}
+```
+
+* **互斥**: `this.m` 保护 `this.stk` 的修改
+* **互斥作用范围**: `this.m` 作用于 `this.stk` 的修改过程
+* **条件竞争**: 条件竞争暂不明确
+* **异常**: 
+  * 加锁时数据未改动, 异常安全
+  * 解锁不会失败, `lock_guard` 保证必定解锁
+  * `stk.push()` 可能异常, 原因是拷贝/移动数据时可能异常, 但 `stack<>` 保证不会出问题
+
+```C++
+void pop(T& x)      	
+{
+    lock_guard<mutex> l(m);
+    if (stk.empty())	
+        throw empty_stack();
+    
+    x = move(stk.top());
+    stk.pop();
+}
+
+shared_ptr<T> pop()    
+{
+    lock_guard<mutex> l(m);
+    if (stk.empty())
+        throw empty_stack();
+    
+    shared_ptr<T> const res(make_shared<T>(stk.top()));	
+    stk.pop();	
+    return res;
+}
+```
+
+* **互斥**: `this.m` 保护 `this.stk` 的读和写
+
+* **互斥作用范围**: `this.m` 作用于全程
+
+* **条件竞争**: 原本的 `empty()` 和 `pop()`, `top()` 和 `pop()` 存在条件竞争, 现在的 `pop()` 包含了 `empty()` 和 `top()` 的功能, **独立自洽**
+
+* **异常**:
+
+  * 加锁安全
+
+  * 解锁安全
+
+  * `empty_stack` 异常: 数据未改动, 异常安全
+
+  * `shared_ptr<T>` 创建异常:
+
+    * 对象内存分配异常
+    * 引用计数内存分配异常
+    * 数据的拷贝/移动过程, **拷贝构造函数**和**移动构造函数**抛出异常
+
+    `shared_ptr` 和 `make_shared` 保证该过程异常安全
+
+  * `x = move(stk.top());` 拷贝/移动操作异常: 数据结构本身未改动, 所以异常安全
+
+  * `stk.pop()` 异常: `stack<>` 保证异常安全
+
+```C++
+bool empty() const		
+{
+    lock_guard<mutex> l(m);	
+    return stk.empty();
+}
+```
+
+`empty()` 不改动数据, 异常安全
+
 ### 问题
 
-**死锁**
+**1. 使用者要避免死锁**: 
 
-`stack<>` 会使用**用户自定义的拷贝/移动操作**, 用户也可能**重载 new 运算符**
+对于**用户自定义**的**拷贝操作**, **移动操作**和**重载 new 运算符**
 
-插入或删除数据时, 若数据本身调用上述函数, 则会再次调用栈的成员函数, 即再次获取互斥, 而互斥早已被锁住, 导致死锁的发生
+在**栈容器插入或删除元素**时, 会调用上述函数, **上述函数可能再次调用栈容器的成员函数**, 再次获取同一互斥, 导致产生死锁
 
-**构造函数与析构函数**
+**2. 构造函数与析构函数**
 
 使用者必须保证: **构造函数完成前**和**析构函数开始后**, 其他线程不能访问数据
 
-## 线程安全的队列容器
+**3. 并未提供 wait 和 try 操作**
+
+没有提供 `wait_and_push` 和 `try_and_push` 等操作
+
+**4. 并发程度低**
+
+只是用一个锁, 本质上是全部串行化, 并发程度低
+
+**5. 容器元素不是指针**
+
+内存分配在锁的范围内进行, 效率低
+
+## 简单线程安全的队列容器
 
 ###  条件变量实现线程安全队列
+
+**代码**
 
 ```C++
 #include <queue>
@@ -2985,7 +3155,9 @@ public:
 	void push(T x)
 	{
 		lock_guard<mutex> l(m);
+        
 		q.push(move(x));
+        
 		cnd.notify_one();
 	}
 
@@ -2993,6 +3165,7 @@ public:
 	{
 		unique_lock<mutex> l(m);
 		cnd.wait(l, [this] {return !q.empty(); });
+        
 		x = move(q.front());
 		q.pop();
 	}
@@ -3016,6 +3189,7 @@ public:
 
 		x = move(q.front());
 		q.pop();
+        
 		return true;
 	}
 
@@ -3038,21 +3212,27 @@ public:
 };
 ```
 
-**`notify_one` 的问题**
+**改进**
 
-问题描述: `notify_one` 只会唤醒一个等待线程, 若该线程**抛出异常**, 就浪费了一次 `notify_one` 的唤醒
+* 增加 `wait` 和 `try` 操作, **避免忙等**
+
+**缺点**
+
+* `notify_one` 只会唤醒一个等待线程, 若该线程**抛出异常**或由于其他原因没有响应唤醒, 就浪费了一次 `notify_one` 的唤醒
+* 单一互斥
+* 元素类型非指针
 
 **解决办法**
 
-* 将 `notify_one` 改为 `notify_all`
-
-  后果是增大开销
+* 将 `notify_one` 改为 `notify_all`, 但会增大开销
 
 * `wait_and_pop` 在异常处理中再次调用 `notify_one`
 
-* 容器元素改为 `shared_ptr<>`, `shared_ptr<>` 保证了在拷贝/移动时**异常安全**
+* 容器元素改为 `shared_ptr<>`, `shared_ptr<>` 保证了在拷贝/移动时不会抛出异常
 
 ### 存储 `shared_ptr<>` 的线程安全队列
+
+**代码**
 
 ```C++
 #include <queue>
@@ -3131,9 +3311,69 @@ public:
 };
 ```
 
-**优点**
+**改进**
 
-`push` 操作中, 内存分配可以脱离锁的保护, 缩短互斥保护范围, 增加并发程度
+* **元素类型改为指针**, 指针拷贝/移动不会异常
+* **在锁的范围外分配内存**, 减少互斥的持有时间
+
+**缺点**
+
+* **单一互斥**
+
+**接口分析**
+
+```C++
+void push(T x)
+{
+    shared_ptr<T> p(make_shared<T>(move(x)));
+
+    lock_guard<mutex> l(m);
+    q.push(p);
+    cnd.notify_one();
+}
+```
+
+* **互斥**: 单一互斥保护数据修改
+* **互斥范围**: `notify_one()` 可能没必要在锁的范围内执行, 内存分配在锁的范围外进行
+* **条件竞争**: 貌似不存在条件竞争
+* **异常**:
+  * `shared_ptr` 和 `make_shared` 内存分配异常, 但数据未修改, 故异常安全
+  * `lock_guard` 保证加锁解锁的异常安全
+  * `q.push()` 异常, 由 `queue` 保证异常安全
+  * `cnd.notify_one()` 由条件变量保证异常安全 
+
+```C++
+viod wait_and_pop(T& x)
+{
+    unique_lock<mutex> l(m);
+    cnd.wait(l, [this] {return !q.empty(); });
+
+    x = move(*q.front());
+    q.pop();
+}
+
+bool try_and_pop(T& x)
+{
+    lock_guard<mutex> l(m);
+
+    if (q.empty())
+        return false;
+
+    x = move(*q.front());
+    q.pop();
+    return true;
+}
+```
+
+* **互斥**: 单一互斥保护数据修改
+* **互斥范围**: 全程
+* **条件竞争**: `pop()` 即判断是否为空, 又返回值, 独立自洽
+* **异常**:
+  * `lock_guard` 保证加锁解锁的异常安全
+  * `if (q.empty())` 异常: 数据未改动, 异常安全
+  * `x = move(*q.front())` 异常: 数据未改动, 异常安全
+
+## 精细粒度锁的线程安全队列
 
 ### 单线程简单队列
 
