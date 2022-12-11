@@ -1707,6 +1707,28 @@ class Point
 }
 ```
 
+### 指针转换
+
+* `shared_ptr` 不能转为 `unique_ptr`
+
+* `unique_ptr` 能转为 `shared_ptr`, 但要注意**野指针**问题
+
+  * 问题
+
+    ```C++
+    {
+        unique_ptr<T> a;
+        shared_ptr<T> b(a.get());	
+    }	// a 销毁时释放内存, 导致 b 称为野指针
+    ```
+
+  * 正常转换
+
+    ```C++
+    unique_ptr<T> a;
+    shared_ptr<T> b = move(a);	// a 的内存所有权转移给 b, 且 b 的引用计数为 1
+    ```
+
 ### 线程安全
 
 **shared_ptr**
