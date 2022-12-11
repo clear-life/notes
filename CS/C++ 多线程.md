@@ -3021,8 +3021,7 @@ threadsafe_stack(const threadsafe_stack& other)
 }
 ```
 
-* **互斥**: `other.m` 保护 `other.stk` 被读取, 没有使用 `this.m` 是因为**假定使用者在构造函数完成前没有访问数据结构**
-* **互斥作用范围**: `other.m` 作用于 `other.stk` 的复制过程
+* **互斥**: `other.m` 保护 `other.stk` 的读取过程, 没有使用 `this.m` 是因为**假定使用者在构造函数完成前没有访问数据结构**
 * **条件竞争**: 构造函数不与其他接口并行执行, 不存在竞争
 * **异常**: 
   * 加锁时可能异常: 此时数据并未改动, 所以异常安全
@@ -3037,8 +3036,7 @@ void push(T x)
 }
 ```
 
-* **互斥**: `this.m` 保护 `this.stk` 的修改
-* **互斥作用范围**: `this.m` 作用于 `this.stk` 的修改过程
+* **互斥**: `this.m` 恰好作用于 `this.stk` 的修改过程
 * **条件竞争**: 条件竞争暂不明确
 * **异常**: 
   * 加锁时数据未改动, 异常安全
@@ -3068,9 +3066,7 @@ shared_ptr<T> pop()
 }
 ```
 
-* **互斥**: `this.m` 保护 `this.stk` 的读和写
-
-* **互斥作用范围**: `this.m` 作用于全程
+* **互斥**: `this.m` 作用于全程
 
 * **条件竞争**: 原本的 `empty()` 和 `pop()`, `top()` 和 `pop()` 存在条件竞争, 现在的 `pop()` 包含了 `empty()` 和 `top()` 的功能, **独立自洽**
 
@@ -3333,8 +3329,7 @@ void push(T x)
 }
 ```
 
-* **互斥**: 单一互斥保护数据修改
-* **互斥范围**: `notify_one()` 可能没必要在锁的范围内执行, 内存分配在锁的范围外进行
+* **互斥**: 单一互斥保护数据修改,  `notify_one()` 没必要在锁的范围内执行, 内存分配在锁的范围外进行(缺点)
 * **条件竞争**: 貌似不存在条件竞争
 * **异常**:
   * `shared_ptr` 和 `make_shared` 内存分配异常, 但数据未修改, 故异常安全
@@ -3365,8 +3360,7 @@ bool try_and_pop(T& x)
 }
 ```
 
-* **互斥**: 单一互斥保护数据修改
-* **互斥范围**: 全程
+* **互斥**: 单一互斥保护数据修改, 作用于全程
 * **条件竞争**: `pop()` 即判断是否为空, 又返回值, 独立自洽
 * **异常**:
   * `lock_guard` 保证加锁解锁的异常安全
@@ -3544,11 +3538,6 @@ public:
   > 研究虚节点设计前后不变量的变化及对应锁的变化
 
 ```C++
-#include <iostream>
-#include <mutex>
-
-using namespace std;
-
 template<typename T>
 class threadsafe_queue
 {
@@ -3613,6 +3602,94 @@ public:
 	}
 };
 ```
+
+**不变量**
+
+* ```C++
+  tail→next == nullptr
+  tail→data == nullptr
+  ```
+
+* `head == tail` 说明队列为空
+
+* 对于节点 x, 若 `x != tail`, 则 `x->data` 指向 T 类型的实例, 且 `x->next` 指向后继节点
+
+* `x->next == tail` 说明 x 是最后一个节点
+
+* 从 `head` 出发, 沿着 `next` 指针访问后继节点, 最终会到达 `tail` 指向的节点
+
+**接口分析**
+
+```C++
+void push(T x)
+{
+    shared_ptr<T> new_data(make_shared<T>(move(x)));
+    unique_ptr<node> p(new node);
+
+    node* const new_tail = p.get();
+
+    lock_guard<mutex> tail_l(tail_m);
+
+    tail->data = new_data;
+    tail->next = move(p);
+
+    tail = new_tail;
+}
+```
+
+* **互斥**: `tail_m` 恰好作用于 `tail` 的修改过程
+
+* **不变量**: `tail` 相关的**不变量在互斥外保持不变**, 在互斥内被破坏(但不被外界看到)
+
+* **条件竞争**: `push` 独立自洽
+
+* **异常**:
+
+  * `shared_ptr`, `make_shared` 和 `new`, `unique_ptr` 异常
+
+    数据未改动, `shared_ptr`, `make_shared` 和 `new`, `unique_ptr` 保证不会出现内存泄漏
+
+  * `new_tail = p.get()` 异常: 数据未改动
+
+  * ```C++
+    tail->data = new_data;
+    tail->next = move(p);
+    
+    tail = new_tail;
+    ```
+
+    `tail` 改动异常: 可能会出问题
+
+    > 1. 异常处理中处理 tail 改动抛出的异常 
+    > 2. 事物机制运行临界区代码, 保证要么全部执行, 要么全部不执行
+
+```C++
+shared_ptr<T> try_pop()
+{
+    unique_ptr<node> old_head;
+
+    {
+        lock_guard<mutex> head_l(head_m);
+        if (head.get() == get_tail())
+        {
+            old_head = nullptr;
+        }
+        else
+        {
+            old_head = move(head);
+            head = move(old_head->next);
+        }
+    }
+
+    return old_head ? old_head->data : shared_ptr<T>();
+}
+```
+
+* **互斥**: `head_m` 保护除返回语句外的所有过程, `head_t` 保护 `tail` 的访问过程
+* **不变量**: 
+* **条件竞争**: `pop()` 包含判空和返回值, 独立自洽
+* **异常**:
+  * 
 
 ### 支持等待操作的线程安全队列
 
