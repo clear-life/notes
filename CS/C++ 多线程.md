@@ -3649,19 +3649,8 @@ void push(T x)
 
     数据未改动, `shared_ptr`, `make_shared` 和 `new`, `unique_ptr` 保证不会出现内存泄漏
 
-  * `new_tail = p.get()` 异常: 数据未改动
+  * 暂时认定指针拷贝/移动操作不发生异常
 
-  * ```C++
-    tail->data = new_data;
-    tail->next = move(p);
-    
-    tail = new_tail;
-    ```
-
-    `tail` 改动异常: 可能会出问题
-
-    > 1. 异常处理中处理 tail 改动抛出的异常 
-    > 2. 事物机制运行临界区代码, 保证要么全部执行, 要么全部不执行
 
 ```C++
 shared_ptr<T> try_pop()
@@ -3685,11 +3674,105 @@ shared_ptr<T> try_pop()
 }
 ```
 
-* **互斥**: `head_m` 保护除返回语句外的所有过程, `head_t` 保护 `tail` 的访问过程
-* **不变量**: 
-* **条件竞争**: `pop()` 包含判空和返回值, 独立自洽
+* **互斥**: 
+
+  * `head_m` 保护除返回语句外的所有过程, `head_t` 保护 `tail` 的访问过程
+  * `tail_m` 保护 `tail` 的读取, 使得 `push()` 中对 `tail` 的修改导致的 `tail` 不变量的破坏对 `tail` 的读取不可见, 要么还未修改, `get_tail` 读取到 `tail` 旧值, 要么已经修改, `get_tail` 读取到 `tail` 新值
+
+* **不变量**:
+
+  *  `get_tail` 在 `head_mutex` 的保护范围内, 这点很重要
+
+    在 `head_mutex` 的保护范围内, 可以认为 `head` 不会被改变, 
+
+    即参与比较的对象 `head` 不会被改变, 另一参与比较的对象 `tail` 虽然有可能改变, 
+
+    但 `push()` 只会改变 `tail` 的值往右移动, 对当前读取到的 `tail` 而言, 可以看作不会被改变, 于是参与比较 `head` 和 `tail` 在**参与比较时的值可以认为是同一时刻**的
+
+  * 但若 `get_tail` 在 `head_mutex` 的保护范围外的话, 参与比较时, `head` 的值与 `get_tail` 读取到的 `tail` 可能是不同时刻的, 就可能会判断错误, 导致出错
+
+  * 错误示例
+
+    ```C++
+    A:
+    {
+        tail_m.lock();
+        ...		// 修改 tail
+        tail_m.unlock();
+    }
+    
+    B:
+    {
+        tail_m.lock();
+        old_tail = tail;	// 读取 tail  		时刻 a
+        tail_m.unlock();
+        
+        head_m.lock();
+        if(head == old_tail)// 比较 head 和 tail  时刻 b
+        head_m.unlock();
+        
+    }
+    ```
+
+    参与比较的 head 和 tail 的值**可能属于不同时刻**, 导致得到错误的判断, 产生错误的结果, 破坏数据结构
+
+    > 错误的判断和结果指: 
+    >
+    > 时刻 a : 队列有一个元素
+    >
+    > 时刻 a 和 b 之间: 另一 try_pop 线程删除队列的元素, 使得队列为空
+    >
+    > 时刻 b : head 和 old_tail 发生比较, 发现二者不同(尽管此时只有一个虚节点, 队列为空), 于是将 head 节点 pop 掉, 导致 head 为 nullptr, 破坏了不变量(虚节点队列至少含有一个节点, head 不可能为 nullptr)
+
+  * 正确示例
+
+    ```C++
+    A:
+    {
+        tail_m.lock();
+        ...		// 修改 tail
+        tail_m.unlock();
+    }
+    
+    B:
+    {
+        head_m.lock();
+        if(head == get_tail())// 同一时刻比较 head 和 tail
+        head_m.unlock();
+        
+    }
+    ```
+
+    参与比较时, `head` 的值不可能发生变化, `get_tail()`函数在**读取**和**参与比较**之间 `tail` 的值可能发生变化, 但 `tail` 的值虽然发生变化, `head` 的值却不会发生变化, 于是能够做出正确的判断
+
+    > 顶多参与比较时判断为空队列, 实际为非空队列, 导致 try_pop 的结果为空指针, 但不会破坏数据结构本身
+
+*  **条件竞争**: `pop()` 包含判空和返回值, 独立自洽
+
 * **异常**:
-  * 
+
+  * 指针拷贝/移动操作可以认为不发生异常
+  * return 语句可能发生异常
+
+* **死锁**:
+
+  * `try_pop()` 会获取两个锁, 但总是先锁 `head_m`, 再锁 `tail_m`, 所以死锁不会出现
+
+* **并发程度**:
+
+  * 锁的粒度更精细, 两个接口分别在两个互斥上持锁, 并发程度高
+
+    > try_pop 对应 head_m, push 对应 tail_m
+
+  * 内存分配在未持锁状态下进行
+
+    > `shared_ptr<T> new_data(make_shared<T>(move(x)));`	内存分配
+    > `unique_ptr<node> p(new node);`	内存分配
+
+  * 内存释放在未持锁状态下进行
+
+    > `unique_ptr<node> old_head;` 在函数返回时自动释放内存
+
 
 ### 支持等待操作的线程安全队列
 
