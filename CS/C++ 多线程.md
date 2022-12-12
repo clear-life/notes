@@ -3773,8 +3773,11 @@ shared_ptr<T> try_pop()
 
     > `unique_ptr<node> old_head;` 在函数返回时自动释放内存
 
-
 ### 支持等待操作的线程安全队列
+
+* 增加 `wait` 操作
+
+**接口分离代码**
 
 ```C++
 #include <mutex>
@@ -3898,6 +3901,281 @@ public:
 	bool empty();
 };
 ```
+
+**合并后代码**
+
+```C++
+#include <mutex>
+#include <condition_variable>
+
+using namespace std;
+
+template<typename T>
+class threadsafe_queue
+{
+private:
+	struct node
+	{
+		shared_ptr<T> data;
+		unique_ptr<node> next;
+	};
+
+	mutex head_m;
+	unique_ptr<node> head;
+
+	mutex tail_m;
+	node* tail;
+
+	condition_variable cnd;
+
+	node* get_tail()
+	{
+		lock_guard<mutex> tail_l(tail_m);
+		return tail;
+	}
+
+public:
+	threadsafe_queue(): head(new node), tail(head.get()) {}
+
+	threadsafe_queue(threadsafe_queue const& other) = delete;
+	threadsafe_queue& operator=(threadsafe_queue const& other) = delete;
+
+	shared_ptr<T> try_pop();
+	bool try_pop(T& x);
+
+	shared_ptr<T> wait_and_pop();
+	void wait_and_pop(T& x);
+
+	void push(T x);
+	bool empty();
+};
+
+template<typename T>
+void threadsafe_queue<T>::push(T x)
+{
+	shared_ptr<T> new_data(make_shared<T>(move(x)));
+	unique_ptr<node> p(new node);
+	
+	node* const new_tail = p.get();
+
+	{
+		lock_guard<mutex> tail_l(tail_m);
+
+		tail->data = new_data;
+		tail->next = move(p);
+
+		tail = new_tail;
+	}
+
+	cnd.notify_one();
+}
+
+template<typename T>
+shared_ptr<T> threadsafe_queue<T>::wait_and_pop()
+{
+	unique_ptr<node> old_head;
+
+	{
+		unique_lock<mutex> head_l(head_m);
+		cnd.wait(head_l, [&] {return head.get() != get_tail(); });
+
+		old_head = move(head);
+		head = move(old_head->next);
+	}
+
+	return old_head->data;
+}
+
+template<typename T>
+void threadsafe_queue<T>::wait_and_pop(T& x)
+{
+	unique_ptr<node> old_head;
+
+	{
+		unique_lock<mutex> head_l(head_m);
+		cnd.wait(head_l, [&] {return head.get() != get_tail(); });
+		x = move(*head->data);
+
+		old_head = move(head);
+		head = move(old_head->next);
+
+	}
+}
+
+template<typename T>
+shared_ptr<T> threadsafe_queue<T>::try_pop()
+{
+	unique_ptr<node> old_head;
+
+	{
+		lock_guard<mutex> head_l(head_m);
+
+		if (head.get() != get_tail())
+		{
+			old_head = move(head);
+			head = move(old_head->next);
+		}
+	}
+
+	return old_head ? old_head->data : shared_ptr<T>();
+}
+
+template<typename T>
+bool threadsafe_queue<T>::try_pop(T& x)
+{
+	unique_ptr<node> old_head;
+
+	{
+		lock_guard<mutex> head_l(head_m);
+
+		if (head.get() != get_tail())
+		{
+			x = move(*head->data);
+
+			old_head = move(head);
+			head = move(old_head->next);
+		}
+	}
+
+	return old_head;
+}
+
+template<typename T>
+bool threadsafe_queue<T>::empty()
+{
+	lock_guard<mutex> head_l(head_m);
+	return head.get() == get_tail();
+}
+```
+
+**改进**
+
+* 将有可能抛出异常的拷贝/移动操作放在锁内
+* 增加 `wait` 操作
+* 控制锁的范围
+
+**接口分析**
+
+```C++
+template<typename T>
+void threadsafe_queue<T>::push(T x)
+{
+	shared_ptr<T> new_data(make_shared<T>(move(x)));
+	unique_ptr<node> p(new node);
+	
+	node* const new_tail = p.get();
+
+	{
+		lock_guard<mutex> tail_l(tail_m);
+
+		tail->data = new_data;
+		tail->next = move(p);
+
+		tail = new_tail;
+	}
+
+	cnd.notify_one();
+}
+```
+
+* **互斥**: 
+  * `tail_m` 仅保护 `tail` 的修改过程, 内存分配过程在锁外, `notify_one` 也在锁外, 使得唤醒线程没必要等待锁的释放
+* **不变量**: 不变量的破坏被 `tail_m` 保护, 外界看不到
+* **条件竞争**: 无限队列, `push()` 独立自洽
+* **异常**: 
+  * 内存分配过程异: 数据未改动, 不变量未破坏, STL 接口保证不会内存泄漏
+  * `node* const new_tail = p.get()` 貌似有可能发生异常, 如果可能发生异常, 建议放入锁内(需要了解为什么异常要放进锁内)
+  * `cnd.notify_one()` 异常: 改动已发生, 条件变量保证异常不出问题
+* **死锁**: 一个互斥, 不发生死锁
+* **并发程度**: 
+  * 内存分配在未持锁状态下进行
+  * 条件变量 `notify_one` 在未持锁状态下进行
+  * 锁的粒度更精细, `push()` 仅持有 `tail_m` 互斥, 与 `pop()` 并发程度高
+
+```C++
+template<typename T>
+shared_ptr<T> threadsafe_queue<T>::wait_and_pop()
+{
+	unique_ptr<node> old_head;
+
+	{
+		unique_lock<mutex> head_l(head_m);
+		cnd.wait(head_l, [&] {return head.get() != get_tail(); });
+
+		old_head = move(head);
+		head = move(old_head->next);
+	}
+
+	return old_head->data;
+}
+
+template<typename T>
+void threadsafe_queue<T>::wait_and_pop(T& x)
+{
+	unique_ptr<node> old_head;
+
+	{
+		unique_lock<mutex> head_l(head_m);
+		cnd.wait(head_l, [&] {return head.get() != get_tail(); });
+		x = move(*head->data);
+
+		old_head = move(head);
+		head = move(old_head->next);
+
+	}
+}
+
+template<typename T>
+shared_ptr<T> threadsafe_queue<T>::try_pop()
+{
+	unique_ptr<node> old_head;
+
+	{
+		lock_guard<mutex> head_l(head_m);
+
+		if (head.get() != get_tail())
+		{
+			old_head = move(head);
+			head = move(old_head->next);
+		}
+	}
+
+	return old_head ? old_head->data : shared_ptr<T>();
+}
+
+template<typename T>
+bool threadsafe_queue<T>::try_pop(T& x)
+{
+	unique_ptr<node> old_head;
+
+	{
+		lock_guard<mutex> head_l(head_m);
+
+		if (head.get() != get_tail())
+		{
+			x = move(*head->data);
+
+			old_head = move(head);
+			head = move(old_head->next);
+		}
+	}
+
+	return old_head;
+}
+```
+
+* **互斥**: 
+  * `head_m` 保护 `head` 的修改全程
+  * `tail_m` 仅保护 `tail` 的读取过程
+* **不变量**: `tail_m` 在 `head_m` 内使得 `head` 和 `tail` 的比较是同一时刻的, 在不变量未被破坏的情况下参与比较的, 能够得到正确的判断
+* **条件竞争**: `pop()` 操作判断是否为空和返回结果, 独立自洽
+* **异常**: 
+  * 指针相关操作可以认为无异常
+  * x 的拷贝/移动操作可能发生异常, 但在锁内
+* **死锁**: 两个互斥, 但获取顺序确定, 不发生死锁
+* **并发程度**: 
+  * 返回值在锁外返回
+  * 精细粒度的互斥, 两个互斥保护不同的部分, 分离数据的设计使得两个接口不会试图获取同一互斥, 也不会出现**两个互斥锁住同一变量并修改**的情况
 
 ## 线程安全的查找表
 
