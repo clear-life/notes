@@ -4507,8 +4507,9 @@ class threadsafe_list
 		shared_ptr<T> data;
 		unique_ptr<node> next;
 
-		node(): next() {}
-		node(T const& value): data(make_shared<T>(value)) {}
+		node() {}
+
+		node(T const& x): data(make_shared<T>(x)) {}
 	};
 
 	node head;
@@ -4523,70 +4524,77 @@ public:
 	threadsafe_list(threadsafe_list const& other) = delete;
 	threadsafe_list& operator=(threadsafe_list const& other) = delete;
 
-	void push_front(T const& value)
+	void push_front(T const& x)
 	{
-		unique_ptr<node> new_node(new node(value));
+		unique_ptr<node> p(new node(x));
 
 		lock_guard<mutex> l(head.m);
-		new_node->next = move(head.next);
-		head.next = move(new_head);
+
+		p->next = move(head.next);
+		head.next = move(p);
 	}
 
 	template<typename Function>
-	void for_each(Function f)
+	void for_each(Function func)
 	{
-		node* current = &head;
+		node* cur = &head;
 		unique_lock<mutex> l(head.m);
 
-		while (node* const next = current->next.get())
+		while (node* const next = cur->next.get())
 		{
 			unique_lock<mutex> next_l(next->m);
-			l.unlock();
 
-			f(*next->data);
-			current = next;
+			l.unlock();
+			func(*next->data);
+			cur = next;
 			l = move(next_l);
 		}
 	}
 
 	template<typename Predicate>
-	shared_ptr<T> find_first_if(Predicate p)
+	shared_ptr<T> _Traits_find_first_of(Predicate predic)
 	{
-		node* current = &head;
+		node* cur = &head;
 		unique_lock<mutex> l(head.m);
-		while (node* const next = current->next.get())
+
+		while (node* const next = cur->next.get())
 		{
 			unique_lock<mutex> next_l(next->m);
 			l.unlock();
 
-			if (p(*next->data))
+			if (predic(*next->data))
 			{
 				return next->data;
 			}
-
-			current = next;
+			
+			cur = next;
 			l = move(next_l);
 		}
+		return shared_ptr<T>();
 	}
 
 	template<typename Predicate>
-	void remove_if(Predicate p)
+	void remove_if(Predicate predic)
 	{
-		node* current = &head;
+		node* cur = &head;
 		unique_lock<mutex> l(head.m);
-		while (node* const next = current->next.get())
+
+		while (node* const next = cur->next.get())
 		{
 			unique_lock<mutex> next_l(next->m);
-			if (p(*next->data))
+
+			if (predic(*next->data))
 			{
-				unique_ptr<node> old_next = move(current->next);
-				current->next = move(next->next);
+				unique_ptr<node> old_next = move(cur->next);
+
+				cur->next = move(next->next);
+
 				next_l.unlock();
 			}
 			else
 			{
 				l.unlock();
-				current = next;
+				cur = next;
 				l = move(next_l);
 			}
 		}
