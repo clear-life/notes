@@ -4179,11 +4179,33 @@ bool threadsafe_queue<T>::try_pop(T& x)
 
 ## 线程安全的查找表
 
+### 分析
+
+* **通过迭代器访问容器元素会出现条件竞争**, 所以先删除迭代器
+* 重新设计接口, 防止条件竞争, 常见手段为**接口融合**
+
+### 接口设计
+
+**get_value()**
+
+* 预设返回值
+
+  由 `key` 获取 `value`, 由于 `key` 可能不存在, 从**接口融合**的角度要兼顾 `key` 不存在的情况
+
+  可以由用户预设一个值, `key` 不存在时返回该值
+
+* 返回智能指针
+
+  返回智能指针, 如果 `key` 存在, 返回其指针, 如果不存在就返回空指针
+
+### 代码
+
 ```C++
-#include <iostream>
 #include <vector>
 #include <list>
+#include <map>
 #include <mutex>
+#include <shared_mutex>
 
 using namespace std;
 
@@ -4191,86 +4213,85 @@ template<typename Key, typename Value, typename Hash = hash<Key>>
 class threadsafe_lookup_table
 {
 private:
-	class bucket_type
+	class bucket
 	{
 	private:
-		typedef pair<Key, Value> bucket_value;
-		typedef list<bucket_value> bucket_data;
-		typedef typename bucket_data::iterator bucket_iterator;
+		typedef pair<Key, Value> node;
+		typedef typename list<node>::iterator bucket_iterator;	// typename 专门强调是类型
 
-		bucket_data data;
+		list<node> data;
 		mutable shared_mutex m;
 
-		bucket_iterator find_entry_for(Key const& key) const
+		bucket_iterator find_entity(Key const& key) const
 		{
-			return find_if(data.begin(), data.end(), [&](bucket_value const& item) {return item.first == key});
+			return find_if(data.begin(), data.end(),
+				[&](node const& item) 
+				{return item.first == key; });
 		}
 
 	public:
-		Value value_for(Key const& key, Value const& default_value) const
+		Value get_value(Key const& key, Value const& default_value) const
 		{
 			shared_lock<shared_mutex> l(m);
-			bucket_iterator const found_entry = find_entry_for(key);
-			return (found_entry == data.end()) ? default_value : found_entry->second;
+
+			bucket_iterator const it = find_entity(key);
+
+			return it == data.end() ? default_value : it->second;
 		}
 
 		void add_or_update_mapping(Key const& key, Value const& value)
 		{
-			unique_lock<shared_mutex> l(m);
-			bucket_iterator const found_entry = find_entry_for(key);
+			lock_guard<shared_mutex> l(m);
 
-			if (found_entry == data.end())
+			bucket_iterator const it = find_entity(key);
+
+			if (it == data.end())
 			{
-				data.push_back(bucket_value(key, value));
+				data.push_back(node(key, value));
 			}
 			else
 			{
-				found_entry->second = value;
+				it->second = value;
 			}
 		}
 
 		void remove_mapping(Key const& key)
 		{
-			unique_lock<shared_mutex> l(m);
-			bucket_iterator const found_entry = find_entry_for(key);
+			lock_guard<shared_mutex> l(m);
 
-			if (found_entry != data.end())
+			bucket_iterator const it = find_entity(key);
+
+			if (it != data.end())
 			{
-				data.erase(found_entry);
+				data.erase(it);
 			}
 		}
 	};
 
-	vector<unique_ptr<bucket_type>> buckets;
+	vector<unique_ptr<bucket>> buckets;
 	Hash hasher;
 
-	bucket_type& get_bucket(Key const& key) const
+	bucket& get_bucket(Key const& key) const
 	{
-		size_t const bucket_index = hasher(key) % buckets.size();
-		return *buckets[bucket_index];
+		size_t const idx = hasher(key) % buckets.size();
+		return *buckets[idx];
 	}
 
 public:
-	typedef Key key_tepe;
-	typedef Value mapped_type;
-	typedef Hash hash_type;
-
 	threadsafe_lookup_table(
-		unsigned num_buckets = 19, Hash cosnt& hasher_ = Hash()) :
-		buckets(num_buckets), hash(hash_)
+		int num = 19, Hash const& hasher_ = Hash()
+	) : buckets(num), hasher(hasher_)
 	{
-		for (unsigned i = 0; i < num_buckets; i++)
-		{
-			buckets[i].reset(new bucket_type);
-		}
+		for (int i = 0; i < num; i++)
+			buckets[i].reset(new bucket);
 	}
 
 	threadsafe_lookup_table(threadsafe_lookup_table const& other) = delete;
 	threadsafe_lookup_table& operator=(threadsafe_lookup_table const& other) = delete;
 
-	Value value_for(Key const& key, Value const& default_value = Value()) const
+	Value get_value(Key const& key, Value const& default_value) const
 	{
-		return get_bucket(key).value_for(key, default_value);
+		return get_bucket(key).get_value(key, default_value);
 	}
 
 	void add_or_update_mapping(Key const& key, Value const& value)
@@ -4285,25 +4306,190 @@ public:
 
 	map<Key, Value> get_map() const
 	{
-		vector<unique_lock<shared_mutex>> locks;
-		for (unsigned i = 0; i < buckets.size(); i++)
-		{
-			locks.push_back(unique_lock<shared_mutex>(buckets[i].m));
-		}
-
 		map<Key, Value> res;
-		for (unsigned i = 0; i < buckets.size(); i++)
 		{
-			for (bucket_iterator it = buckets[i].data.begin(); it != uckets[i].data.end(); ++it)
-			{
-				res.insert(*it);
-			}
-		}
+			vector<shared_lock<shared_mutex>> locks;
+			for (int i = 0; i < buckets.size(); i++)
+				locks.push_back(shared_lock<shared_mutex>(buckets[i].m));
 
+			for (int i = 0; i < buckets.size(); i++)
+				for (bucket_iterator it = buckets[i].data.begin();
+					it != buckets[i].data.end(); ++it)
+					res.insert(*it);
+		}
 		return res;
 	}
 };
 ```
+
+### 改进
+
+* 桶的数目由构造函数设置, 桶的数目固定, 所以访问具体的桶不需要考虑该桶的不变量是否成立, 即不需要加锁, 但在访问桶的 data 时还是要加锁的
+* 多个互斥保护不同部分
+* 读写锁, 提高并发程度 n 倍
+* 重设接口, 消除接口上的条件竞争
+
+### 接口分析
+
+**bucket 接口**
+
+```C++
+bucket_iterator find_entity(Key const& key) const
+{
+    return find_if(data.begin(), data.end(),
+                   [&](node const& item) 
+                   {return item.first == key; });
+}
+```
+
+**private** 接口, 供外部接口访问, 不需要加锁
+
+```C++
+Value get_value(Key const& key, Value const& default_value) const
+{
+    shared_lock<shared_mutex> l(m);
+
+    bucket_iterator const it = find_entity(key);
+
+    return it == data.end() ? default_value : it->second;
+}
+```
+
+读操作
+
+* **互斥**: `shared_mutex` 保护读取过程, **包含返回语句**, 防止出现迭代器指向的节点失效的情况
+* **不变量**: 返回语句也在锁的保护范围, **保护迭代器的不变量不被破化**
+* **条件竞争**: 自行判断是否含有 `key`, 且由 `default_value` 表明是否查找到, 独立自洽, 没有条件竞争
+* **异常**: 
+  * 读操作不改动数据, 即使抛出异常也不影响数据结构, 可以认为无异常
+  * 假定加锁解锁无异常
+  * `find_entity()` 由 `std::find_if()` 保证无异常, 迭代器的拷贝操作无异常
+* **死锁**: 一个互斥, 无死锁
+* **并发程度**: 
+  * 读写锁, 并发程度高
+  * 多互斥保护不同部分, 并发程度高
+
+```C++
+void add_or_update_mapping(Key const& key, Value const& value)
+{
+    lock_guard<shared_mutex> l(m);
+
+    bucket_iterator const it = find_entity(key);
+
+    if (it == data.end())
+    {
+        data.push_back(node(key, value));
+    }
+    else
+    {
+        it->second = value;
+    }
+}
+```
+
+写操作
+
+* **互斥**: `shared_mutex` 保护查询和修改操作
+* **不变量**: 整个修改过程被排他锁保护, 不变量的破坏不会被其他线程看到
+* **条件竞争**: 接口自行判断是否找到 `key`, 独立自洽, 无条件竞争
+* **异常**:
+  * `data.push_back()` 异常: `list` 保证即使异常也不会改变数据结构, 所以异常安全
+  * `it->second = value;` 异常: 可能会出问题, 留给使用者处理
+* **死锁**: 一个互斥
+* **并发程度**:
+  * 排他锁, 并发程度低
+  * 多互斥, 并发程度高
+
+```C++
+void remove_mapping(Key const& key)
+{
+    lock_guard<shared_mutex> l(m);
+
+    bucket_iterator const it = find_entity(key);
+
+    if (it != data.end())
+    {
+        data.erase(it);
+    }
+}
+```
+
+写操作
+
+* **互斥**: `shared_mutex` 保护查询和修改操作
+* **不变量**: 整个修改过程被排他锁保护, 不变量的破坏不会被其他线程看到
+* **条件竞争**: 接口自行判断是否找到 `key`, 独立自洽, 无条件竞争
+* **异常**:
+  * `data.erase()` 异常: `list` 保证即使异常也不会改变数据结构, 所以异常安全
+* **死锁**: 一个互斥
+* **并发程度**:
+  * 排他锁, 并发程度低
+  * 多互斥, 并发程度高
+
+**threadsafe_lookup_table 接口**
+
+```C++
+bucket& get_bucket(Key const& key) const
+{
+    size_t const idx = hasher(key) % buckets.size();
+    return *buckets[idx];
+}
+```
+
+桶的数目固定, 内存地址也不会变化, 所以尽管内容会变化, 但接口只需要返回引用, 所以不需要加锁
+
+```C++
+Value get_value(Key const& key, Value const& default_value) const
+{
+    return get_bucket(key).get_value(key, default_value);
+}
+
+void add_or_update_mapping(Key const& key, Value const& value)
+{
+    get_bucket(key).add_or_update_mapping(key, value);
+}
+
+void remove_mapping(Key const& key)
+{
+    get_bucket(key).remove_mapping(key);
+}
+```
+
+**get_bucket()** 无需保护, 结果固定
+
+连锁调用后的那个函数会自行加锁保护其过程, 且返回过程不需要锁的保护
+
+```C++
+map<Key, Value> get_map() const
+{
+    map<Key, Value> res;
+    {
+        vector<shared_lock<shared_mutex>> locks;
+        for (int i = 0; i < buckets.size(); i++)
+            push_back(shared_lock<shared_mutex>(buckets[i].m));
+
+        for (int i = 0; i < buckets.size(); i++)
+            for (bucket_iterator it = buckets[i].data.begin();
+                it != buckets[i].data.end(); ++it)
+                res.insert(*it);
+    }
+    return res;
+}
+```
+
+读操作
+
+* **互斥**: `shared_mutex` 保护每个 `bucket` 的查询操作
+* **不变量**: 整个修改过程被所有共享锁保护, 不变量的破坏不会被其他线程看到
+* **条件竞争**: 接口自行访问所有数据, 独立自洽, 无条件竞争
+* **异常**:
+  * `push_back()` 异常: 数据未改动, 且 `shared_lock` 保证正确解锁, 所以异常安全
+  * `res.insert(*it);` 异常: 数据未改动, 数据未被破坏, 仅返回值可能不正确, 异常留给使用者处理
+* **死锁**: 多个互斥, 按照桶的序号获取, 无死锁
+* **并发程度**:
+  * 共享, 并发程度高
+  * 多互斥, 并发程度高
+  * `res` 的初始化和返回都在锁外, 并发程度高
 
 ## 支持迭代的线程安全链表
 
