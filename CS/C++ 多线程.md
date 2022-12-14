@@ -4493,8 +4493,21 @@ map<Key, Value> get_map() const
 
 ## 支持迭代的线程安全链表
 
+### 分析
+
+迭代器的生命周期不由容器控制, 不应向外提供迭代器, 因为:
+
+* 外部迭代器指向内部, 但内部却会被修改, 导致**迭代器可能在不变量被破坏的时刻访问容器内部**, **除非迭代器持有锁**
+
+考虑让容器以接口形式提供迭代功能, 运行用户提供的函数, 但有可能造成**死锁和条件竞争**
+
+考虑对每个结点分别使用一个互斥来保护, 能够提高并发程度
+
+### 代码
+
 ```C++
 #include <mutex>
+#include <memory>
 
 using namespace std;
 
@@ -4509,7 +4522,7 @@ class threadsafe_list
 
 		node() {}
 
-		node(T const& x): data(make_shared<T>(x)) {}
+		node(T const& x) : data(make_shared<T>(x)) {}
 	};
 
 	node head;
@@ -4537,38 +4550,38 @@ public:
 	template<typename Function>
 	void for_each(Function func)
 	{
-		node* cur = &head;
-		unique_lock<mutex> l(head.m);
-
-		while (node* const next = cur->next.get())
+		node* pre = &head;		// pre 表示已经处理完的结点, head 不需要处理, 相当于处理完
+		unique_lock<mutex> pre_l(head.m);
+			
+		while (node* const cur = pre->next.get())	// cur 表示当前要处理的结点
 		{
-			unique_lock<mutex> next_l(next->m);
+			unique_lock<mutex> cur_l(cur->m);
+			pre_l.unlock();
 
-			l.unlock();
-			func(*next->data);
-			cur = next;
-			l = move(next_l);
+			func(*cur->data);
+			pre = cur;
+			pre_l = move(cur_l);
 		}
 	}
 
 	template<typename Predicate>
-	shared_ptr<T> _Traits_find_first_of(Predicate predic)
+	shared_ptr<T> find_first_if(Predicate predic)
 	{
-		node* cur = &head;
-		unique_lock<mutex> l(head.m);
+		node* pre = &head;
+		unique_lock<mutex> pre_l(head.m);
 
-		while (node* const next = cur->next.get())
+		while (node* const cur = pre->next.get())
 		{
-			unique_lock<mutex> next_l(next->m);
-			l.unlock();
+			unique_lock<mutex> cur_l(cur->m);
+			pre_l.unlock();
 
-			if (predic(*next->data))
+			if (predic(*cur->data))
 			{
-				return next->data;
+				return cur->data;
 			}
-			
-			cur = next;
-			l = move(next_l);
+
+			pre = cur;
+			pre_l = move(cur_l);
 		}
 		return shared_ptr<T>();
 	}
@@ -4576,29 +4589,208 @@ public:
 	template<typename Predicate>
 	void remove_if(Predicate predic)
 	{
-		node* cur = &head;
-		unique_lock<mutex> l(head.m);
+		node* pre = &head;
+		unique_lock<mutex> pre_l(head.m);
 
-		while (node* const next = cur->next.get())
+		while (node* const cur = pre->next.get())
 		{
-			unique_lock<mutex> next_l(next->m);
+			unique_lock<mutex> cur_l(cur->m);
 
-			if (predic(*next->data))
+			if (predic(*cur->data))
 			{
-				unique_ptr<node> old_next = move(cur->next);
+				unique_ptr<node> old_next = move(pre->next);
 
-				cur->next = move(next->next);
+				pre->next = move(cur->next);
 
-				next_l.unlock();
+				cur_l.unlock();
 			}
 			else
 			{
-				l.unlock();
-				cur = next;
-				l = move(next_l);
+				pre_l.unlock();
+				pre = cur;
+				pre_l = move(cur_l);
 			}
 		}
 	}
 };
 ```
+
+### 接口分析
+
+```C++
+void push_front(T const& x)
+{
+    unique_ptr<node> p(new node(x));
+
+    lock_guard<mutex> l(head.m);
+
+    p->next = move(head.next);
+    head.next = move(p);
+}
+```
+
+* **互斥**: 由于要修改 `head`, 所以只需在 head 的修改期间锁住 `head.m`
+* **不变量**: `head` 不变量的破坏在 `head.m` 的保护范围
+* **条件竞争**: 
+  * `push_front()` 无需别的接口判断, 独立自洽
+  * 没有调用用户自定义接口, 不会向外传递内部数据的引用和指针
+* **异常**:
+  * 内存分配异常: 数据未改动, `unique_ptr` 保证无内存泄漏, 异常安全
+  * `unique_ptr` 移动操作可以认为异常安全
+* **死锁**:
+  * 一个互斥
+  * 无调用用户接口, 不会发生嵌套锁
+* **并发程度**
+  * 内存分配在锁外进行, 并发程度高
+  * 每个结点单独一个互斥, 并发程度高
+
+```C++
+template<typename Function>
+void for_each(Function func)
+{
+    node* pre = &head;		// pre 表示已经处理完的结点, head 不需要处理, 相当于处理完
+    unique_lock<mutex> pre_l(head.m);
+        
+    while (node* const cur = pre->next.get())	// cur 表示当前要处理的结点
+    {
+        unique_lock<mutex> cur_l(cur->m);
+        pre_l.unlock();
+
+        func(*cur->data);
+        pre = cur;
+        pre_l = move(cur_l);
+    }
+}
+```
+
+* **互斥**: 从 `head.m` 开始轮流获取紧挨着的两个互斥(`pre->m` 和 `cur->m`)直到下一互斥获取之后且数据处理完后, 再释放当前互斥
+
+* **不变量**
+
+  * `pre` 节点由 `pre->m` 保护, 操作为读取
+
+  * `cur` 节点由 `cur->m` 保护, 操作为访问(可能读也可能写, 取决于 func 函数), 下一循环的条件判断那里需要访问 `get()` 成员函数, 并判断是否执行处理
+
+    > 下一循环 cur 就变为 pre 了, cur_l 就变为 pre_l 了
+
+* **条件竞争**
+
+  * 与其余接口可能存在条件竞争, 但由于从head 开始按顺序加锁, 所以不会出现死锁和条件竞争
+  * 接口本身独立自洽, 但却会**访问用户提供的函数**, 导致可能向外传递内部数据的引用, 从而产生数据竞争, 即条件竞争
+
+* **异常**
+
+  * 仅用户提供的接口可能出异常
+  * 其余操作都是指针操作, 可以认为无异常
+
+* **死锁**
+
+  * 多互斥, 容易死锁, 但按规定顺序持锁, 所以无问题
+  * 用户提供的接口可能获取锁, 导致出现嵌套所, 可能会死锁
+
+* **并发程度**
+
+  * 多互斥, 并发程度高
+  * head 地址不变, 放在锁外, 并发程度高
+  * 获取到 `cur->m` 且处理完 `pre` 后, `pre->m` 就解锁, 并发程度高
+
+```C++
+template<typename Predicate>
+shared_ptr<T> find_first_if(Predicate predic)
+{
+    node* pre = &head;
+    unique_lock<mutex> pre_l(head.m);
+
+    while (node* const cur = pre->next.get())
+    {
+        unique_lock<mutex> cur_l(cur->m);
+        pre_l.unlock();
+
+        if (predic(*cur->data))
+        {
+            return cur->data;
+        }
+
+        pre = cur;
+        pre_l = move(cur_l);
+    }
+    return shared_ptr<T>();
+}
+```
+
+* **互斥**:  `pre->m` 保护 pre 节点的访问,  `cur->m` 保护 cur 节点的访问
+* **不变量**: `cur->m` 的获取在 `pre->m` 的保护范围内, 获取后 `pre->m` 再解锁, 故不变量未被破坏
+* **条件竞争**: 
+  * 按顺序获取互斥, 无条件竞争
+  * 用户接口可能向外传递引用, 可能存在数据竞争
+* **异常**:
+  * 用户接口可能有异常
+* **死锁**
+  * 按顺序获取互斥, 无死锁
+  * 用户接口可能获取锁, 造成嵌套锁, 可能会死锁
+* **并发程度**
+  * 多互斥
+  * 不必要操作在锁外
+  * `return cur->data;` 在锁内, 可能优化到锁外比较好
+
+```C++
+template<typename Predicate>
+void remove_if(Predicate predic)
+{
+    node* pre = &head;
+    unique_lock<mutex> pre_l(head.m);
+
+    while (node* const cur = pre->next.get())
+    {
+        unique_lock<mutex> cur_l(cur->m);
+
+        if (predic(*cur->data))
+        {
+            unique_ptr<node> old_next = move(pre->next);
+
+            pre->next = move(cur->next);
+
+            cur_l.unlock();
+        }
+        else
+        {
+            pre_l.unlock();
+            pre = cur;
+            pre_l = move(cur_l);
+        }
+    }
+}
+```
+
+* **互斥**:  `pre->m` 保护 pre 节点的访问,  `cur->m` 保护 cur 节点的访问
+
+* **不变量**: `cur->m` 的获取在 `pre->m` 的保护范围内, 然后判断 if 语句的条件:
+
+  * 成立时: 删除 cur 节点, 故要同时修改 `pre` 和 `cur` 节点, 所以要同时持有两个锁, 修改完后, cur 节点认为被删除, `cur->m` 解锁, `pre->m` 依旧保护 pre 节点, `pre` 和 `pre_l` 不需要做修改
+
+    > cur 节点真正销毁是在 `cur->m` 解锁后, 可能会引发条件竞争, 但由于已经持有 `pre->m`, 所以不可能有线程越过 pre 节点访问 cur 节点, 所以不变量未被破坏, 不会引发条件竞争
+
+  * 不成立时:
+
+    认为 cur 节点处理完, 正常将 pre 和 pre_l 置为 cur 节点的值和锁
+
+* **条件竞争**: 
+
+  * 按顺序获取互斥, 无条件竞争
+  * 用户接口可能向外传递引用, 可能存在数据竞争
+  * cur 节点的销毁在锁外, 可能引发条件竞争(解锁之后, 销毁之前其余线程访问 cur 节点), 但由于当前正持有 `pre->m`, 不会有其余线程越过 pre 节点在 cur 节点上获取锁, 所以不会发生条件竞争
+
+* **异常**:
+
+  * 用户接口可能有异常
+
+* **死锁**
+
+  * 按顺序获取互斥, 无死锁
+  * 用户接口可能获取锁, 造成嵌套锁, 可能会死锁
+
+* **并发程度**
+
+  * 多互斥, 按顺序加锁
+  * 不必要操作在锁外
 
