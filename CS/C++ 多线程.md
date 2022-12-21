@@ -2530,6 +2530,9 @@ x 有可能为 1
 * **内置类型赋值**
 * 支持**隐式转换**为内置类型
 * 成员函数**返回右值,** 不返回左值
+* **删除拷贝和移动操作**
+
+  **拷贝和移动**操作都涉及两个独立对象, 先从 A 读, 再对 B 写, 读写之间有**间隙**, 所以**删除拷贝和移动操作**
 
 **成员函数:**
 
@@ -2549,21 +2552,17 @@ x 有可能为 1
 
   * `false`: **运行时才能确定**是否不用锁
 
-* **load()**
+* **load()**: load 操作
 
-* **store()**
+* **store()**: store 操作
 
-* **exchange()**
+* **exchange()**: read-modify-write 操作
 
-* **compare_exchange_weak()**
+* **compare_exchange_weak()**: read-modify-write 操作
 
-* **compare_exchange_strong()**
+* **compare_exchange_strong()**: read-modify-write 操作
 
-**删除拷贝和移动操作**
-
-**拷贝和移动**操作都涉及两个独立对象, 先从 A 读, 再对 B 写, 读写之间有**间隙**, 所以**删除拷贝和移动操作**
-
-**设置内存次序**
+### memory_order
 
 枚举类 **std::memory_order** 表示内存次序
 
@@ -2660,9 +2659,7 @@ void unlock()
 }
 ```
 
-### atomic<bool\>
-
-**成员函数**
+### CAS
 
 * **exchange()**  返回旧值, 设置新值
 
@@ -2676,47 +2673,49 @@ void unlock()
 
 **compare_exchange_strong**
 
-原子值为 A, 期望值为 B, 设定值为 C
+原子值为 x.val, 期望值为 rt, 设定值为 t
 
-* 若 A == B, 则 A = C, 返回 true
-* 若 A != B, 则 B = A, 返回 false
+* 若 x.val == rt, 则 x.val = t, 返回 true
+* 若 x.val != rt, 则 rt = x.val, 返回 false
 
 ```C++
-bool compare_exchange_strong(T& B, const T C)
-{   // A = *this
-    if(A == B)
+bool compare_exchange_strong(T& rt, const T t)
+{  
+    if(x.val == rt)
     {
-        A = C;
+        x = t;
         return true;
     }
     else
     {
-        B = A;
+        rt = x.val;
         return false;
     }
 }
 ```
 
-**compare_exchange_weak**
+**spurious failure**
 
-允许在 A == B 时返回 false
+`x.compare_exchange_weak(rt, t)` 中即使 `x == rt` 成立也有可能失败, 称为**佯败**spurious failure
+
+原子在于**原子化的CAS操作**必须由一条指令完成, 然而在某些处理器上没有这种指令
+
+无法保证CAS操作的原子性, 而是由一系列指令完成, 就有可能导致失败
+
+> 在佯败情况下, 最终 x.val = t 失败, 而且返回了true
+
+所以 `compare_exchange_weak` 往往配合循环使用
 
 ```C++
-bool compare_exchange_weak(T& B, const T C)
-{   // A = *this
-    if(A == B)
-    {
-        if(A = C 成功)
-            return true;
-        return false;		// 失败时 A 并未被修改
-    }
-    else
-    {
-        B = A;
-        return false;
-    }
+atomic<bool> b;
+
+{
+    bool rt = false;
+    while(!b.compare_exchange_weak(rt, true) && !rt);	// 防止佯败
 }
 ```
+
+
 
 ### atomic<T*>
 
@@ -2743,6 +2742,8 @@ bool compare_exchange_weak(T& B, const T C)
 
 * 原子运算
 
+  下列操作都是 **read-modify-write** 操作
+
   ```C++
   fetch_add()
   fetch_sub()
@@ -2752,6 +2753,8 @@ bool compare_exchange_weak(T& B, const T C)
   ```
 
 * 复合赋值
+
+  无法设置 memory order 因而都是 memory_order_set_cst
 
   ```C++
   +=
@@ -2763,12 +2766,15 @@ bool compare_exchange_weak(T& B, const T C)
 
 * 前后缀自增和自减
 
+  与一个相同
+
   ```C++
   ++x
   x++
   −−x
   x−−
   ```
+
 
 ### 原子操作非成员函数
 
