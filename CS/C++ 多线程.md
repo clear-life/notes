@@ -2523,7 +2523,7 @@ B:
 x 有可能为 1
 ```
 
-### STD原子类型
+### atomic<>
 
 **特点:**
 
@@ -2539,7 +2539,7 @@ x 有可能为 1
 
   * `true`: 原子指令实现
 
-  * `false`: 锁实现
+  * `false`: 内部锁实现
 
 * **is_always_lock_free()**
 
@@ -2551,21 +2551,17 @@ x 有可能为 1
 
 * **load()**
 
-  读
-
 * **store()**
 
-  写
-  
 * **exchange()**
 
 * **compare_exchange_weak()**
 
 * **compare_exchange_strong()**
 
-**删除拷贝操作**
+**删除拷贝和移动操作**
 
-**拷贝和移动**操作都涉及两个独立对象, 先从 A 读, 再对 B 写, 无法原子化, 所以**删除拷贝和移动操作**
+**拷贝和移动**操作都涉及两个独立对象, 先从 A 读, 再对 B 写, 读写之间有**间隙**, 所以**删除拷贝和移动操作**
 
 **设置内存次序**
 
@@ -2579,28 +2575,30 @@ enum memory_order
     memory_order_acquire,
     memory_order_release,
     memory_order_acq_rel,
-    memory_order_seq_cst	// 默认为最严格的内存次序
+    memory_order_seq_cst
 };
 ```
 
-**操作划分为3类**
+**原子操作划分为3类**: 
 
-* 存储 store 操作
-  * **relaxed**
-  * release
-  * **seq_cst**
-* 载入 load 操作
-  * **relaxed**
-  * consume
-  * acquire
-  * **seq_cst**
-* 读-改-写 read-modify-write 操作
-  * **relaxed**
-  * consume
-  * acquire
-  * release
-  * acq_rel
-  * **seq_cst**
+每类操作有独自能选用的 memory order
+
+* **store** 操作
+  * memory_order_relaxed
+  * memory_order_**release**
+  * memory_order_seq_cst
+* **load** 操作
+  * memory_order_relaxed
+  * memory_order_**consume**
+  * memory_order_**acquire**
+  * memory_order_seq_cst
+* **read-modify-write** 操作
+  * memory_order_relaxed
+  * memory_order_**consume**
+  * memory_order_**acquire**
+  * memory_order_**release**
+  * memory_order_**acq_rel**
+  * memory_order_seq_cst
 
 ### atomic_flag
 
