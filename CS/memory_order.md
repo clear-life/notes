@@ -67,11 +67,11 @@ struct S
 
 同一内存位置, 当表达式 A **write**, 表达式 B **read** 或 **modify**, 就称表达式 A 和 B **冲突**
 
-表达式冲突的程序就有**数据竞争**, 除非满足任一条件:
+存在表达式冲突的程序就有**数据竞争**, 除非满足任一条件:
 
 * A 和 B 在同一线程内, 或在同一信号处理函数中
 * A 和 B 是原子操作
-* A happen-before B 或 B happen-before A
+* A **happen-before** B 或 **B happen-before** A
 
 若出现数据竞争, 则行为未定义:
 
@@ -360,15 +360,67 @@ $~$
    根据传递性, b < a < d < c
    ```
 
+   ```C++
+   i = 0;
+   n = ++i + i++;	// 未定义行为
+   
+   ++i 值计算		a
+   ++i 副作用		b
+   i++ 值计算		c
+   i++ 副作用		d
+   
+   ++i 	b < a
+   i++		c < d
+   但 b 和 d unsequenced
+   即  ++i 副作用  与  i++ 副作用  unsequenced, 
+   结果可能为 i == 1 和 i == 2, 于是行为未定义
+   ```
+
+   ```C++
+   i = ++i + 2;	// 正确行为
+   
+   ++i 值计算			a
+   ++i 副作用			b
+   i = ++i + 1	值计算	c
+   i = ++i + 1	副作用	d
+   
+   ++i, b < a
+   i = ++i + 1, d < c, 且 a < d
+   所以 b < a < d < c
+       
+       
+   i = 0;    
+   i = i++ + 2;	// 未定义行为
+   
+   i++ 值计算			a
+   i++ 副作用			b
+   i = i++ + 1	值计算	c
+   i = i++ + 1	副作用	d
+       
+   i++, a < b
+   i = i++ + 1, d < c, 且 a < d
+   但 b 和 d 的关系 unsequenced
+   于是 i 上的两个副作用 unsequenced, 结果可能为 i == 1 和 i == 2, 结果未定义
+   ```
+
 2. 同一**内存位置**上, **副作用 A** 与使用该内存位置的任何对象的**值计算 B** **unsequenced**, 则行为未定义
 
    ```C++
+   i = 0;
    x = ++i + i;	// 未定义行为
+   
+   ++i 值计算		a
+   ++i 副作用 	b
+   i 值计算		c
+   
+   ++i 中, 副作用 sequenced before 值计算, 即 b < a
+   然而 a 和 c, b 和 c 的关系却是 unsequenced, 即编译器可以任意重排指令
+       
+   副作用 b 和值计算 c 作用于同一内存位置, 但却是 unsequenced
+   结果有两种情况 c 计算的值为: 0 或 1, 于是行为未定义
    ```
 
    
-
-
 
 ## memory_order
 
