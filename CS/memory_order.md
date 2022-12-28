@@ -4,30 +4,37 @@
 
 ### 中英术语对照表
 
-|    中文    |         英文          |
-| :--------: | :-------------------: |
-|    访问    |        access         |
-|  内存模型  |     memory model      |
-|  内存位置  |    memory location    |
-|  内存次序  |     memory order      |
-|  内存访问  |     memory access     |
-|  内存次序  |     memory_order      |
-|   运算符   |       operator        |
-|   操作数   |        operand        |
-|   值类别   |    value category     |
-|   字面量   |        literal        |
-|   表达式   |      expression       |
-| 初等表达式 |  primary expression   |
-| 表达式求值 | expression evaluation |
-|  求值顺序  |  order of evaluation  |
-| 按顺序早于 |   sequenced before    |
-|   值计算   |   value computation   |
-|   副作用   |      side-effect      |
-| 未定义行为 |  undefined behavior   |
-|            |                       |
-|            |                       |
-|            |                       |
-|            |                       |
+|    中文    |           英文            |
+| :--------: | :-----------------------: |
+|    访问    |          access           |
+|  内存模型  |       memory model        |
+|  内存位置  |      memory location      |
+|  内存次序  |       memory order        |
+|  内存访问  |       memory access       |
+|  内存次序  |       memory_order        |
+|   运算符   |         operator          |
+|   操作数   |          operand          |
+|   值类别   |      value category       |
+|   字面量   |          literal          |
+|   表达式   |        expression         |
+| 初等表达式 |    primary expression     |
+| 表达式求值 |   expression evaluation   |
+|  求值顺序  |    order of evaluation    |
+|   先序于   |     sequenced before      |
+|   值计算   |     value computation     |
+|   副作用   |        side-effect        |
+| 未定义行为 |    undefined behavior     |
+|   值计算   |     value computation     |
+|   副作用   |        side-effect        |
+|  携带依赖  |     carry dependency      |
+|  改动序列  |    modification order     |
+|  先发生于  |       happen-before       |
+|  释放序列  |     release sequence      |
+| 依赖先序于 | dependency-ordered before |
+|    同步    |        synchronize        |
+|  先发生于  |       happen-before       |
+|            |                           |
+|            |                           |
 
 ### 访问
 
@@ -105,7 +112,7 @@ thread t1(f), t2(f), t3(f);	// 正常行为
 > * 缓冲存储器 cache
 >   * 三级缓存
 
-## 求值顺序
+## 表达式求值顺序
 
 ### 运算符
 
@@ -292,7 +299,7 @@ $~$
     * 要么 **A sequence before B**
     * 要么 **B sequence before A**
 
-### 按顺序早于
+### 先序于
 
 **sequenced before**
 
@@ -423,9 +430,13 @@ $~$
    ```
 
 
-## 内存次序
+# 内存次序
+
+## 相关术语
 
 ### memory_order
+
+`std::memory_order` 指定**内存访问**(包括**非原子内存访问**)如何**围绕原子操作排序**
 
 ```C++
 #include <atomic>
@@ -453,9 +464,137 @@ enum class memory_order
 };
 ```
 
-`std::memory_order` 指定**内存访问**(包括**非原子内存访问**)**在原子操作上的次序**
+**描述**:
 
-**定义**:
+线程间**同步**和**内存次序**决定了不同执行线程**表达式**的**求值**和**副作用**
 
-线程间**同步**和**内存次序**决定了**表达式**的 **evaluation** 和 **side-effect**
+### 先序于
 
+**sequenced before**
+
+线程内, 求值 A 于求值 B 可能存在**先序于**的关系, 见**表达式求值顺序**
+
+### 携带依赖
+
+**carry dependency**: 
+
+线程内, 求值 A **先序于** 求值 B, 若下列任一条件满足, 则 **B 依赖于 A**:
+
+* A 的值作为 B 的操作数, 除非
+  * B 调用 `std::kill_dependency`
+  * A 是内置 `&&`, `||`, `?:`, `,` 的左操作数
+* A 写入标量对象 M, B 从 M 读
+* B 依赖于 X,  X 依赖于 A
+
+### 改动序列
+
+**modification order**: 在原子变量上的**修改操作的全序序列**, 称为**该原子变量的改动序列**
+
+所有原子操作满足:
+
+1. **写写一致性**: 原子对象 M 上的**求值 A 和求值 B**(**写写**), 若 **A 先发生于 B**, 则在 M 的改动序列中 **A 比 B 早**
+2. **读读一致性**: 原子对象 M 上的**值计算 A 和值计算 B**(**读读**), 若 **A 先发生于 B**, A 读到 M 的值来自写操作 X, 则 B 读到 M 的值来自 **M 改动序列中 X 及之后的部分**
+3. **读写一致性**: 原子对象 M 上的**值计算 A 和操作 B**(**读写**), 若 **A 先发生于 B**, 则 A 读到 M 的值来自 **M 改动序列中 B 之前的部分**
+4. **写读一致性**: 源自对象 M 上的**副作用 A 和值计算 B**(**写读**), 若 **A 先发生于 B**, 则 B 读到 M 的值来自 **M 改动序列中 A 及之后的部分**
+
+### 释放序列
+
+**release sequence**: 原子对象 M 上的 `release` 操作 A 执行后, M 的改动序列中包含下列内容的最长连续子序列:
+
+* A 所在线程的写操作
+* 任何线程对 M 的原子**读-改-写**操作
+
+被称为以 **A 为开头的释放序列**
+
+### 同步
+
+**synchronize with**
+
+线程 1 的**原子 `release` store** 操作 A, 线程 2 的**原子 `acquire` load** 操作 B, 若 B 读自 A 存入的值, 则 **A 同步于 B**
+
+### 依赖先序于
+
+**dependency-ordered before**
+
+线程间, 若下列任一为真, 则 **A 依赖先序于 B**:
+
+* 原子对象 M, 线程 1 的求值 A 是个 `release` 操作, 线程 2 的求值 B 是个 `consume` 操作, 且 B 读到的值来自 A
+* A 依赖先序于 X 且 X 携带依赖给 B (即 B 依赖于 X)
+
+### 线程间先发生于
+
+**inter-thread happen-before**
+
+线程间, 若下列任一为真, 则 **求值 A 线程间先发生于求值 B**:
+
+* A 同步于 B
+* A 同步于 X 且 X 先序于 B
+* A 依赖先序于 B
+* A 先序于 X 且 X 线程间先发生于 B
+* A 线程间先发生于 X 且 X 线程间先发生于 B
+
+### 先发生于
+
+**happen-before**
+
+无论线程, 若下列任一为真, 则 **求值 A 先发生于求值 B**:
+
+* A 先序于 B
+* A 线程间先发生于 B
+
+### 简单先发生于
+
+**simply happen-before**
+
+无论线程, 若下列任一为真, 则 **求值 A 简单先发生于求值 B**:
+
+* A 先序于 B
+* A 同步于 B
+* A 简单先发生于 X 且 X 简单先发生于 B
+
+> 没有 `consume` 的情况下, 简单先发生于 与 先发生于 是相同的
+
+### 强先发生于
+
+**strongly happen-before**
+
+无论线程, 若下列任一为真, 则 **求值 A 强先发生于求值 B**:
+
+* A 先序于 B
+* A 同步于 B 且 A 与 B 均为序列一致原子操作
+* A 先序于 X, X 简单先发生于 Y, Y 先序于 B
+* A 强先发生于 X 且 X 强先发生于 B
+
+
+> 强先发生于不包括 `consume` 操作
+
+### 可见副作用
+
+**visible side-effect**
+
+标量 M 上的副作用 A 和 值计算 B, 若下列都为真, 则 A 对 B 是可见的:
+
+1. A 先发生于 B
+2. 没有其余 M 的副作用 X 满足 A 先发生于 X 且 X 先发生于 B
+
+## 基本操作
+
+### `consume ` 操作
+
+带 `memory_order_consume` 或更强 `tag` 的 **atomic load** 是 `consume` 操作
+
+### `acquire` 操作
+
+带 `memory_order_acquire` 或更强 `tag` 的 **atomic load** 是 `acquire` 操作
+
+> mutex 上的 lock() 操作是一个 `acquire` 操作
+
+### `release` 操作
+
+带 `memory_order_release` 或更强 `tag` 的 **atomic store** 是 `release` 操作
+
+> mutex 上的 unlock() 操作是一个 `release` 操作
+
+> `std::atomic_thread_fence` 施加比 `consume`, `acquire`, `release` 更强的同步要求
+
+## 内存次序
