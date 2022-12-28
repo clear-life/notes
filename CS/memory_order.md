@@ -35,6 +35,11 @@
 |  先发生于  |       happen-before       |
 |            |                           |
 |            |                           |
+|            |                           |
+|            |                           |
+|            |                           |
+|            |                           |
+|            |                           |
 
 ### 访问
 
@@ -598,3 +603,52 @@ enum class memory_order
 > `std::atomic_thread_fence` 施加比 `consume`, `acquire`, `release` 更强的同步要求
 
 ## 内存次序
+
+### relaxed ordering
+
+**宽松次序**
+
+**带 `memory_order_relaxed` tag 的原子操作不是同步操作**, 并不会为并发的内存访问施加次序约束
+
+只能保证**原子性**和**改动序列的一致性**
+
+例:
+
+```C++
+atomic<int> x = 0;
+atomic<int> y = 0;
+
+A:
+{
+	r1 = y.load(memory_order_relaxed);	a1
+    x.store(r1);						a2
+}
+
+B:
+{
+	r2 = x.load(memory_order_relaxed);	b1
+    y.store(42);						b2
+}
+```
+
+结果可能为 `r1 == 42 && r2 == 42`
+
+尽管 a1 先序于 a2, b1 先序于 b2
+
+但因为宽松次序只保证**原子性**和**改动序列的一致性**
+
+所以有可能出现:
+
+* 在 y 的改动序列中, b2 早于 a1
+* 在 x 的改动序列中, a2 早于 b1
+
+所以由于**编译器重排指令**或**运行时 b2 完成地更快**, 于是出现 b2 在 b1 之前完成的情况 `b2  a1  a2  b1`
+
+**宽松次序的典型应用是计数器**
+
+```C++
+atomic<int> cnt = 0;
+
+cnt.fetch_add(1, memory_order_relaxed);
+```
+
