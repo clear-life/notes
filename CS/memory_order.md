@@ -33,12 +33,7 @@
 | 依赖先序于 | dependency-ordered before |
 |    同步    |        synchronize        |
 |  先发生于  |       happen-before       |
-|            |                           |
-|            |                           |
-|            |                           |
-|            |                           |
-|            |                           |
-|            |                           |
+| 连贯先序于 | coherence-ordered-before  |
 |            |                           |
 
 ### 访问
@@ -582,6 +577,17 @@ enum class memory_order
 1. A 先发生于 B
 2. 没有其余 M 的副作用 X 满足 A 先发生于 X 且 X 先发生于 B
 
+### 连贯先序于
+
+**coherence-ordered-before**
+
+原子对象 M 上的原子操作 A 和原子操作 B, 若下列任一为真, 则 **A 连贯先序于 B**:
+
+* A 是修改动作, B 读自 A 存储的值
+* 在 M 的改动序列中 A 比 B 早
+* A 读自 X 存储的值, X 在改动序列中早于 B, 且 A 和 B 不是同一 **read-modify-write(RMW)** 操作
+* A 连贯先序于 X, X 连贯先序于 B
+
 ## 基本操作
 
 ### `consume ` 操作
@@ -606,9 +612,7 @@ enum class memory_order
 
 ### relaxed ordering
 
-**宽松次序**
-
-**带 `memory_order_relaxed` tag 的原子操作不是同步操作**, 并不会为并发的内存访问施加次序约束
+**宽松次序**: **带 `memory_order_relaxed` tag 的原子操作不是同步操作**, 并不会为并发的内存访问施加次序约束
 
 只能保证**原子性**和**改动序列的一致性**
 
@@ -637,6 +641,10 @@ B:
 
 但因为宽松次序只保证**原子性**和**改动序列的一致性**
 
+> 原子性: 操作时原子操作
+>
+> 改动序列一致性: 在线程 A 和线程 B 看来, x 和 y 的改动序列都相同, 不会出现改动序列不同的情况
+
 所以有可能出现:
 
 * 在 y 的改动序列中, b2 早于 a1
@@ -650,5 +658,205 @@ B:
 atomic<int> cnt = 0;
 
 cnt.fetch_add(1, memory_order_relaxed);
+```
+
+### release-acquire ordering
+
+**定义**: 线程 1 中带 tag `memory_order_release` 的 **atomic store A**, 线程 B 中同一变量上带 tag `memory_order_acquire` 的 **atomic load B**, 若 B 读自 A 写入的值, 则 **A 同步于 B**
+
+* 在线程 1 看来, 先发生于 A 的所有内存写入(**非原子**和 **relaxed 原子**), 在线程 2 中是**可见副作用**
+
+> 前提是 B 返回 release 序列中 A 及之后写入的值
+
+> 同步关系仅在 **release** 和 **acquire** 相同原子变量的线程间建立, 其余线程可能会看到完全不同的内存访问顺序
+
+**互斥锁**是 **release-acquire** 同步的典型例子, 当线程 A 释放锁线程 B 获取锁, 则 A 中临界区的部分(release 之前) 对线程 B 可见(acquire 之后)
+
+```C++
+#include <thread>
+#include <atomic>
+#include <string>
+#include <cassert>
+
+using namespace std;
+
+atomic<string*> ptr;
+int x = 0;
+
+void producer()
+{
+	string* p = new string("Hello");
+	x = 42;
+	ptr.store(p, memory_order_release);
+}
+
+void consumer()
+{
+	string* p2;
+	while (!(p2 = ptr.load(memory_order_acquire)));
+
+	assert(*p2 == "Hello");
+	assert(x == 42);
+}
+
+int main()
+{
+	thread t1(producer);
+	thread t2(consumer);
+	t1.join();
+	t2.join();
+}
+```
+
+```C++
+#include <thread>
+#include <atomic>
+#include <cassert>
+#include <vector>
+
+
+using namespace std;
+vector<int> x;
+atomic<int> flag = { 0 };
+
+void thread_1()
+{
+    x.push_back(42);
+    flag.store(1, memory_order_release);
+}
+
+void thread_2()
+{
+    int expected = 1;
+    while (!flag.compare_exchange_strong(expected, 2, memory_order_relaxed)) 
+    {
+        expected = 1;
+    }
+}
+
+void thread_3()
+{
+    while (flag.load(memory_order_acquire) < 2);
+    assert(x.at(0) == 42); 
+}
+
+int main()
+{
+    thread a(thread_1);
+    thread b(thread_2);
+    thread c(thread_3);
+    a.join(); b.join(); c.join();
+}
+```
+
+### release-consume ordering
+
+**定义**: 线程 1 中带 tag `memory_order_release` 的 **atomic store A**, 线程 B 中同一变量上带 tag `memory_order_consume` 的 **atomic load B**, 若 B 读自 A 写入的值, 则 **A 依赖先序于 B**
+
+* 在线程 1 看来, 先发生于 A 的所有内存写入(**非原子**和 **relaxed 原子**), 在**线程 2 中 B 携带依赖的操作**看来是**可见副作用**, 即一旦 B 完成, 则**线程 2 中使用 B 获取值的运算符和函数**能看到 **A 及之前写入的内容**
+
+> 同步关系仅在 **release** 和 **consume** 相同原子变量的线程间建立, 其余线程可能会看到完全不同的内存访问顺序
+
+典型例子: 少写入的数据结构读取, 有指针的发布-订阅模式
+
+```C++
+#include <thread>
+#include <atomic>
+#include <cassert>
+#include <string>
+
+using namespace std;
+
+atomic<string*> ptr;
+int x;
+
+void producer()
+{
+    string* p = new string("Hello");
+    x = 42;
+    ptr.store(p, memory_order_release);
+}
+
+void consumer()
+{
+    string* p2;
+    while (!(p2 = ptr.load(memory_order_consume)));
+    
+    assert(*p2 == "Hello"); // 不会出错: *p2 依赖于 ptr 
+    assert(x == 42); // 可能出错也可能不出错: x 不依赖于 ptr
+}
+
+int main()
+{
+    thread t1(producer);
+    thread t2(consumer);
+    t1.join(); t2.join();
+}
+```
+
+### sequentially-consistent ordering
+
+**定义**: 带 tag `memory_order_seq_cst` 的 **atomic** 操作不仅有与 **release-acquire ordering** 的同步方式, 而且会将所有带此 tag 的原子操作形成一个**全序序列**
+
+**正式定义**: 包含所有 `memory_order_seq_cst` 操作和栅栏的**全序序列 S**, 满足下列约束:
+
+1. 若 A 和 B 是 `memory_order_seq_cst` 操作, 且 A 强先发生于 B, 则在 S 中 A 前于 B
+2. 对象 M 上的原子操作 A 和 B, 若 A 连贯先序于 B:
+   1. 若 A 和 B 都是 `memory_order_seq_cst` 操作, 则 S 中 A 前于 B
+   2. 若 A 是  `memory_order_seq_cst` 操作, B 先发生于  `memory_order_seq_cst` 栅栏 X, 则 S 中 A 前于 X
+   3.  若 `memory_order_seq_cst` 栅栏 X 先发生于 A, B 是  `memory_order_seq_cst` 操作, 则 S 中 X 前于 B
+   4. 若 `memory_order_seq_cst` 栅栏 X 先发生于 A,  B 先发生于  `memory_order_seq_cst` 栅栏 Y, 则 S 中 X 前于 Y
+
+正式定义确保了:
+
+* 全序序列与所有原子对象的改动序列一致
+* `memory_order_seq_cst` **load** 要么从最后一个 `memory_order_seq_cst` 修改操作获取值, 要么从不先发生于 `memory_order_seq_cst` 修改操作的 `non-memory_order_seq_cst` 修改操作中获取值
+
+> **全序序列**可能与**先发生于**不一致
+
+```C++
+#include <thread>
+#include <atomic>
+#include <cassert>
+ 
+std::atomic<bool> x = {false};
+std::atomic<bool> y = {false};
+std::atomic<int> z = {0};
+ 
+void write_x()
+{
+    x.store(true, std::memory_order_seq_cst);
+}
+ 
+void write_y()
+{
+    y.store(true, std::memory_order_seq_cst);
+}
+ 
+void read_x_then_y()
+{
+    while (!x.load(std::memory_order_seq_cst));
+    
+    if (y.load(std::memory_order_seq_cst))
+        ++z;
+}
+ 
+void read_y_then_x()
+{
+    while (!y.load(std::memory_order_seq_cst));
+    
+    if (x.load(std::memory_order_seq_cst)) 
+        ++z;
+}
+ 
+int main()
+{
+    std::thread a(write_x);
+    std::thread b(write_y);
+    std::thread c(read_x_then_y);
+    std::thread d(read_y_then_x);
+    a.join(); b.join(); c.join(); d.join();
+    assert(z.load() != 0);  	// 不会发生
+}
 ```
 
