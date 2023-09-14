@@ -23,15 +23,12 @@ def process_text_return_keyword(file_path, page_num):
             for page in PDFPage.get_pages(f, pagenos=[page_num - 1]):  # 处理第 page_num 页
                 interpreter.process_page(page)
 
-        converter.close()
         text = output.getvalue()    # 第 page_number 页的文本内容在 text 中存储
+        converter.close()
 
     res = regex.search(text)
 
-    if res:
-        return ''.join(res.group().split())
-    else:
-        return None
+    return ''.join(res.group().split()) if res else None
 
 
 def process_single_file(file_name):
@@ -46,26 +43,35 @@ def process_single_file(file_name):
     if match_keyword:
         new_name = get_new_name(file_name, match_keyword)
         print(f"{file_name} 将被重命名为", new_name)
+
         if input("请确认是否重命名([y]/n):") == "n":
-            print(f"跳过 {file_name}")
+            des=f"{file_name} 手动跳过"
+            print(des)
+            with open(f"{work_path}/pdf.log", "a") as f:
+                f.write(f"{des}\n")
             return
 
         rename = f"{files_path}/{new_name}"
         os.rename(file_path, rename)
         print(f"{file_name} 已被重命名为", new_name)
     else:
-        print(f"{file_name} 并未匹配到任何一个关键词")
+        des=f"{file_name} 并未匹配到任何一个关键词, 跳过"
+        print(des)
+        with open(f"{work_path}/pdf.log", "a") as f:
+            f.write(f"{des}\n")
 
 
 def process_input():
     print(f"输入工作目录, 并确保该目录下有文件夹 files, files 中含有要处理的文件\n"
-          "工作目录示例: D:/目录1/目录2/workspace\n")
+          "工作目录示例: D:/目录1/目录2/workspace\n"
+          "建议使用 / 作为路径分隔符\n")
 
     global work_path
     work_path = input("请输入工作目录: ")
     while not os.path.exists(work_path) or not os.path.exists(f"{work_path}/files"):
         print(f"{work_path} 路径或 files 子目录不存在")
         work_path = input("请输入工作目录: ")
+    print(f"工作目录: {work_path}")
 
     print()
     print("输入要匹配的关键词列表, 脚本在文本中最先匹配到的某个关键词作为判定结果\n"
@@ -91,6 +97,9 @@ if __name__ == "__main__":
     regex = re.compile(key_word_pattern)
     print()
 
+    with open(f"{work_path}/pdf.log", "w") as f:
+        pass
+
     for root, dirs, files in os.walk(files_path):
         for file_name in files:
             print("file_name:", file_name)
@@ -99,4 +108,5 @@ if __name__ == "__main__":
 
     print()
     print("程序执行完毕。")
+    print(f"pdf 文件中被跳过的部分记录在 {work_path}/pdf.log 中")
     input("按 Enter 键退出...")
