@@ -226,8 +226,6 @@ def process_single_file(dir_path, file_name):
 
 
 # 实习合同  劳动合同  巨新星专业课课表
-# AKIDT0Rer7OrCRadcaVIwU5iManwzzrbFB93
-# riVIzd8UwIYhBar49OvUDwjOwkS4a9eC
 if __name__ == "__main__":
     work_path = ''
     files_path = ''
