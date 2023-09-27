@@ -21,7 +21,7 @@ from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentClo
 def process_input():
     print("注意事项:\n"
           "1.不要在开通系统代理/vpn/翻墙软件情况下使用\n"
-          "2.不要在打开pd f文件情况下使用\n"
+          "2.不要在打开pdf文件情况下使用\n"
           "3.需要在联网状态下使用")
     print()
 
@@ -269,4 +269,3 @@ if __name__ == "__main__":
     print(f"pdf 文件中被跳过的部分记录在 {work_path}/{skip_log} 中")
     print(f"错误信息记录在 {work_path}/{err_log} 中")
     input("按 Enter 键退出...")
-
