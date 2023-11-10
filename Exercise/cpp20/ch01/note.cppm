@@ -6,3 +6,16 @@ export struct Archive
     double b;
     char c;
 };
+
+export class Archive2
+{
+    public:
+        Archive2();
+        ~Archive2();
+
+        void foo();
+    private:
+        int m_a;
+        double m_b;
+        char m_c;
+};

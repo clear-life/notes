@@ -11,6 +11,8 @@
 // a.b = 1.0f;
 // a.c = '1';
 
+// module archive;
+
 using namespace std;
 
 // 命名空间
@@ -46,6 +48,24 @@ auto foo(int a)
     return a;
 }
 
+
+// 作用域解析
+namespace NS
+{
+    int get() { return 0; }
+}
+
+class Demo
+{
+    public:
+        int get() { return 1; }
+};
+
+int get()
+{
+    return 2;
+}
+
 // 属性
 [[nodiscard]] int func([[maybe_unused]] int a)
 {
@@ -75,6 +95,33 @@ optional<int> getData(bool flag)
         return 1;
     return nullopt; // return {};
 }
+
+// 初始化列表
+// <initializer_list>
+int sum(initializer_list<int> values)
+{
+    int res{ 0 };
+    for (int i : values)
+        res += i;
+    return res;
+}
+
+int a{ sum({ 1, 2, 3}) };
+int b{ sum({ 1, 2, 3, 4}) };
+
+
+void func2(int a)
+{
+}
+
+
+// 统一初始化
+struct A
+{
+    int a;
+    double b;
+    char c;
+};
 
 int main(int argc, char *argv[])
 {
@@ -217,7 +264,7 @@ int main(int argc, char *argv[])
 
 
     // 属性
-    //  test_noreturn();
+    // test_noreturn();
 
     switch (1)
     {
@@ -276,7 +323,32 @@ int main(int argc, char *argv[])
 
 
     // 循环
-    //for (<initializer>; <declaration> : <initializer>) { <body> }
+    // for (<initializer>; <declaration> : <initializer>) { <body> }
     for (array arr { 0, 1, 2 }; int i : arr) { cout << i << endl; }
+
+
+    // 作用域解析
+    {
+        Demo d;
+        cout << NS::get() << endl;
+        cout << d.get() << endl;
+        cout << ::get() << endl;
+        cout << get() << endl;
+    }
+
+
+    // 统一初始化
+    // 错误示范, 统一初始化不允许窄化 narrowing 
+    // int x{ 1.1 };
+    // func2({ 1.1 });
+    // 正确示范, 统一初始化允许宽化 widening
+    A a{ 0, 1, '2' };
+
+    // 指派初始化器, 可以跳过某些变量, 让其使用默认值(类内初始化值或默认值)
+    A b {
+        // .a = 0, 跳过变量 a
+        .b = 1.0,
+        .c = '2'
+    };
 }
 
