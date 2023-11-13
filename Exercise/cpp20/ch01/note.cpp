@@ -7,9 +7,6 @@
 
 // import archive;
 // Archive a;
-// a.a = 1;
-// a.b = 1.0f;
-// a.c = '1';
 
 // module archive;
 
@@ -350,5 +347,81 @@ int main(int argc, char *argv[])
         .b = 1.0,
         .c = '2'
     };
+
+
+    // 指针
+    // 内存分为 stack 和 free store
+    // new 和 delete, new[] 和 delete[] 总是成对出现
+    {
+        int a{ 8 };
+        int *p{ &a };
+        if (p)
+            cout << *p << endl;
+        // 错误示范, p 指向的是栈变量, 会自动销毁, 当然, 也没有对应的 new
+        // delete p;
+        // d = nullptr;
+    }
+    {
+        int *p{ new int[3] };
+        if (p)
+            p[1] = 2;
+        delete[] p;
+        p = nullptr;
+    }
+
+
+    // const
+    // const 作用于直接左侧(const int例外)
+    // 从右往左读
+    {
+        const int *p; 
+        // p                p 是变量
+        // *p               *p 是变量, p 是指针变量
+        // int *p           *p 是int类型
+        // const int *p     *p 是int类型 const属性
+    }
+    {
+        int const *p;
+        // p                p 是变量
+        // *p               *p 是变量, p 是指针变量
+        // const *p         *p 是const属性
+        // int const *p     *p 是int类型 const属性
+    }
+    {
+        int * const p{ nullptr };
+        // p                p 是变量, 初始化为 nullptr
+        // const p          p 是const属性
+        // * const p        p 是指针变量, const 属性
+        // int * const p    *p 是int类型
+    }
+    {
+        const int * const p{ nullptr}; 
+        // p                    p 是变量, 始化为 nullptr
+        // const p              p 是const属性
+        // * const p            *p 是变量, p 是指针变量
+        // int * const p        *p 是int类型
+        // const int * const p  *p 是int类型, const属性
+    }
+    {
+        int const * const p{nullptr}; 
+        // p                    p 是变量, 初始化为 nullptr
+        // const p              p 是const属性
+        // * const p            *p 是变量, p 是指针变量
+        // const * const p      *p 是const属性
+        // int const * const p  *p 是int类型 const属性
+    }
+
 }
 
+// const 使用: const 变量, const 参数, const 返回值, const 成员函数
+int const ca = 0;
+
+int const * const foo(int const * const p)
+{
+    return nullptr;
+}
+
+class B
+{
+   constexpr int func() const { return 0; }
+};
