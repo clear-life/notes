@@ -1,23 +1,57 @@
 # Linux
 
-### 发行版族谱
+## vim
 
-* **Debian系**
+### 光标移动
 
-  dpkg  apt
+**Character**: `h j k l` 
 
-  * Debian GNU/Linux
-  * Ubuntu
-  * Kali Linux
+**word**: `w b e`
 
-* **RedHat系**
+**WORD**: `W B E`
 
-  rpm  yum
+**Line**: `0 $`
 
-  * Red Hat Enterprise Linux
-  * CentOS
-  * Fedora
+**Paragraph**: `{ }`
 
-* **Arch系**
+**Block**: `[{ ]}`
 
-  pacman
+**Page**: `C-b C-f`
+
+**Window**: `H M L`
+
+**File**: `gg G`
+
+**括号匹配**: `%`
+
+### 搜索
+
+**当前word**: `# *`
+
+**搜索**: `/`
+
+**遍历**: `n N`
+
+### 命令
+
+#### normal
+
+y p  c r  x d 
+
+yy dd
+
+D J < > . u
+
+v V C-v
+
+i a A
+
+#### command
+
+`:w :q :#`
+
+`:vsp :sp :diffs` `C-w ←↓↑→`
+
+`:n1,n2s/word1/word2/gc`
+
+`:set paste` `:set nopaste`
