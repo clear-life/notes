@@ -239,3 +239,12 @@ cabal build
 cabal run
 ```
 
+## 参考
+
+[国内如何安装 Haskell 运行环境 (Windows)](https://niallzhou.cfd/post/tricks/install_haskell_env/)
+
+[中科大镜像站: GHCup](https://mirrors.ustc.edu.cn/help/ghcup.html)
+
+[清华镜像站: Hackage](https://mirrors.tuna.tsinghua.edu.cn/help/hackage/)
+
+[如何安装 Haskell 工具链（2022 年版）](https://zhuanlan.zhihu.com/p/455688955)
