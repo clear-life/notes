@@ -1,4 +1,6 @@
-# Windows VSCode配置Haskell
+# VSCode(Windows)配置Haskell开发环境
+
+[TOC]
 
 ## 简介
 
@@ -27,9 +29,8 @@
 
 * **HLS**
 
-  Haskell Language Server 编辑相关功能(代码补全, 跳转等)
+  Haskell Language Server 提供代码编辑相关服务(代码补全, 跳转等)
   
-  Language Server Protocol  IDE/编辑器 和 Language Server 
 
 $~$
 
@@ -50,13 +51,15 @@ $env:BOOTSTRAP_HASKELL_YAML = 'https://mirrors.ustc.edu.cn/ghcup/ghcup-metadata/
 Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;Invoke-Command -ScriptBlock ([ScriptBlock]::Create((Invoke-WebRequest https://mirrors.ustc.edu.cn/ghcup/sh/bootstrap-haskell.ps1 -UseBasicParsing))) -ArgumentList $true
 ```
 
-一路 enter 过去, 先把 GHCup 安装了, 其余的都能用 GHCup安装
+一路 enter 过去, 能把 GHCup 安装就算成功, 其余的都能用 GHCup安装
 
-下载过程中遇到有关墙方面的网络问题导致的 error 尝试最后的 clash 方法
+包下载过程中遇到有关墙方面的网络问题尝试通过后面的 clash 全局代理方法
 
 **2. 换源**
 
 **GHCup 配置中科大源**
+
+修改 GHCup 配置文件
 
 其余教程(Linux) ghcup 配置文件位于 `~/.ghcup/config.yaml` 
 
@@ -148,6 +151,8 @@ package-index:
 
 ### 安装
 
+包下载过程中遇到有关墙方面的网络问题尝试通过后面的 clash 全局代理方法
+
 ghc
 
 ```bash
@@ -174,7 +179,7 @@ ghcup install hls latest
 
 ### Clash
 
-如果通过换源的方式下载不了某些模块, 可以通过 Clash for Windows 的 TUM mode 创建的虚拟网卡来代理所有流量来下载
+如果通过换源的方式下载不了某些包, 可以通过 Clash for Windows 的 TUM mode 创建的虚拟网卡代理所有流量来下载
 
 #### TUN Mode
 
@@ -196,7 +201,16 @@ $env:HTTP_PROXY="http://127.0.0.1:7890"
 $env:HTTPS_PROXY="http://127.0.0.1:7890"
 ```
 
-随便找个目录执行
+bash 执行
+
+```bash
+export HTTP_PROXY="http://127.0.0.1:7890"
+export HTTPS_PROXY="http://127.0.0.1:7890"
+```
+
+随便找个目录执行 curl
+
+在 powershell 中执行会报错, 所以我在 git bash 中执行 curl
 
 ```bash
 curl -LO https://www.haskell.org/ghcup/sh/bootstrap-haskell.ps1
