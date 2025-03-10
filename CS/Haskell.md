@@ -395,6 +395,7 @@ pattern  `<-` $A$
 * 自上而下进行匹配
 * 匹配失败就跳过
 * 不能用 `++`
+* `x:xs` 要加 `()` 因为 `:` 优先级小于函数调用
 
 #### 函数模式匹配
 
@@ -598,3 +599,451 @@ quicksort (x : xs)
 	in left ++ [x] ++ right
 ```
 
+## 高阶函数
+
+函数可作为参数和返回值
+
+### Curried functions
+
+**数学理解**
+
+每次带入一个变量的值
+
+$f(x,y,z) = g(x)*h(y)*j(z)$
+
+带入 x = a 得到函数 $f(a,y,z) = g(a)*h(y)*j(z)$
+
+带入 y = b 得到函数 $f(a,b,z) = g(a)*h(b)*j(z)$
+
+带入 z = c 得到值 $f(a,b,c) = g(a)*h(b)*j(c)$
+
+**haskell语法**
+
+函数 `f x y z = x * y * z` (`a -> a -> a -> a`)执行 `f 1 2 3` 会:
+
+带入 x = 1 得到函数 `f2 y z = y * z`(`a -> a -> a`)
+
+带入 y = 2 得到函数 `f3 z = 2 * z`(`a -> a`
+
+带入 z = 3 得到值 `6`
+
+```haskell
+f :: a -> a -> a -> a
+f x y z = x * y * z
+
+f2 :: a -> a -> a
+f2 y z = y * z
+
+f3 :: a -> a
+f3 z = 2 * z
+```
+
+* 可以不按顺序带入
+
+  ```
+  f2 x z = f x 1 z
+  ```
+
+* 中缀函数不全调用 `()`
+
+  ```
+  f = (/10)
+  f x = x / 10
+  ```
+
+* `(-x)` 中 `-` 不代表减法运算, `subtract` 减法函数
+
+* 函数类型不属于 `Show`
+
+* 函数类似 `f x = g y x` 可改为 `f = g y`
+
+### 高阶函数
+
+#### 函数作为参数
+
+```
+g :: (a -> a) -> a -> a
+g f x = f (f x)
+```
+
+* `->` 右结合
+* `()` 为一个参数 
+
+**`zipWith`**
+
+```
+zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith' _ [] _ = []
+zipWith' _ _ [] = []
+zipWith' f (x:xs) (y:ys) = f x y : zipWith' f xs ys
+```
+
+`flip`
+
+```
+flip' :: (a->b->c) -> (b->a->c)
+filp' f = g
+	where g y x = f x y
+```
+
+等价于
+
+```
+flip' :: (a->b->c) -> b -> a -> c
+flip' f y x = f x y
+```
+
+### map 与 filter
+
+`map`
+
+映射
+
+```
+map :: (a->b) -> [a] -> [b]
+map _ [] = []
+map f (x:xs) = f x : map f xs
+```
+
+`filter`
+
+过滤
+
+```
+filter :: (a->Bool) -> [a] -> [a]
+filter _ [] = []
+filter f (x:xs)
+	| f x = x : filter f xs 
+	| otherwise = filter f xs
+```
+
+`takeWhile`
+
+```
+takeWhile :: (a->Bool) -> [a] -> [a]
+takeWhile _ [] = []
+takeWhile f (x:xs)
+	| f x = x : takeWhile f xs
+	| otherwise = []
+```
+
+### lambda
+
+匿名函数
+
+`\ x y.. -> ...`
+
+* 表达式, 返回函数
+* 只能匹配一种模式, 匹配失败引发运行时错误
+
+```
+f :: (Num a) => a -> a -> a -> a
+f x y z = x + y + z
+```
+
+等价于
+
+```
+f :: (Num a) => a -> a -> a -> a
+f = \x -> \y -> \z -> x + y + z
+```
+
+### 关键字 fold
+
+遍历 List 元素并操作后返回值
+
+`flodl f acc0 x:xs`
+
+$acc_1\ = f\ acc_0\ x_1$
+
+...
+
+$acc_n\ =\ f\ acc_{n-1}\ x_{n}$
+
+```
+sum' :: (Num a) => [a] -> a  
+sum' = foldl (+) 0
+```
+
+`flodr f acc0 xs:x`
+
+$acc_1\ = f\ x_1\ acc0$
+
+...
+
+$acc_n\ =\ f\ x_{n}\ acc_{n-1}$
+
+```C++
+map' :: (a->b) -> [a] -> [b]
+map' f xs = flodr (\x acc -> f x : acc) [] xs
+```
+
+* 生成新 List 一般使用 `flodr`
+
+* `foldl1` 与 `flodr1` 设定首尾元素为初值, 从旁边开始 flod
+* `foldl1` 与 `flodr1` 处理空 List 会出错
+* `foldl1` 不能处理无限 List
+* `foldr1` 能处理无限 List
+
+```
+maximum' :: (Ord a) [a] -> a
+maximum' [] = []
+
+= foldl ()  
+```
+
+常见库函数 fold 实现
+
+```
+maximum' :: (Ord a) => [a] -> a  
+maximum' = foldr1 (\x acc -> if x > acc then x else acc)  
+
+reverse' :: [a] -> [a]  
+reverse' = foldl (\acc x -> x : acc) []  
+
+product' :: (Num a) => [a] -> a  
+product' = foldr1 (*)  
+
+filter' :: (a -> Bool) -> [a] -> [a]  
+filter' p = foldr (\x acc -> if p x then x : acc else acc) []  
+
+head' :: [a] -> a  
+head' = foldr1 (\x _ -> x)  
+
+last' :: [a] -> a  
+last' = foldl1 (\_ x -> x)
+```
+
+`scanl` `scanl1`  `scanr` `scanr1`记录累加值的所有状态到一个 List 中
+
+### $ 函数调用
+
+`$` 函数调用符
+
+```
+($) :: (a -> b) -> a -> b  
+f $ x = f x
+```
+
+* 优先级最低
+* 右结合
+
+```
+sum (map sqrt [1..130])
+
+sum $ map sqrt [1..130]
+```
+
+`$` 可将数据作为函数使用
+
+```
+map ($ 3) [(4+),(10*),(^2),sqrt]  
+```
+
+### Function composition
+
+数学, 复合函数
+
+$(f\circ g) = f(g(x))$
+
+```
+(.) :: (b->c) -> (a->b) -> a -> c
+f . g = \x -> f (g x)
+```
+
+* 右结合
+
+* 定义 point free style 函数
+
+   ```
+   fn x = ceiling (negate (tan (cos (max 50 x))))
+   fn = ceiling . negate . tan . cos . max 50
+   ```
+
+   
+
+## 模块
+
+### 状态模块
+
+`import Module`
+
+`:m Module`
+
+`import Module (Functions)`
+
+`import Module hiding (Functions)`
+
+`import qualified Module` 全名使用函数
+
+`import qualified Module as M`
+
+> 翻阅标准库中的模块和函数是提升个人 Haskell 水平的重要途径
+
+### Data.List
+
+**intersperse** 元素穿插 List
+
+**intercalate** List 穿插 List
+
+**transpose** 翻转二维 List
+
+**fold' 和 foldl1'** 非惰性实现, 防止堆栈溢出
+
+**concat** 移除一级 List
+
+**concatMap** map List 后再 `concat`
+
+**and** 整个 List
+
+**or** 整个 List
+
+**any** **all** 对 List 每个元素进行 f 函数判断
+
+**iterate** 一直调用函数, 用返回值做下次的输入
+
+**splitAt** List 在特定位置断开, 返回二元组List
+
+**takeWhile** 从 List 取元素, 直到 False
+
+**dropWhile** 扔掉符合条件的元素, 直到 False, 返回剩余部分
+
+**span** 与 `takeWhile` 相似, 但返回两个 List, 一个 True 部分, 一个 False 部分
+
+**break** 与 `dropWhile` 相似, 在 False 处断开, 返回两个 List
+
+**sort**
+
+**group** 对 List 连续且相等元素分段
+
+**inits** 和 **tails** 与 `init` `tail` 但会递归地调用自身直到为空
+
+**isInfixOf** 是否包含子集合
+
+**isPrefixOf** 与 **isSuffixOf** 是否以某子集合开头或结尾
+
+**elem** 与 **notElem** 是否包含某元素
+
+**partition** 限制函数 limit 对 List 划分, 一个 List True 元素, 一个 List False 元素
+
+**find** 返回首个符合条件的`Maybe`元素
+
+> Maybe: Just something 或 Nothing
+
+**elemIndex** 返回元素`Maybe`索引
+
+**elemIndices** 返回元素索引 List
+
+**findIndex** 返回所有符合条件元素 List
+
+**zip3 ... zip7** 和 **zipWith3 ... zipWith7**
+
+**lines** 返回 String 的所有行, List
+
+**unlines** `lines` 的反函数
+
+**words** 和 **unwords** 把 String 分为一组单词和反操作
+
+**nub** 去除 List 重复元素
+
+**delete** 删除首次出现的某元素
+
+**\\** 差集操作 $A - B$
+
+**union** 并集 $A\bigcup B$ 
+
+**intersect** 交集 $A \bigcap B$
+
+**insert** 将元素插入首个大于等于的元素前
+
+**genericLength  genericTake  genericDrop  genericSplitAt  genericIndex  genericReplicate** 返回值为 Num
+
+**nubBy  deleteBy  unionBy  intersectBy  groupBy** 用函数判定相等性而不是 `==`
+
+**on**
+
+```
+on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
+f `on` g = \x y -> f (g x) (g y)
+```
+
+```
+ghci> groupBy ((==) `on` (> 0)) values  
+[[-4.3,-2.4,-1.2],[0.4,2.3,5.9,10.5,29.1,5.3],[-2.4,-14.5],[2.9,2.3]]
+```
+
+**sortBy  insertBy  maximumBy**   **minimumBy**
+
+```
+ghci> let xs = [[5,4,5,4,4],[1,2,3],[3,5,4,3],[],[2],[2,2]]  
+ghci> sortBy (compare `on` length) xs  
+[[],[2],[2,2],[1,2,3],[3,5,4,3],[5,4,5,4,4]]
+```
+
+### Data.Char
+
+**isControl** 控制字符
+
+**isSpace** 空白符
+
+**isLower** 小写
+
+**isUper** 大写
+
+**isAlpha** 字母
+
+**isAlphaNum** 字母或数字
+
+**isPrint** 可打印
+
+**isDigit** 数字
+
+**isOctDigit** 八进制数字
+
+**isHexDigit** 十六进制数字
+
+**isLetter** 字母
+
+**isMark** 注音字符
+
+**isNumber** 数字
+
+**isPunctuation** 标点符号
+
+**isSymbol** 货币符号
+
+**isSeperater** 空格或分隔符
+
+**isAscii** unicode 前128
+
+**isLatin1** unicode 前 256
+
+**isAsciiUpper** 大写 ascii
+
+**isAsciiLower** 小写 ascii
+
+**GeneralCategory** 类型(枚举)
+
+**toUpper** 大写
+
+**toLower** 小写
+
+**toTitle** title-case
+
+**digitToInt** char -> int
+
+**intToDigit** int -> char
+
+**ord char** char <-> num
+
+### Data.Map
+
+字典, key-value, 无顺序 List
+
+`import qualified Data.Map as Map`
+
+**lookup** key -> Maybe value
+
+**fromList** List -> Map
+
+**empty**  
