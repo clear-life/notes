@@ -401,7 +401,7 @@ pattern  `<-` $A$
 
 分段函数
 
-```
+```haskell
 f a =
 f x = 
 ```
@@ -420,7 +420,7 @@ $$
 * `(x:[])`  `(x:y:[])`  
 * `[x]`  `[x,y]`
 
-```C++
+```haskell
 head' [] = error "error"
 head' (x:_) = x
 ```
@@ -441,7 +441,7 @@ head' (x:_) = x
 
 * 语法
 
-```
+```haskell
 f x...
 	| ... = 
 	| ... = 
@@ -451,7 +451,7 @@ f x...
 
 `otherwise = True`
 
-```
+```haskell
 a `fun` b
 	| a > b		= GT
 	| a == b	= EQ
@@ -466,7 +466,7 @@ a `fun` b
 * 标识符垂直排开
 * 只对整个函数可见
 
-```
+```haskell
 a `fun` b
 	| a > b		= GT
 	| a == b	= EQ
@@ -478,7 +478,7 @@ a `fun` b
 
 具体函数也是个值, 能在 where 中定义
 
-```
+```haskell
 fun xs = [ bmi w h | (w,h) <- xs]
 	where bmi w h = w / h ^ 2
 ```
@@ -491,13 +491,13 @@ fun xs = [ bmi w h | (w,h) <- xs]
 * 标识符垂直排开或 `;` 分隔在一列 
 * let 在 List comprehension 中的输出函数和限制条件中都可见
 
-```
+```haskell
 let a =
 	b = 
 in 	c = 
 ```
 
-```
+```haskell
 [bmi | (w,h) <- xs, let bmi = w / h ^ 2]
 ```
 
@@ -507,7 +507,7 @@ in 	c =
 
 * case 语句是表达式, 可用在任何地方
 
-```
+```haskell
 case expression of 	pattern -> result
 					pattern -> result
 					...
@@ -515,7 +515,7 @@ case expression of 	pattern -> result
 
 
 
-```
+```haskell
 fun xs = case xs of [] -> ...
 					(x:_) -> x
 ```
@@ -524,7 +524,7 @@ fun xs = case xs of [] -> ...
 
 ### Maximum
 
-```
+```haskell
 maximum' [] = error
 maximum' [x] = x
 maximum' (x:xs)
@@ -537,7 +537,7 @@ maximum' (x:xs)
 
 `replicate`
 
-```
+```haskell
 replicate' :: (Num i, Ord i) => i -> a -> [a]
 replicate' n x
 	| n <= 0 = []
@@ -546,7 +546,7 @@ replicate' n x
 
 `take`
 
-```
+```haskell
 take' :: (Num i, Ord i) => i -> [a] -> [a]
 take' n _
 	| n <= 0	= []
@@ -556,7 +556,7 @@ take' n (x:xs)	= x : take' (n-1) xs
 
 `reverse`
 
-```
+```haskell
 reverse' :: [a] -> [a]
 reverse' [] = []
 reverse' (x:xs) = reverse' xs ++ [x]
@@ -564,14 +564,14 @@ reverse' (x:xs) = reverse' xs ++ [x]
 
 `repeat`
 
-```
+```haskell
 repeat' :: a -> [a]
 repeat' x = x : repeat' x
 ```
 
 `zip`
 
-```
+```haskell
 zip' :: [a] -> [b] -> [(a,b)]
 zip' [] _ = []
 zip' _ [] = []
@@ -580,7 +580,7 @@ zip' (x:xs) (y:ys) = (x,y) : zip' xs ys
 
 `elem`
 
-```
+```haskell
 elem' :: (Eq a) => a -> [a] -> Bool
 elem' _ [] = False
 elem' a (x:xs)
@@ -590,7 +590,7 @@ elem' a (x:xs)
 
 ### 快速排序
 
-```
+```haskell
 quicksort :: (Ord a) => [a] -> [a]
 quicksort [] = []
 quicksort (x : xs)
@@ -646,7 +646,7 @@ f3 z = 2 * z
 
 * 中缀函数不全调用 `()`
 
-  ```
+  ```haskell
   f = (/10)
   f x = x / 10
   ```
@@ -661,7 +661,7 @@ f3 z = 2 * z
 
 #### 函数作为参数
 
-```
+```haskell
 g :: (a -> a) -> a -> a
 g f x = f (f x)
 ```
@@ -671,7 +671,7 @@ g f x = f (f x)
 
 **`zipWith`**
 
-```
+```haskell
 zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
 zipWith' _ [] _ = []
 zipWith' _ _ [] = []
@@ -680,7 +680,7 @@ zipWith' f (x:xs) (y:ys) = f x y : zipWith' f xs ys
 
 `flip`
 
-```
+```haskell
 flip' :: (a->b->c) -> (b->a->c)
 filp' f = g
 	where g y x = f x y
@@ -688,7 +688,7 @@ filp' f = g
 
 等价于
 
-```
+```haskell
 flip' :: (a->b->c) -> b -> a -> c
 flip' f y x = f x y
 ```
@@ -699,7 +699,7 @@ flip' f y x = f x y
 
 映射
 
-```
+```haskell
 map :: (a->b) -> [a] -> [b]
 map _ [] = []
 map f (x:xs) = f x : map f xs
@@ -709,7 +709,7 @@ map f (x:xs) = f x : map f xs
 
 过滤
 
-```
+```haskell
 filter :: (a->Bool) -> [a] -> [a]
 filter _ [] = []
 filter f (x:xs)
@@ -719,7 +719,7 @@ filter f (x:xs)
 
 `takeWhile`
 
-```
+```haskell
 takeWhile :: (a->Bool) -> [a] -> [a]
 takeWhile _ [] = []
 takeWhile f (x:xs)
@@ -736,14 +736,14 @@ takeWhile f (x:xs)
 * 表达式, 返回函数
 * 只能匹配一种模式, 匹配失败引发运行时错误
 
-```
+```haskell
 f :: (Num a) => a -> a -> a -> a
 f x y z = x + y + z
 ```
 
 等价于
 
-```
+```haskell
 f :: (Num a) => a -> a -> a -> a
 f = \x -> \y -> \z -> x + y + z
 ```
@@ -760,7 +760,7 @@ $acc_1\ = f\ acc_0\ x_1$
 
 $acc_n\ =\ f\ acc_{n-1}\ x_{n}$
 
-```
+```haskell
 sum' :: (Num a) => [a] -> a  
 sum' = foldl (+) 0
 ```
@@ -773,7 +773,7 @@ $acc_1\ = f\ x_1\ acc0$
 
 $acc_n\ =\ f\ x_{n}\ acc_{n-1}$
 
-```C++
+```haskell
 map' :: (a->b) -> [a] -> [b]
 map' f xs = flodr (\x acc -> f x : acc) [] xs
 ```
@@ -785,7 +785,7 @@ map' f xs = flodr (\x acc -> f x : acc) [] xs
 * `foldl1` 不能处理无限 List
 * `foldr1` 能处理无限 List
 
-```
+```haskell
 maximum' :: (Ord a) [a] -> a
 maximum' [] = []
 
@@ -794,7 +794,7 @@ maximum' [] = []
 
 常见库函数 fold 实现
 
-```
+```haskell
 maximum' :: (Ord a) => [a] -> a  
 maximum' = foldr1 (\x acc -> if x > acc then x else acc)  
 
@@ -820,7 +820,7 @@ last' = foldl1 (\_ x -> x)
 
 `$` 函数调用符
 
-```
+```haskell
 ($) :: (a -> b) -> a -> b  
 f $ x = f x
 ```
@@ -828,7 +828,7 @@ f $ x = f x
 * 优先级最低
 * 右结合
 
-```
+```haskell
 sum (map sqrt [1..130])
 
 sum $ map sqrt [1..130]
@@ -836,7 +836,7 @@ sum $ map sqrt [1..130]
 
 `$` 可将数据作为函数使用
 
-```
+```haskell
 map ($ 3) [(4+),(10*),(^2),sqrt]  
 ```
 
@@ -846,7 +846,7 @@ map ($ 3) [(4+),(10*),(^2),sqrt]
 
 $(f\circ g) = f(g(x))$
 
-```
+```haskell
 (.) :: (b->c) -> (a->b) -> a -> c
 f . g = \x -> f (g x)
 ```
@@ -855,7 +855,7 @@ f . g = \x -> f (g x)
 
 * 定义 point free style 函数
 
-   ```
+   ```haskell
    fn x = ceiling (negate (tan (cos (max 50 x))))
    fn = ceiling . negate . tan . cos . max 50
    ```
@@ -956,25 +956,27 @@ f . g = \x -> f (g x)
 
 **insert** 将元素插入首个大于等于的元素前
 
+**setNub** 不保留原有顺序, 但速度比 `num` 快
+
 **genericLength  genericTake  genericDrop  genericSplitAt  genericIndex  genericReplicate** 返回值为 Num
 
 **nubBy  deleteBy  unionBy  intersectBy  groupBy** 用函数判定相等性而不是 `==`
 
 **on**
 
-```
+```haskell
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
 f `on` g = \x y -> f (g x) (g y)
 ```
 
-```
+```haskell
 ghci> groupBy ((==) `on` (> 0)) values  
 [[-4.3,-2.4,-1.2],[0.4,2.3,5.9,10.5,29.1,5.3],[-2.4,-14.5],[2.9,2.3]]
 ```
 
 **sortBy  insertBy  maximumBy**   **minimumBy**
 
-```
+```haskell
 ghci> let xs = [[5,4,5,4,4],[1,2,3],[3,5,4,3],[],[2],[2,2]]  
 ghci> sortBy (compare `on` length) xs  
 [[],[2],[2,2],[1,2,3],[3,5,4,3],[5,4,5,4,4]]
@@ -1046,4 +1048,157 @@ ghci> sortBy (compare `on` length) xs
 
 **fromList** List -> Map
 
-**empty**  
+**empty**  空 map
+
+**insert** 插入入新 k-v
+
+**null** 是否空
+
+**size** 大小
+
+**singleton** 一个 k-v 的 map
+
+**lookup**
+
+**member** 是否有 k
+
+**map filter**  f 对 v 作用
+
+**toList** `fromList` 的反函数
+
+**keys elems** keys values
+
+**fromListWith** f 对重复 key 的 values 处理, 默认放在 List 中
+
+**insertWith** 处理已存在 k 的 value
+
+### Data.Set
+
+`import qualified Data.Set as Set`
+
+**fromList** List -> Set
+
+**difference** $A - A \bigcap B$
+
+**union** $A \bigcap B$
+
+**null  size  member  empty  singleton  insert  delete**
+
+**isSubsetOf isProperSubsetOf** 子集 真子集
+
+**map filter**
+
+**toList** Set->List
+
+### 建立自己的模块
+
+`Module.hs`
+
+* **qualified import**
+
+ ```haskell
+ module Module	-- 模块名与文件名一致
+ ( fun1
+ , fun2
+ , fun3
+ , ...
+ ) where
+ ```
+
+### Geometry 文件夹
+
+Geometry 模块
+
+#### Sphere.hs
+
+Sphere 子模块
+
+```C++
+module Geometry.Sphere  
+(
+) where
+```
+
+#### Cuboid.hs
+
+Cuboid  子模块
+
+```
+module Geometry.Cuboid  
+( 
+) where 
+```
+
+#### Cube.hs
+
+Cube 子模块
+
+```
+module Geometry.Cube  
+( 
+) where
+```
+
+## 自定义 Types 和 Typeclasses
+
+### Algebraic Data Types 入门
+
+#### data
+
+**data Type = Value Constructor | ...**
+
+`data Bool = False | True`
+
+```haskell
+data Point = Point Float Float deriving (Show)
+data Shape = Circle Point Float | Rectangle Point Point deriving (Show)
+```
+
+* **Value Constructor** 值构造子为函数, 返回 Type 类型的值
+
+* 模式匹配的对象是**Value Constructor**
+* 匹配过的 `[]` `False` `5` 是不含参数的值构造子
+* `deriving (Show)` 能让 Shape 被输出到控制台
+* 类型只有一个 **Value Constructor** 时, 最好与类型重名
+
+导出类型
+
+`Shape(..) ` 表示到处所有 **Value Constructor**
+
+```
+module Shapes
+( Point(..)
+, Shape(..)
+, ...
+) where
+```
+
+* 不导出类型的 **Value Constructor** 也就不能用该 **Value Constructor** 进行模式匹配
+
+### Record Syntax
+
+```haskell
+data Person = Person{	a :: type,
+					   	b :: type,
+					   	...
+					} deriving (Show)
+```
+
+```haskell
+Car {company="Ford", model="Mustang", year=1967}
+```
+
+* 自动生成取值函数
+* 无需关心项顺序
+
+### Type parameters
+
+#### Type Constructor 
+
+**Type Constructor** 类型构造子: 类型为参数, 返回新类型
+
+`data Maybe a = Nothing | Just a`
+
+* `a` 类型参数
+* List 是类型构造子
+
