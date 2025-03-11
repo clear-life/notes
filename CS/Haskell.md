@@ -396,6 +396,7 @@ pattern  `<-` $A$
 * 匹配失败就跳过
 * 不能用 `++`
 * `x:xs` 要加 `()` 因为 `:` 优先级小于函数调用
+* 通过构造子进行模式匹配
 
 #### 函数模式匹配
 
@@ -1202,3 +1203,364 @@ Car {company="Ford", model="Mustang", year=1967}
 * `a` 类型参数
 * List 是类型构造子
 
+* `Nothing`  类型 `Maybe a`
+* `[]` 类型 `[a]`
+* 不要在 `data` 声明中加类型约束
+
+```haskell
+data Type a b .. = Type {	x :: a,
+							y :: b,
+							...
+						} deriving (Show)
+```
+
+### Derived instance
+
+`data Type = Type {} deriving (Eq, Show, Read)`
+
+将 Type 划分到 Eq 里, 然后就能用 `==` 和 `/=` 判定相等性
+
+* 类型构造子的所有类型参数都在 `Eq` 中, Type 才能被划分到 `Eq` 中, 即成为 `Eq` 的 instance
+
+`Ord` 类型类 derive instance
+
+先判断值构造子是否一致
+
+再判断参数(参数都是 `Ord` 的 instance)
+
+`data Bool = False | True deriving (Ord)`
+
+`False` 在 `True` 前, 比 `True` 小
+
+`Maybe a` 类型中, `Nothing` 小于 `Just something`
+
+```haskell
+data Day = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
+           deriving (Eq, Ord, Show, Read, Bounded, Enum)
+```
+
+### Type synonyms
+
+类型别名
+
+`type String = [Char]`
+
+`type AssocList k v = [(k,v)]`
+
+`AssocList` 为类型构造子, 类型 k v 为参数, 生成具体类型
+
+不全调用得到新的类型构造子
+
+`type IntMap v = Map Int v`
+
+`type IntMap = Map Int`
+
+qualified import 导入 Data.Map
+
+`type IntMap = Map.Map Int`
+
+* 类型构造子只能用在类型部分, 不能用在值部分, 不能当作值构造子使用
+
+`Either a b`
+
+```haskell
+data Either a b = Left a | Right b deriving (Eq, Ord, Read, Show)
+```
+
+### Recursive data structures
+
+递归定义数据结构
+
+List 定义: `[]` 或 x : List
+
+```haskell
+data List a = Empty | Cons a (List a) deriving (Show, Read, Eq, Ord)
+```
+
+record syntax
+
+```haskell
+data List a = Empty | Cons { listHead :: a, listTail :: List a} deriving (Show, Read, Eq, Ord)
+```
+
+结合性优先级
+
+fixity 指定结合性(left/right-associative)和优先级
+
+`*` fixity `infixl 7 *`
+
+`+` fixity `infixl 6 +`
+
+```haskell
+infixr 5 :-:
+data List a = Empty | a :-: (List a) deriving (Show, Read, Eq, Ord)
+```
+
+```
+infixr 5  .++
+(.++) :: List a -> List a -> List a
+Empty .++ ys = ys
+(x :-: xs) .++ ys = x :-: (xs .++ ys)
+```
+
+二元搜索树
+
+```
+singleton :: a -> Tree a
+singleton x = Node x EmptyTree EmptyTree
+
+treeInsert :: (Ord a) => a -> Tree a -> Tree a
+treeInsert x EmptyTree = singleton x
+treeInsert x (Node a left right)
+      | x == a = Node x left right
+      | x < a  = Node a (treeInsert x left) right
+      | x > a  = Node a left (treeInsert x right)
+```
+
+
+
+```
+treeElem :: (Ord a) => a -> Tree a -> Bool
+treeElem x EmptyTree = False
+treeElem x (Node a left right)
+    | x == a = True
+    | x < a  = treeElem x left
+    | x > a  = treeElem x right
+```
+
+### 自定义 Typeclasses
+
+* typeclass 看作 interface, 定义一些行为(函数)
+* 满足所有行为的类型为 typeclass 的 instance
+
+#### Prelude  Eq 定义
+
+`class TypeClassName typeVar where`
+
+```
+class Eq a where
+    (==) :: a -> a -> Bool
+    (/=) :: a -> a -> Bool
+    x == y = not (x /= y)
+    x /= y = not (x == y)
+```
+
+* class 定义新 typeclass Eq, a(类型变量) 为 Eq 的 instance
+* 交叉递归定义 class 行为函数
+
+#### 定义 typeclass 的 instance
+
+`instance TypeClassName TypeName where `
+
+```
+instance Eq TrafficLight where
+    Red == Red = True
+    Green == Green = True
+    Yellow == Yellow = True
+    _ == _ = False
+```
+
+`==` 由 `/=` 定义
+
+`/=` 由 `==` 定义
+
+只需在 instance 定义中实现其中一个
+
+最小完整定义 minimal complete definition: 能让 type 符合 typeclass 行为的最少函数实现数量
+
+**Show instance**
+
+```
+instance Show TrafficLight where
+    show Red = "Red light"
+    show Yellow = "Yellow light"
+    show Green = "Green light"
+```
+
+derive 生成 show 会将 值构造子转换为 String
+
+**定义为 subclass**
+
+```C++
+class (Eq a) => Num a where
+   ...
+```
+
+* (Eq a) 类型约束 Num a 
+* subclass: 定义 Num 的 instance a 前 a 首先是 Eq 的 instance
+* Maybe 不能作为 class 中的类型, 因为 Maybe 不是类型, 而是类型构造子, 但 Maybe m 却可以
+* `:info TypeClass` 查看 instance
+
+```
+instance (Eq m) => Eq (Maybe m) where
+    Just x == Just y = x == y
+    Nothing == Nothing = True
+    _ == _ = False
+```
+
+### yes-no typeclass
+
+typeclass
+
+```
+class YesNo a where
+    yesno :: a -> Bool
+```
+
+instance
+
+```
+instance YesNo Int where
+    yesno 0 = False
+    yesno _ = True
+```
+
+```
+instance YesNo [a] where
+    yesno [] = False
+    yesno _ = True
+```
+
+```
+instance YesNo Bool where
+    yesno = id	-- id 返回参数
+```
+
+```
+instance YesNo (Maybe a) where
+    yesno (Just _) = True
+    yesno Nothing = False
+```
+
+```
+instance YesNo TrafficLight where
+    yesno Red = False
+    yesno _ = True
+```
+
+### Functor typeclass
+
+可被 map 的类型
+
+```
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+```
+
+f 类型构造子, 接受类型 a 返回类型, 接受类型 b 返回类型
+
+`map :: (a -> b) -> [a] -> [b]`
+
+map 就是对 List 的 fmap
+
+```
+instance Functor [] where
+    fmap = map
+```
+
+能做容器的类型可能就是 functor(Functor 的 instance)
+
+```
+instance Functor Maybe where
+    fmap f (Just x) = Just (f x)
+    fmap f Nothing = Nothing
+```
+
+### Kind
+
+king 类型的标签, 类型的类型
+
+`:k` 
+
+`*` 具体类型
+
+类型构造子也可 curry, 能 partially apply
+
+## 输入与输出
+
+### Hello, world!
+
+`main = putStrLn "hello, world"`
+
+**编译**
+
+`ghc --make test.hs`
+
+```
+:t putStrLn
+putStrLn :: String -> IO ()
+```
+
+* `IO` 表 I/O action, 绑定到 main 后能执行 IO 操作
+* `()` 为 I/O action 的返回值
+* do 将所有 I/O action 绑定为一个
+
+```
+main :: IO something
+main = do
+    putStrLn "Hello, what's your name?"
+    name <- getLine
+    putStrLn ("Hey " ++ name ++ ", you rock!")
+```
+
+**getLine** 类型 IO String, 执行 I/O action 将结果绑定到名字中
+
+* 只有在 I/O action 中才能拿到某一个 I/O action 的数据
+* I/O code: 依赖 I/O 的程序
+
+* do block 最后一个 action 不能绑定名字
+
+let bindings 能在 do block 中使用(不需要 in)
+
+```
+main = do
+    line <- getLine
+    if null line
+        then return ()
+        else do
+            putStrLn $ reverseWords line
+            main
+
+reverseWords :: String -> String
+reverseWords = unwords . map reverse . words
+```
+
+**return** 将 pure value 包装为 IO action, return 不会结束执行
+
+**putStr** 不换行 type signature `putStr :: String -> IO ()`
+
+是一个包在 IO action 的 unit, 即空值, 不能绑定
+
+**putChar**
+
+**print** 相当于 `putStrLn . show` 但能输出 `""`
+
+**getChar** type signature `getChar :: IO Char`
+
+由于缓冲区, 只有按下 Enter 时才会触发读取字符的行为
+
+**when**(`import Contorl.Monad`)
+
+True 返回传入 IO action, False 返回 return ()
+
+封装 `if something then do some I/O action else return ()`
+
+**sequence** `sequence :: [IO a] -> IO [a]`
+
+```
+main = do
+    a <- getLine
+    b <- getLine
+    c <- getLine
+    print [a,b,c]
+    
+main = do
+    rs <- sequence [getLine, getLine, getLine]
+    print rs
+```
+
+**mapM mapM_** 返回 IO action 的函数  List,  mapM_ 丢弃运算结果(例 return () 中的 ())
+
+**forever** 无限循环一个 IO action
+
+**forM**  Control.Monad 跟 mapM 作用一样, 但参数顺序相反
