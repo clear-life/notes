@@ -1,7 +1,5 @@
 # VSCode(Windows)配置Haskell开发环境
 
-[TOC]
-
 ## 简介
 
 ### Haskell
@@ -10,14 +8,14 @@
 * 强静态类型
 * 类型推断
 * 惰性求值
-* 纯函数式编程语言: 无 side-effect (副作用)
+* 纯函数式编程语言: 无 side-effect
 * 并发编程
 
 ### Haskell 工具链
 
 * **GHCup**
 
-​		版本管理器, 管理 Haskell 工具链 (GHC, Cabal, Stack, HLS)
+   版本管理器, 管理 Haskell 工具链 (GHC, Cabal, Stack, HLS)
 
 * **GHC**
 
@@ -34,13 +32,13 @@
 
 $~$
 
-## 安装
+## 换源安装
 
 ### 准备工作
 
 关闭杀毒软件直至安装完成
 
-### GHCup
+### 安装 GHCup
 
 **1. 安装 GHCup 本体**
 
@@ -51,9 +49,9 @@ $env:BOOTSTRAP_HASKELL_YAML = 'https://mirrors.ustc.edu.cn/ghcup/ghcup-metadata/
 Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;Invoke-Command -ScriptBlock ([ScriptBlock]::Create((Invoke-WebRequest https://mirrors.ustc.edu.cn/ghcup/sh/bootstrap-haskell.ps1 -UseBasicParsing))) -ArgumentList $true
 ```
 
-一路 enter 过去, 能把 GHCup 安装就算成功, 其余的都能用 GHCup安装
+一路 enter 过去, 能安装上 GHCup 就算成功, 其余的都能用 GHCup安装
 
-包下载过程中遇到有关墙方面的网络问题尝试通过后面的 clash 全局代理方法
+包下载过程中遇到有关墙方面的网络问题尝试通过 clash 全局代理方法
 
 **2. 换源**
 
@@ -149,49 +147,49 @@ package-index:
     ignore-expiry: true
 ```
 
-### 安装
+### 安装其余工具
 
 包下载过程中遇到有关墙方面的网络问题尝试通过后面的 clash 全局代理方法
 
-ghc
+**ghc**
 
 ```bash
 ghcup install ghc latest
 ```
 
-cabal
+**cabal**
 
 ```bash
 ghcup install cabal latest
 ```
 
-stack
+**stack**
 
 ```bash
 ghcup install stack latest
 ```
 
-hls
+**hls**
 
 ```bash
 ghcup install hls latest
 ```
 
-### Clash
+## Clash 安装
 
-如果通过换源的方式下载不了某些包, 可以通过 Clash for Windows 的 TUM mode 创建的虚拟网卡代理所有流量来下载
+如果通过换源的方式下载不了某些包, 可以通过 Clash for Windows 的 TUN mode 代理全局流量进行安装 
 
-#### TUN Mode
+### TUN Mode
 
 Clash For Windows → 常规 → 系统代理打开
 
 TUN Mode 需要先安装 Service Mode(服务模式)	
 
-Clash For Windows → 常规 → Service Mode 后的管理 → 安装 → 绿色地球
+Clash For Windows → 常规 → Service Mode 后的管理 → 安装(绿色地球)
 
 Clash For Windows → 常规 → TUN Mode打开
 
-#### 代理
+### 设置代理
 
 非管理员权限的 PowerShell 执行
 
@@ -201,16 +199,18 @@ $env:HTTP_PROXY="http://127.0.0.1:7890"
 $env:HTTPS_PROXY="http://127.0.0.1:7890"
 ```
 
-bash 执行
+或 bash 执行
 
 ```bash
 export HTTP_PROXY="http://127.0.0.1:7890"
 export HTTPS_PROXY="http://127.0.0.1:7890"
 ```
 
+### 安装脚本
+
 随便找个目录执行 curl
 
-在 powershell 中执行会报错, 所以我在 git bash 中执行 curl
+若在 powershell 中执行报错, 可在 git bash 中执行 curl
 
 ```bash
 curl -LO https://www.haskell.org/ghcup/sh/bootstrap-haskell.ps1
@@ -231,7 +231,7 @@ curl -LO https://www.haskell.org/ghcup/sh/bootstrap-haskell.ps1
 ./bootstrap-haskell.ps1 -Interactive -DisableCurl
 ```
 
-### VSCode
+## VSCode
 
 安装插件 haskell.haskell
 

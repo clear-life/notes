@@ -1564,3 +1564,71 @@ main = do
 **forever** 无限循环一个 IO action
 
 **forM**  Control.Monad 跟 mapM 作用一样, 但参数顺序相反
+
+### 文件与字符流
+
+**getContents** 从标准输入读取直到 EOF `getContents :: IO String` 惰性 IO(按行读取), 用作重导输入输出
+
+**interact** 接受 `String -> String` 函数, 返回 IO action
+
+**openFile** `openFile :: FilePath -> IOMode -> IO Handle` 文件路径 IOMode 返回 IO action
+
+`type FilePath = String`
+
+`data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode`
+
+`IO Mode` 表示一个 IO action 包含一个类型为 Mode 的值
+
+**hGetContents** 从文件读取 Contents
+
+**hClose** 关闭文件
+
+**withFile** `withFile :: FilePath -> IOMode -> (Handle -> IO a) -> IO a`
+
+**hGetLine**、**hPutStr**、**hPutStrLn**、**hGetChar**
+
+**readFile**  `readFile :: FilePath -> IO String`
+
+ **writeFile**  `writefile :: FilePath -> String -> IO ()`
+
+**appendFile** 
+
+**hFlush**
+
+**openTempFile**
+
+**removeFile**
+
+**renameFile**
+
+### 命令行引数
+
+**getArgs** `System.Environment` `getArgs :: IO [String]`
+
+**getProgName**
+
+### 随机数
+
+**System.Random**
+
+**random** `random :: (RandomGen g, Random a) => g -> (a, g)`
+
+### Bytestrings
+
+**Data.ByteString** Strict bytestrings
+
+**Data.ByteString.Lazy** Lazy bytestrings
+
+**pack**
+
+**unpack**
+
+**fromChunks**
+
+**empty**
+
+### Exceptions
+
+Exception 只能在 I/O section 中被接到
+
+**catch**
