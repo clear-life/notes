@@ -20,6 +20,8 @@ $f(x,y...)=...$
 
 $f(x,y...)$
 
+函数: 将表达式绑定到函数名, 模式为参数, 函数调用为带参数 
+
 $~$
 
 ### List
@@ -855,170 +857,135 @@ module Geometry.Cube
 ) where
 ```
 
-## 自定义 Types 和 Typeclasses
+## 自定义 Type 和 Typeclass
 
-### Algebraic Data Types 入门
+### Algebraic Data Type
 
-#### data
+#### 自定义 ADT
 
-**data Type = Value Constructor | ...**
+**data TypeName = Value Constructor | ... [deriving (TypeClass)]**
 
-`data Bool = False | True`
+* **data** 表示定义数据类型
+* **Type** 类型名称
+* **Value Constructor** **值构造子**
+* **|** 或
+* **deriving (TypeClass)** 将该类型归类于 **TypeClass** 类型类
 
 ```haskell
-data Point = Point Float Float deriving (Show)
-data Shape = Circle Point Float | Rectangle Point Point deriving (Show)
+data Bool = False | True
+
+data Int = -2147483648 | -2147483647 | ... | -1 | 0 | 1 | 2 | ... | 2147483647
+
+data Shape = Circle Float Float Float | Rectangle Float Float Float Float
 ```
 
-* **Value Constructor** 值构造子为函数, 返回 Type 类型的值
+#### Value Constructor
 
-* 模式匹配的对象是**Value Constructor**
-* 匹配过的 `[]` `False` `5` 是不含参数的值构造子
-* `deriving (Show)` 能让 Shape 被输出到控制台
-* 类型只有一个 **Value Constructor** 时, 最好与类型重名
+**data TypeName = Constructor Type1 Type2**
 
-导出类型
+`Constructor :: Type1 -> Type2 -> Type`
 
-`Shape(..) ` 表示到处所有 **Value Constructor**
+* **值构造子(函数): 输入值, 返回值**
+* 模式匹配中的模式为值构造子
+
+#### 类型导出
 
 ```haskell
 module Shapes
-( Point(..)
+( Point(..)		-- .. 表示所有值构造子
 , Shape(..)
 , ...
 ) where
 ```
 
-* 不导出类型的 **Value Constructor** 也就不能用该 **Value Constructor** 进行模式匹配
+* **TypeName** 只导出类型
+* **TypeName(..)** 导出类型及所有值构造子
+* **TypeName(Constructor1, Constructor2)** 导出类型及指定值构造子
 
-### Record Syntax
+#### Record Syntax
+
+**{}**
+
+* 按项取值
+* 自动生成取参函数
 
 ```haskell
-data Person = Person{	a :: type,
-					   	b :: type,
+data Person = Person {	name :: String,
+					   	age :: Int,
 					   	...
-					} deriving (Show)
+					 }
 ```
-
-```haskell
-Car {company="Ford", model="Mustang", year=1967}
-```
-
-* 自动生成取值函数
-* 无需关心项顺序
-
-### Type parameters
 
 #### Type Constructor 
 
-**Type Constructor** 类型构造子: 类型为参数, 返回新类型
+**类型构造子: 输入类型, 返回类型**
 
-`data Maybe a = Nothing | Just a`
+**data Maybe a = Nothing | Just a**
 
-* `a` 类型参数
-* List 是类型构造子
+* 类型参数 **a**
 
-* `Nothing`  类型 `Maybe a`
-* `[]` 类型 `[a]`
-* 不要在 `data` 声明中加类型约束
+* **Nothing**  类型 **Maybe a**
 
-```haskell
-data Type a b .. = Type {	x :: a,
-							y :: b,
-							...
-						} deriving (Show)
-```
+#### Derived instance
 
-### Derived instance
+**data Type = Type {} deriving (Eq, Show, Read)**
 
-`data Type = Type {} deriving (Eq, Show, Read)`
+* 类型构造子的所有类型参数都在 `Eq` 中, Type 才能被划分到 `Eq` 中
 
-将 Type 划分到 Eq 里, 然后就能用 `==` 和 `/=` 判定相等性
+* `False` 在 `True` 前, 比 `True` 小
 
-* 类型构造子的所有类型参数都在 `Eq` 中, Type 才能被划分到 `Eq` 中, 即成为 `Eq` 的 instance
+* `Maybe a` 中, `Nothing` 小于 `Just something`
 
-`Ord` 类型类 derive instance
+#### 类型别名
 
-先判断值构造子是否一致
+**type String = [Char]**
 
-再判断参数(参数都是 `Ord` 的 instance)
+**type AssocList k v = [(k,v)]**
 
-`data Bool = False | True deriving (Ord)`
+**type IntMap = Map.Map Int**
 
-`False` 在 `True` 前, 比 `True` 小
+* 类型构造子 `AssocList`, 类型参数 k v 
 
-`Maybe a` 类型中, `Nothing` 小于 `Just something`
+* **类型构造子不全调用**得到新类型构造子
+* 类型别名只能用在类型部分
 
-```haskell
-data Day = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
-           deriving (Eq, Ord, Show, Read, Bounded, Enum)
-```
+#### Either a b
 
-### Type synonyms
-
-类型别名
-
-`type String = [Char]`
-
-`type AssocList k v = [(k,v)]`
-
-`AssocList` 为类型构造子, 类型 k v 为参数, 生成具体类型
-
-不全调用得到新的类型构造子
-
-`type IntMap v = Map Int v`
-
-`type IntMap = Map Int`
-
-qualified import 导入 Data.Map
-
-`type IntMap = Map.Map Int`
-
-* 类型构造子只能用在类型部分, 不能用在值部分, 不能当作值构造子使用
-
-`Either a b`
+* left 类型为 a, right 类型为 b
+* a 错误类型, b 成功类型
 
 ```haskell
 data Either a b = Left a | Right b deriving (Eq, Ord, Read, Show)
 ```
 
-### Recursive data structures
+#### 递归定义数据结构
 
-递归定义数据结构
-
-List 定义: `[]` 或 x : List
+**List**
 
 ```haskell
-data List a = Empty | Cons a (List a) deriving (Show, Read, Eq, Ord)
+data List a = Empty | Cons a (List a) 
+data List a = Empty | Cons { listHead :: a, listTail :: List a}
 ```
 
-record syntax
+**结合性优先级**
+
+定义函数为 operator 时可指定 fixity
+
+`infixl 7 *`
+
+`infixl 6 +`
+
+
+
+**二元搜索树**
+
+定义
 
 ```haskell
-data List a = Empty | Cons { listHead :: a, listTail :: List a} deriving (Show, Read, Eq, Ord)
+data Tree a = EmptyTree | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
 ```
 
-结合性优先级
-
-fixity 指定结合性(left/right-associative)和优先级
-
-`*` fixity `infixl 7 *`
-
-`+` fixity `infixl 6 +`
-
-```haskell
-infixr 5 :-:
-data List a = Empty | a :-: (List a) deriving (Show, Read, Eq, Ord)
-```
-
-```haskell
-infixr 5  .++
-(.++) :: List a -> List a -> List a
-Empty .++ ys = ys
-(x :-: xs) .++ ys = x :-: (xs .++ ys)
-```
-
-二元搜索树
+插入
 
 ```haskell
 singleton :: a -> Tree a
@@ -1032,7 +999,7 @@ treeInsert x (Node a left right)
       | x > a  = Node a left (treeInsert x right)
 ```
 
-
+检查
 
 ```haskell
 treeElem :: (Ord a) => a -> Tree a -> Bool
@@ -1043,68 +1010,44 @@ treeElem x (Node a left right)
     | x > a  = treeElem x right
 ```
 
-### 自定义 Typeclasses
+### Typeclass
 
-* typeclass 看作 interface, 定义一些行为(函数)
-* 满足所有行为的类型为 typeclass 的 instance
+Typeclass 行为由函数描述
 
-#### Prelude  Eq 定义
+Type 定义 instance 
 
-`class TypeClassName typeVar where`
+#### class
+
+**class Eq a where**
 
 ```haskell
-class Eq a where
+class (TypeClass a) => Eq a where
     (==) :: a -> a -> Bool
     (/=) :: a -> a -> Bool
     x == y = not (x /= y)
     x /= y = not (x == y)
 ```
 
-* class 定义新 typeclass Eq, a(类型变量) 为 Eq 的 instance
-* 交叉递归定义 class 行为函数
+* /= 与 == 相互定义
+* 最小完整定义: 让类型符合 class 行为的**最小实作函数数量**
 
-#### 定义 typeclass 的 instance
+#### instance
 
-`instance TypeClassName TypeName where `
+**instance Eq Light where**
+
+类型 Light (deriving Eq)
 
 ```haskell
-instance Eq TrafficLight where
+data Light = Red | Yellow | Green
+
+instance Eq Light where
     Red == Red = True
     Green == Green = True
     Yellow == Yellow = True
     _ == _ = False
 ```
 
-`==` 由 `/=` 定义
-
-`/=` 由 `==` 定义
-
-只需在 instance 定义中实现其中一个
-
-最小完整定义 minimal complete definition: 能让 type 符合 typeclass 行为的最少函数实现数量
-
-**Show instance**
-
-```haskell
-instance Show TrafficLight where
-    show Red = "Red light"
-    show Yellow = "Yellow light"
-    show Green = "Green light"
-```
-
-derive 生成 show 会将 值构造子转换为 String
-
-**定义为 subclass**
-
-```haskell
-class (Eq a) => Num a where
-   ...
-```
-
-* (Eq a) 类型约束 Num a 
-* subclass: 定义 Num 的 instance a 前 a 首先是 Eq 的 instance
-* Maybe 不能作为 class 中的类型, 因为 Maybe 不是类型, 而是类型构造子, 但 Maybe m 却可以
-* `:info TypeClass` 查看 instance
+**instance 含类型构造子**
 
 ```haskell
 instance (Eq m) => Eq (Maybe m) where
@@ -1113,67 +1056,23 @@ instance (Eq m) => Eq (Maybe m) where
     _ == _ = False
 ```
 
-### yes-no typeclass
-
-typeclass
-
-```haskell
-class YesNo a where
-    yesno :: a -> Bool
-```
-
-instance
-
-```haskell
-instance YesNo Int where
-    yesno 0 = False
-    yesno _ = True
-```
-
-```haskell
-instance YesNo [a] where
-    yesno [] = False
-    yesno _ = True
-```
-
-```haskell
-instance YesNo Bool where
-    yesno = id	-- id 返回参数
-```
-
-```haskell
-instance YesNo (Maybe a) where
-    yesno (Just _) = True
-    yesno Nothing = False
-```
-
-```haskell
-instance YesNo TrafficLight where
-    yesno Red = False
-    yesno _ = True
-```
+$~$
 
 ### Functor typeclass
 
-可被 map 的类型
+可被 map over
 
 ```haskell
 class Functor f where
     fmap :: (a -> b) -> f a -> f b
 ```
 
-f 类型构造子, 接受类型 a 返回类型, 接受类型 b 返回类型
-
-`map :: (a -> b) -> [a] -> [b]`
-
-map 就是对 List 的 fmap
+* **一类型参数的类型构造子 f**
 
 ```haskell
 instance Functor [] where
     fmap = map
 ```
-
-能做容器的类型可能就是 functor(Functor 的 instance)
 
 ```haskell
 instance Functor Maybe where
@@ -1181,15 +1080,56 @@ instance Functor Maybe where
     fmap f Nothing = Nothing
 ```
 
+二类型参数类型构造子 **Either**
+
+```haskell
+instance Functor (Either a) where
+    fmap f (Right x) = Right (f x)
+    fmap f (Left x) = Left x
+```
+
 ### Kind
 
-king 类型的标签, 类型的类型
+$值 \xrightarrow{标签} 类型 \xrightarrow{标签} kind$ 
 
-`:k` 
+`Int :: *`
 
-`*` 具体类型
+`Maybe :: * -> *`
 
-类型构造子也可 curry, 能 partially apply
+`Either :: * -> * -> *`
+
+#### 类型构造子curry
+
+**class**
+
+```haskell
+class Tofu t where
+    tofu :: j a -> t a j
+```
+
+* `j :: * -> *`
+* `t :: * -> (* -> *) -> *`
+
+**type**
+
+`* -> (* -> *) -> *`
+
+```haskell
+data Frank a b  = Frank {frankField :: b a} deriving (Show)
+```
+
+* `b a :: *`
+* `b :: * -> *`
+* `Frank :: * -> (* -> *) -> *`
+
+**instance**
+
+* type Frank 带入 class Tofu t
+
+```haskell
+instance Tofu Frank where
+    tofu x = Frank x
+```
 
 ## 输入与输出
 
