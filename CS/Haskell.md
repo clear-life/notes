@@ -249,6 +249,7 @@ f x
 
 * 表达式
 * 一行 `;` 隔开
+* **let bindings in expression** bindings 名字 expression 使用名字的表达式
 * 作用域: in, guard, List Comprehension(in 省略)
 
 ```haskell
@@ -1133,157 +1134,240 @@ instance Tofu Frank where
 
 ## 输入与输出
 
-### Hello, world!
+### IO action
+
+#### Hello world
 
 `main = putStrLn "hello, world"`
 
-**编译**
+`putStrLn :: String -> IO ()`
 
-`ghc --make test.hs`
+* `IO` I/O action
+* `()` 返回类型
+* do 绑定多个 IO action 为一个 IO action, 返回类型为最后一个 IO action 的返回类型
+* main 类型为 IO something
 
-```haskell
-:t putStrLn
-putStrLn :: String -> IO ()
+```C++
+getLine :: IO String
+name <- getLine
 ```
 
-* `IO` 表 I/O action, 绑定到 main 后能执行 IO 操作
-* `()` 为 I/O action 的返回值
-* do 将所有 I/O action 绑定为一个
-
-```haskell
-main :: IO something
-main = do
-    putStrLn "Hello, what's your name?"
-    name <- getLine
-    putStrLn ("Hey " ++ name ++ ", you rock!")
-```
-
-**getLine** 类型 IO String, 执行 I/O action 将结果绑定到名字中
-
-* 只有在 I/O action 中才能拿到某一个 I/O action 的数据
-* I/O code: 依赖 I/O 的程序
+* 执行 IO action getLine, 将返回值绑定到 name 名称(String)
+* `<-` 从 IO action 中取出包含的返回值
+* I/O action 才能获取 I/O action 的数据
 
 * do block 最后一个 action 不能绑定名字
 
-let bindings 能在 do block 中使用(不需要 in)
+* **return :: Monad m => a -> m a**  将 pure value 包装为 IO action
 
-```haskell
-main = do
-    line <- getLine
-    if null line
-        then return ()
-        else do
-            putStrLn $ reverseWords line
-            main
+#### IO 函数
 
-reverseWords :: String -> String
-reverseWords = unwords . map reverse . words
-```
+**putStrLn :: String -> IO ()**
 
-**return** 将 pure value 包装为 IO action, return 不会结束执行
+**putStr :: String -> IO ()** 边界条件为空字串
 
-**putStr** 不换行 type signature `putStr :: String -> IO ()`
+**putChar :: Char -> IO ()**
 
-是一个包在 IO action 的 unit, 即空值, 不能绑定
+**print :: Show a => a -> IO ()**
 
-**putChar**
-
-**print** 相当于 `putStrLn . show` 但能输出 `""`
-
-**getChar** type signature `getChar :: IO Char`
+**getChar :: IO Char**
 
 由于缓冲区, 只有按下 Enter 时才会触发读取字符的行为
 
-**when**(`import Contorl.Monad`)
+**when :: Applicative f => Bool -> f () -> f ()** 封装 `if something then do some I/O action else return () `
 
-True 返回传入 IO action, False 返回 return ()
-
-封装 `if something then do some I/O action else return ()`
-
-**sequence** `sequence :: [IO a] -> IO [a]`
+**sequence :: [IO a] -> IO [a]**  [a] IO action 返回值的 List
 
 ```haskell
-main = do
-    a <- getLine
-    b <- getLine
-    c <- getLine
-    print [a,b,c]
-    
-main = do
-    rs <- sequence [getLine, getLine, getLine]
-    print rs
+rs <- sequence [getLine, getLine, getLine]
 ```
 
-**mapM mapM_** 返回 IO action 的函数  List,  mapM_ 丢弃运算结果(例 return () 中的 ())
+**mapM mapM_** mapM 执行 IO action, 返回结果, mapM_ 只执行 IO action, 丢弃结果
 
-**forever** 无限循环一个 IO action
+**forever** 无限循环 IO action
 
-**forM**  Control.Monad 跟 mapM 作用一样, 但参数顺序相反
+**forM** 参数先 List,  
 
 ### 文件与字符流
 
-**getContents** 从标准输入读取直到 EOF `getContents :: IO String` 惰性 IO(按行读取), 用作重导输入输出
+**getContents :: IO String** 行读入, 读到 EOF, Lazy IO
 
-**interact** 接受 `String -> String` 函数, 返回 IO action
+**interact :: (String -> String) -> IO ()**
 
-**openFile** `openFile :: FilePath -> IOMode -> IO Handle` 文件路径 IOMode 返回 IO action
+**openFile :: FilePath -> IOMode -> IO Handle** 
 
-`type FilePath = String`
+```haskell
+type FilePath = String
+data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+```
 
-`data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode`
+**hGetContents :: Handle -> IO String**
 
-`IO Mode` 表示一个 IO action 包含一个类型为 Mode 的值
+**hClose :: Handle -> IO ()**
 
-**hGetContents** 从文件读取 Contents
-
-**hClose** 关闭文件
-
-**withFile** `withFile :: FilePath -> IOMode -> (Handle -> IO a) -> IO a`
+**withFile :: FilePath -> IOMode -> (Handle -> IO a) -> IO a**
 
 **hGetLine**、**hPutStr**、**hPutStrLn**、**hGetChar**
 
-**readFile**  `readFile :: FilePath -> IO String`
+**readFile :: FilePath -> IO String**
 
- **writeFile**  `writefile :: FilePath -> String -> IO ()`
+ **writefile :: FilePath -> String -> IO ()**
 
-**appendFile** 
+**appendFile :: FilePath -> String -> IO ()** 
 
-**hFlush**
+> 默认情况下:
+>
+> 文本文件 line-buffering
+>
+> 二进制文件 block-buffering
 
-**openTempFile**
+**hSetBuffering :: Handle -> BufferMode -> IO ()** 设置 buffer 模式
 
-**removeFile**
+```haskell
+data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
+```
 
-**renameFile**
+* NoBuffering: char
+* LineBuffering: line
+* BlockBuffering: Nothing(操作系统) Just Int byte
+
+**hFlush :: Handle -> IO ()**
+
+**openTempFile :: FilePath -> String -> IO (FilePath, Handle)**
+
+**removeFile :: FilePath -> IO ()**
+
+**renameFile :: String -> FilePath -> IO ()**
 
 ### 命令行引数
 
-**getArgs** `System.Environment` `getArgs :: IO [String]`
+#### System.Environment
 
-**getProgName**
+**getArgs :: IO [String]** 获取命令行参数
+
+**getProgName :: IO String** 获取程序名称
+
+```haskell
+import System.Environment
+import System.Directory
+import System.IO
+import Data.List
+
+dispatch :: [(String, [String] -> IO ())]
+dispatch =  [ ("add", add)
+            , ("view", view)
+            , ("remove", remove)
+            ]       
+            
+main = do
+    (command:args) <- getArgs
+    let (Just action) = lookup command dispatch
+    action args
+  
+add :: [String] -> IO ()
+add [fileName, todoItem] = appendFile fileName (todoItem ++ "\n")
+
+view :: [String] -> IO ()
+view [fileName] = do
+    contents <- readFile fileName
+    let todoTasks = lines contents
+    numberedTasks = zipWith (\n line -> show n ++ " - " ++ line) [0..] todoTasks
+    putStr $ unlines numberedTasks
+
+remove :: [String] -> IO ()
+remove [fileName, numberString] = do
+    handle <- openFile fileName ReadMode
+    (tempName, tempHandle) <- openTempFile "." "temp"
+    contents <- hGetContents handle
+    let number = read numberString
+        todoTasks = lines contents
+        newTodoItems = delete (todoTasks !! number) todoTasks
+    hPutStr tempHandle $ unlines newTodoItems
+    hClose handle
+    hClose tempHandle
+    removeFile fileName
+    renameFile tempName fileName
+```
 
 ### 随机数
 
-**System.Random**
+#### System.Random
 
-**random** `random :: (RandomGen g, Random a) => g -> (a, g)`
+**random :: (RandomGen g, Random a) => g -> (a, g)**
 
-### Bytestrings
+* RandomGen 随机数源类型类
+   * **StdGen**
+* Random 随机数类型类
 
-**Data.ByteString** Strict bytestrings
+**mkStdGen :: Int -> StdGen** 
 
-**Data.ByteString.Lazy** Lazy bytestrings
+```haskell
+random (mkStdGen 100) :: (Int, StdGen)
+```
 
-**pack**
+**randomR :: (RandomGen g, Random a) :: (a, a) -> g -> (a, g)**
 
-**unpack**
+**randomRs** 
 
-**fromChunks**
+**newStdGen** 
 
-**empty**
+### Bytestring
 
-### Exceptions
+#### Strict bytestring
 
-Exception 只能在 I/O section 中被接到
+* Data.ByteString
+* 无惰性
+* 一次性计算整个 bytestring
 
-**catch**
+#### Lazy bytestring
+
+* Data.ByteString.Lazy
+* 惰性
+* 每 chunk 读
+
+**pack :: [Word8] -> ByteString**
+
+**unpack :: ByteString -> [Word8]**
+
+**fromChunks** strict bytestring 转 lazy bytestring
+
+**toChunks** lazy bytestring 转 strict bytestring
+
+**empty** 空 bytestring
+
+### Exception
+
+* pure code 和 IO code 都能抛出 Exception
+* 只有 IO code 才能接收 Exception
+
+```haskell
+System.Directory
+doesFileExist :: FilePath -> IO Bool 
+```
+
+#### System.IO.Error
+
+**catch :: IO a -> (IOError -> IO a) -> IO a**
+
+* **IO a** try block
+* **(IOError -> IO a)** catch block
+
+```haskell
+import System.Environment
+import System.IO
+import System.IO.Error
+
+main = toTry `catch` handler
+
+toTry :: IO ()
+toTry = do (fileName:_) <- getArgs
+            contents <- readFile fileName
+            putStrLn $ "The file has " ++ show (length (lines contents)) ++ " lines!"
+
+handler :: IOError -> IO ()
+handler e = putStrLn "Whoops, had some trouble!"
+```
+
+**isDoesNotExistError :: IOError -> Bool**
+
+**ioError :: IOException -> IO a**
