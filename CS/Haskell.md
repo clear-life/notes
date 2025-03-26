@@ -1371,3 +1371,231 @@ handler e = putStrLn "Whoops, had some trouble!"
 **isDoesNotExistError :: IOError -> Bool**
 
 **ioError :: IOException -> IO a**
+
+## 函数式思考问题
+
+### 逆波兰表示法
+
+`"10 4 3 + 2 * -" -> -4`
+
+```haskell
+import Data.List  
+
+solveRPN :: (Num a, Read a) => String -> a  
+solveRPN = head . foldl foldingFunction [] . words  
+    where   foldingFunction (x:y:ys) "*" = (x * y):ys  
+            foldingFunction (x:y:ys) "+" = (x + y):ys  
+            foldingFunction (x:y:ys) "-" = (y - x):ys  
+            foldingFunction xs numberString = read numberString:xs
+```
+
+### 路径规划
+
+#### 定义类型
+
+```haskell
+data Section = Section { getA :: Int, getB :: Int, getC :: Int } deriving (Show)  
+type RoadSystem = [Section]
+
+data Label = A | B | C deriving (Show)  
+type Path = [(Label, Int)]
+```
+
+#### step 二元函数
+
+```haskell
+roadStep :: (Path, Path) -> Section -> (Path, Path)  
+roadStep (pathA, pathB) (Section a b c) =   
+    let priceA = sum $ map snd pathA  
+        priceB = sum $ map snd pathB  
+        forwardPriceToA = priceA + a  
+        crossPriceToA = priceB + b + c  
+        forwardPriceToB = priceB + b  
+        crossPriceToB = priceA + a + c  
+        newPathToA = if forwardPriceToA <= crossPriceToA  
+                        then (A,a):pathA  
+                        else (C,c):(B,b):pathB  
+        newPathToB = if forwardPriceToB <= crossPriceToB  
+                        then (B,b):pathB  
+                        else (C,c):(A,a):pathA  
+    in  (newPathToA, newPathToB)
+```
+
+#### 路径规划
+
+```haskell
+optimalPath :: RoadSystem -> Path  
+optimalPath roadSystem = 
+    let (bestAPath, bestBPath) = foldl roadStep ([],[]) roadSystem  
+    in  if sum (map snd bestAPath) <= sum (map snd bestBPath)  
+                then reverse bestAPath  
+                else reverse bestBPath
+```
+
+#### 输入输出处理
+
+```haskell
+import Data.List  
+
+main = do  
+    contents <- getContents  
+    let threes = groupsOf 3 (map read $ lines contents)  
+        roadSystem = map (\[a,b,c] -> Section a b c) threes  
+        path = optimalPath roadSystem  
+        pathString = concat $ map (show . fst) path  
+        pathPrice = sum $ map snd path  
+    putStrLn $ "The best path to take is: " ++ pathString  
+    putStrLn $ "The price is: " ++ show pathPrice
+
+groupsOf :: Int -> [a] -> [[a]]  
+groupsOf 0 _ = undefined  
+groupsOf _ [] = []  
+groupsOf n xs = take n xs : groupsOf n (drop n xs)
+```
+
+## Functor Applicative Functor 与 Monoid
+
+### Functor
+
+#### Functor fmap
+
+可被 map over, list, Maybe, tree ...
+
+```haskell
+Functor :: (* -> *) -> Constraint
+f :: * -> * 
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+```
+
+* 类型构造子 f
+* `fmap :: (a -> b) -> f a -> f b`
+* 用函数 `(a -> b)` 将 `(f a)` 映射为 `(f b)`
+* functor 类比为算法, f a 为算法1, f b 为算法2,  a->b 是map over 的函数, 用来映射算法1->算法2
+* 函数 fmap 接受一个函数, 并把函数 lift 到 functor 上
+* lift: 将函数"提升"到另一个上下文中 
+
+#### Instance
+
+**Either a**
+
+```haskell
+instance Functor (Either a) where
+	fmap _ (Left x) = Left x
+	fmap f (Right y) = Right (f y)
+```
+
+> Either a 是类型构造子 f
+>
+> Left x 和 Right y 是类型 f a 的模式(数学变量/形参)
+>
+> f 是类型 a->b 的模式(数学变量)
+
+**IO**
+
+```haskell
+instance Functor IO where
+    fmap f action = do
+        result <- action
+        return (f result)
+```
+
+**`(->) r`**
+
+```haskell
+instance Functor ((->) r) where  
+    fmap f g = (\x -> f (g x))
+    fmap = (.)
+```
+
+* 类型构造子 `(->) r`
+* 类型 `(a->b)` 模式 f
+* 类型 `(r->a)` 模式 g
+* `fmap f g` 类型 `(r->b)`
+
+#### Functor laws
+
+函子定律
+
+**恒等律**
+
+**fmap id = id**
+
+恒等函数映射 = 恒等函数
+
+**组合律**
+
+**fmap (f . g) = fmap f . fmap g**
+
+组合映射 = 映射组合
+
+### Applicative functor
+
+#### 定义
+
+module **Control.Applicative**
+
+typeclass **Applicative**
+
+function **pure <*>**
+
+```haskell
+class (Functor f) => Applicative f where
+	pure :: a -> f a
+	(<*>) :: f (a -> b) -> f a -> f b
+```
+
+**pure**
+
+`pure :: a -> f a`
+
+* f 为 applicative functor instance
+* pure 接受值, 返回包含值的 applicative functor
+
+**<*>**
+
+`(<*>) :: f (a -> b) -> f a -> f b`
+
+**<*>** 接受一个包含函数的 functor 和另一个 functor, 取出 functor 中的函数对另一个 functor 中的值做 map
+
+```haskell
+instance Applicative Maybe where  
+    pure = Just  
+    Nothing <*> _ = Nothing  
+    (Just f) <*> something = fmap f something
+```
+
+**<$>**
+
+**pure f <*> x** 等价于 **fmap f x**
+
+<$> 是中缀版的 fmap
+
+```haskell
+(<$>) :: (Functor f) => (a -> b) -> f a -> f b  
+f <$> x = fmap f x
+```
+
+#### Instance
+
+**Maybe**
+
+```haskell
+instance Applicative Maybe where  
+    pure = Just  
+    Nothing <*> _ = Nothing  
+    (Just f) <*> something = fmap f something
+```
+
+**List**
+
+```haskell
+instance Applicative [] where  
+    pure x = [x]  
+    fs <*> xs = [f x | f <- fs, x <- xs]
+```
+
+* List 是非确定性计算, 代表所有可能
+
+#### IO
+
