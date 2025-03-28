@@ -1934,4 +1934,336 @@ instance F.Foldable Tree where
                                 F.foldMap f r
 ```
 
- 
+## Monad
+
+### 引进
+
+#### 需求
+
+Functor 可被 map over 类型, 带有 context(包裹部分)
+
+```haskell
+fmap :: (Functor f) => (a -> b) -> f a -> f b
+```
+
+Applicative Functor 函数带有 context 的 Functor
+
+```haskell
+(<*>) :: (Applicative f) => f (a -> b) -> f a -> f b
+```
+
+Monad 加强版的 Applicative Functor
+
+`Maybe a` 表示可能会失败的 computation
+
+`[a]` 表示非确定性 computation
+
+`IO a` 表示有 side-effect 的 computation
+
+需求: 对于具有 context 的值 `m a`, 将其带入 `a -> m b` 函数
+
+monad 是支持 `>>=` 的 applicative functor
+
+`>>=` 称为绑定
+
+```haskell
+(>>=) :: (Monad m) => m a -> (a -> m b) -> m b
+```
+
+#### Maybe Monad
+
+Maybe 实现 `>>=` `applyMaybe`
+
+```haskell
+applyMaybe :: Maybe a -> (a -> Maybe b) -> Maybe b  
+applyMaybe Nothing f  = Nothing  
+applyMaybe (Just x) f = f x
+```
+
+### Monad typeclass
+
+#### 定义
+
+```haskell
+class Applicative m => Monad m where  
+    return :: a -> m a  
+
+    (>>=) :: m a -> (a -> m b) -> m b  
+
+    (>>) :: m a -> m b -> m b  
+    x >> y = x >>= \_ -> y  
+
+    fail :: String -> m a  
+    fail msg = error msg
+```
+
+* `return` 将普通值包裹进 monad 中, 等价于 `pure`
+* bind: `>>=` 接收 monadiv value(单子值), 喂给接收普通值的函数, 返回 monad value
+
+#### Maybe instance
+
+```haskell
+instance Monad Maybe where  
+    return x = Just x  
+    Nothing >>= f = Nothing  
+    Just x >>= f  = f x  
+    fail _ = Nothing
+```
+
+#### Maybe 应用
+
+```haskell
+type Birds = Int  
+type Pole = (Birds,Birds)
+```
+
+#### 
+
+```haskell
+landLeft :: Birds -> Pole -> Maybe Pole  
+landLeft n (left,right)  
+    | abs ((left + n) - right) < 4 = Just (left + n, right)  
+    | otherwise                    = Nothing  
+
+landRight :: Birds -> Pole -> Maybe Pole  
+landRight n (left,right)  
+    | abs (left - (right + n)) < 4 = Just (left, right + n)  
+    | otherwise                    = Nothing
+```
+
+
+
+```haskell
+ghci> return (0,0) >>= landRight 2 >>= landLeft 2 >>= landRight 2  
+Just (2,4)
+```
+
+
+
+```haskell
+ghci> return (0,0) >>= landLeft 1 >> Nothing >>= landRight 1  
+Nothing
+```
+
+### do 表示法
+
+#### 定义
+
+* 表达式
+
+* `do` 是 `>>=`  的语法糖, 将 `.. >>= .. >>= ..` 拆分为 `do .. <- ..  .. <- ..`
+* `do` 中每行都是一个单子值
+* 串行, 每一步的值都依赖前一步的结果, 并带着 context 继续下去
+* `do` 中最后一个值不能用 `<-` 绑定
+* `do` 中若一行运算没有用到 `<-` 绑定值, 则实际上使用了 `>>`
+
+重写走钢丝
+
+```haskell
+routine :: Maybe Pole  
+routine = do  
+    start <- return (0,0)  
+    first <- landLeft 2 start  
+    Nothing  
+    second <- landRight 2 first  
+    landLeft 1 second
+```
+
+#### 模式匹配
+
+`<-` 绑定使用模式匹配
+
+模式匹配失败调用 `fail` 函数
+
+默认实现
+
+```haskell
+fail :: (Monad m) => String -> m a  
+fail msg = error msg
+```
+
+Maybe 实现
+
+```haskell
+fail _ = Nothing
+```
+
+### List Monad
+
+#### 定义
+
+```haskell
+instance Monad [] where
+	return x = [x]
+	xs >>= f = concat (map f xs)
+	fail _ = []
+```
+
+#### 不确定性
+
+```haskell
+ghci> [3,4,5] >>= \x -> [x,-x]  
+[3,-3,4,-4,5,-5]
+
+ghci> [1,2] >>= \n -> ['a','b'] >>= \ch -> return (n,ch)  
+[(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+```
+
+do 重写
+
+```haskell
+listOfTuples :: [(Int,Char)]  
+listOfTuples = do  
+    n <- [1,2]  
+    ch <- ['a','b']  
+    return (n,ch)
+```
+
+#### list comprehension
+
+```haskell
+ghci> [ (n,ch) | n <- [1,2], ch <- ['a','b'] ]
+[(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+```
+
+**filter**
+
+```haskell
+ghci> [ x | x <- [1..50], '7' `elem` show x ]  
+[7,17,27,37,47]
+```
+
+**guard** 函数 和 **MonadPlus** typeclass (即是monad 又是 monoid)实现 filter
+
+```haskell
+class Monad m => MonadPlus m where
+	mzero :: m a
+	mplus :: m a -> m a -> m a
+```
+
+mzero 对应 mempty, mplus 对应 mappend
+
+```haskell
+instance MonadPlus [] where  
+    mzero = []  
+    mplus = (++)
+```
+
+mzero 表示不产生结果的非确定性值, 即失败结果
+
+mplus 将两个非确定性值结合为一个
+
+```haskell
+guard :: (MonadPlus m) => Bool -> m ()  
+guard True = return ()  
+guard False = mzero
+```
+
+```haskell
+ghci> [1..50] >>= (\x -> guard ('7' `elem` show x) >> return x)  
+[7,17,27,37,47]
+```
+
+```haskell
+sevensOnly :: [Int]  
+sevensOnly = do  
+    x <- [1..50]  
+    guard ('7' `elem` show x)  
+    return x
+```
+
+#### 不确定性问题
+
+```haskell
+type KnightPos = (Int,Int)
+```
+
+```haskell
+moveKnight :: KnightPos -> [KnightPos]  
+moveKnight (c,r) = do  
+    (c',r') <- [(c+2,r-1),(c+2,r+1),(c-2,r-1),(c-2,r+1)  
+                ,(c+1,r-2),(c+1,r+2),(c-1,r-2),(c-1,r+2)  
+                ]  
+    guard (c' `elem` [1..8] && r' `elem` [1..8])
+    return (c',r')
+```
+
+```haskell
+moveKnight :: KnightPos -> [KnightPos]  
+moveKnight (c,r) = filter onBoard  
+    [(c+2,r-1),(c+2,r+1),(c-2,r-1),(c-2,r+1)  
+    ,(c+1,r-2),(c+1,r+2),(c-1,r-2),(c-1,r+2)  
+    ]  
+    where onBoard (c,r) = c `elem` [1..8] && r `elem` [1..8]
+```
+
+```haskell
+in3 :: KnightPos -> [KnightPos]  
+in3 start = do   
+    first <- moveKnight start  
+    second <- moveKnight first  
+    moveKnight second
+```
+
+```haskell
+in3 start = return start >>= moveKnight >>= moveKnight >>= moveKnight
+```
+
+### 单子律
+
+#### 同一律
+
+**单位元 return**
+
+**Left identity** 
+
+`return x >>= f` $\Leftrightarrow$ `f x` 
+
+**Right identity**
+
+`m >>= return` $\Leftrightarrow$ `m` 
+
+#### 结合律
+
+`(m >>= f) >>= g`  $\Leftrightarrow$  `m >>= (\x -> f x >>= g)` 
+
+#### 单子函数组合
+
+**函数组合**
+
+```haskell
+(.) :: (b -> c) -> (a -> b) -> (a -> c)  
+f . g = (\x -> f (g x))
+```
+
+**单子函数组合**
+
+`g :: a -> m b`
+
+`f :: b -> m c`
+
+定义 `<=<`
+
+```haskell
+(<=<) :: (Monad m) => (b -> m c) -> (a -> m b) -> (a -> m c)
+f <=< g = (\x -> g x >>= f)
+```
+
+单子律
+
+`f <=< return` $\Leftrightarrow$ `f`
+
+`return <=< f` $\Leftrightarrow$ `f`
+
+`(f <=< g) <=< h` $\Leftrightarrow$ `f <=< (g <=< h)`
+
+普通函数
+
+`f . id` $\Leftrightarrow$ `f`
+
+`id . f` $\Leftrightarrow$ `f`
+
+`(f . g) . h` $\Leftrightarrow$ `f . (g . h)`
+
+## Monad
+
