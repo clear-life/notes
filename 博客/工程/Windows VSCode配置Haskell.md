@@ -2,32 +2,34 @@
 
 ## 简介
 
-### Haskell
+### Haskell 特性
 
 * 理论基础: λ 演算
 * 强静态类型
 * 类型推断
 * 惰性求值
-* 纯函数式编程语言: 无 side-effect
+* 纯函数式编程语言
 * 并发编程
 
 ### Haskell 工具链
 
 * **GHCup**
 
-   版本管理器, 管理 Haskell 工具链 (GHC, Cabal, Stack, HLS)
+   Haskell 工具链的版本管理器, 可安装不同版本的 GHC, Cabal 和 Stack, HLS
 
 * **GHC**
 
-  Haskell 编译器
+  Glasgow Haskell Compiler 格拉斯哥 Haskell 编译器
+
+  分为 ghc 编译器, ghci 交互式解释器, runghc 脚本解释器
 
 * **Cabal Stack**
 
-  包管理器和构建系统
+  包管理器和构建工具
 
 * **HLS**
 
-  Haskell Language Server 提供代码编辑相关服务(代码补全, 跳转等)
+  Haskell Language Server: IDE 支持工具
   
 
 $~$
