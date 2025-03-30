@@ -2267,3 +2267,168 @@ f <=< g = (\x -> g x >>= f)
 
 ## Monad
 
+Package 是分发和依赖的单位, 控制模块可见性
+
+Module 是代码组织单位, 控制名称(函数, 类型)可见性
+
+```shell
+my-package/
+  ├── MyPackage.cabal    # 包配置文件
+  ├── src/
+  │   ├── Utils.hs       # 模块1: MyPackage.Utils
+  │   └── Main.hs        # 模块2: MyPackage.Main
+  └── test/              # 测试模块
+```
+
+### Writer Monad
+
+#### 引入
+
+context: 附加值(log)
+
+`applyLog`
+
+```haskell
+applyLog :: (a,String) -> (a -> (b,String)) -> (b,String)  
+applyLog (x,log) f = let (y,newLog) = f x in (y,log ++ newLog)
+```
+
+#### Monoid
+
+monoid 作为附加值
+
+```haskell
+applyLog :: (Monoid m) => (a,m) -> (a -> (b,m)) -> (b,m)  
+applyLog (x,log) f = let (y,newLog) = f x in (y,log `mappend` newLog)
+```
+
+#### 定义
+
+Module `Control.Monad.Writer` 
+
+```haskell
+newtype Writer w a = Writer { runWriter :: (a, w) }
+```
+
+```haskell
+instance (Monoid w) => Monad (Writer w) where  
+    return x = Writer (x, mempty)  
+    (Writer (x,v)) >>= f = let (Writer (y, v')) = f x in Writer (y, v `mappend` v')
+```
+
+#### do
+
+```haskell
+import Control.Monad.Writer  
+
+logNumber :: Int -> Writer [String] Int  
+logNumber x = Writer (x, ["Got number: " ++ show x])  
+
+multWithLog :: Writer [String] Int  
+multWithLog = do  
+    a <- logNumber 3  
+    b <- logNumber 5  
+    return (a*b)
+```
+
+### 单子函数
+
+Monadic functions
+
+#### liftM
+
+```haskell
+liftM :: (Monad m) => (a -> b) -> m a -> m b
+```
+
+```haskell
+fmap :: (Functor f) => (a -> b) -> f a -> f b
+```
+
+```haskell
+liftM :: (Monad m) => (a -> b) -> m a -> m b  
+liftM f m = m >>= (\x -> return (f x))
+```
+
+```haskell
+liftM :: (Monad m) => (a -> b) -> m a -> m b  
+liftM f m = do  
+    x <- m  
+    return (f x)
+```
+
+```haskell
+(<*>) :: (Applicative f) => f (a -> b) -> f a -> f b
+```
+
+```haskell
+ap :: (Monad m) => m (a -> b) -> m a -> m b  
+ap mf m = do  
+    f <- mf  
+    x <- m  
+    return (f x)
+```
+
+```haskell
+liftA2 :: (Applicative f) => (a -> b -> c) -> f a -> f b -> f c  
+liftA2 f x y = f <$> x <*> y
+```
+
+#### join
+
+```haskell
+join :: (Monad m) => m (m a) -> m a 
+join mm = do  
+    m <- mm  
+    m
+```
+
+#### filterM
+
+```haskell
+filter :: (a -> Bool) -> [a] -> [a]
+```
+
+```haskell
+filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
+```
+
+```haskell
+powerset :: [a] -> [[a]]  
+powerset xs = filterM (\x -> [True, False]) xs
+```
+
+#### foldM
+
+```haskell
+foldl :: (a -> b -> a) -> a -> [b] -> a
+```
+
+```haskell
+foldM :: (Monad m) => (a -> b -> m a) -> a -> [b] -> m a
+```
+
+### 自定义 Monad
+
+有理数 `Rational` 分子跟分母用 `%` 分隔
+
+```haskell
+import Data.Ratio
+
+newtype Prob a = Prob { getProb :: [(a,Rational)] } deriving Show
+```
+
+```haskell
+instance Functor Prob where  
+    fmap f (Prob xs) = Prob $ map (\(x,p) -> (f x,p)) xs
+```
+
+```haskell
+instance Monad Prob where  
+    return x = Prob [(x,1%1)]  
+    m >>= f = flatten (fmap f m)  
+    fail _ = Prob []
+```
+
+
+

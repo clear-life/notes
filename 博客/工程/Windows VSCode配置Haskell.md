@@ -53,7 +53,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager
 
 一路 enter 过去, 能安装上 GHCup 就算成功, 其余的都能用 GHCup安装
 
-包下载过程中遇到有关墙方面的网络问题尝试通过 clash 全局代理方法
+包下载过程中遇到有关墙方面的网络问题尝试通过 clash 全局代理下载相应包
 
 **2. 换源**
 
@@ -177,6 +177,8 @@ ghcup install stack latest
 ghcup install hls latest
 ```
 
+$~$
+
 ## Clash 安装
 
 如果通过换源的方式下载不了某些包, 可以通过 Clash for Windows 的 TUN mode 代理全局流量进行安装 
@@ -233,9 +235,13 @@ curl -LO https://www.haskell.org/ghcup/sh/bootstrap-haskell.ps1
 ./bootstrap-haskell.ps1 -Interactive -DisableCurl
 ```
 
+$~$
+
 ## VSCode
 
 安装插件 haskell.haskell
+
+$~$
 
 ## 检验
 
@@ -254,6 +260,8 @@ cabal init --interactive
 cabal build
 cabal run
 ```
+
+$~$
 
 ## 参考
 
