@@ -32,7 +32,11 @@ module MyModule
 ) where
 ```
 
+#### 类型导出
 
+* **TypeName** 只导出类型
+* **TypeName(..)** 导出类型及所有值构造子
+* **TypeName(Constructor1, Constructor2)** 导出类型及指定值构造子
 
 ## 基础概念
 
@@ -46,9 +50,11 @@ referential transparency引用透明: 同参数多次调用函数, 结果相同
 
 **值 类型、名称 绑定、声明 表达式**
 
-$值 \leftarrow 类型 \leftarrow kind$
+$值 \xleftarrow{标签} 类型 \xleftarrow{标签} kind$ 
 
 $名称 \xleftarrow{绑定} 表达式$
+
+$haskell 程序 = 声明 + 表达式$
 
 $~$
 
@@ -56,9 +62,13 @@ $~$
 
 #### 值构造子
 
-值层的构造函数
+**data TypeName = Constructor Type1 Type2**
+
+值层的构造函数, 输入值, 返回值
 
 * Record
+  
+* 前面的值构造子小于后面的值构造子
 
 **List 生成**
 
@@ -71,7 +81,10 @@ $~$
 
 * List Comprehension
 
+   本质是个函数 `-ddump-ds` 查看脱糖代码
+   
    `[ 输出函数 | 限制条件 ]`
+   
 
 
 
@@ -79,15 +92,36 @@ $~$
 
 ### 类型系统
 
+#### ADT
+
+Algebraic Data Type
+
+**data TypeName = Value Constructor | ... [deriving (TypeClass)]**
+
+* deriving typeclass 要求类型构造子所有类型参数都为 typeclass 的 instance
+* 前面的值构造子小于后面的值构造子
+
+**类型别名 type**
+
+* 类型别名只能用在类型部分
+
 #### 类型构造子
 
-类型层的构造函数
+类型层的构造函数, **输入类型, 返回类型**
 
 类型值 $\xleftarrow{构造}$ 类型构造子
 
-* `:k *` 零参类型构造子
-* `:k * -> * -> ..` 有参类型构造子 
-   * **`->`**  `infixr -1 ->` `*->*->*`
+* `:k *` 零类型参数类型构造子
+* `:k * -> * -> ..` 有类型参数类型构造子 
+   * **`->`** 两参类型构造子  `infixr -1 ->` `*->*->*`
+
+      `Int1->Int2->Int3` 结合性为右, 优先级相同, 先 `Int3` 再 `->Int3` 后 `Int2->Int3`, 最后 `Int1->Int2->Int3`
+
+* 类型签名 type signature `::`
+
+* 类型约束 `=>`
+
+   
 
 **Curry**
 
@@ -97,24 +131,19 @@ $~$
 
 通过函数接口定义类型行为, 对类型分类
 
-| Typeclass   |    作用     |      抽像函数      |  示例  |
-| :---------- | :---------: | :----------------: | :----: |
-| **Eq**      |   相等性    |     `==` `/=`      |  Bool  |
-| **Ord**     |    比较     | `<=` `>` `compare` |  Char  |
-| **Show**    |  toString   |       `show`       | [Char] |
-| **Read**    | fromString  |       `read`       |  Bool  |
-| **Num**     |  数值运算   |   `+` `*` `abs`    | Double |
-| **Functor** | 可 map over |       `fmap`       | Maybe  |
+**class C c where**
 
-* 类型约束
+* 最小完整定义: 最小实现函数数量
+
+**instance C TypeName where**
 
 #### Kind
 
 类型的标签
 
-零参类型构造子 $\xrightarrow{kind}$ `*` 
+ `零参类型构造子 :: *` 
 
-有参类型构造子 $\xrightarrow{kind}$ `* -> * -> ..` 
+`有参类型构造子 :: * -> * -> ..` 
 
 $~$
 
@@ -123,15 +152,15 @@ $~$
 **六种名称**: 
 
 * 值命名空间
-   * 变量
+   * **变量**
       * 函数
-   * 值构造子
+   * **值构造子**
 * 类型命名空间
-   * 类型变量
-   * 类型构造子
-   * 类型类
+   * **类型变量**
+   * **类型构造子**
+   * **类型类**
 * 模块命名空间
-   * 模块
+   * **模块**
 
 **限制**:
 
@@ -139,7 +168,7 @@ $~$
 
    **值构造子 类型构造子 类型类 模块** 大写字母开头
 
-* 同作用域, **类型构造子和类型类不能重名**
+* 同作用域**类型构造子和类型类不能重名**
 
 $~$
 
@@ -149,15 +178,21 @@ $~$
 
 * 模式匹配解构传入值
 
-* let 表达式绑定
+* let 绑定
 
-* where 子句绑定
+* where 绑定
 
-* do 表达式绑定
+* do 绑定
 
 #### 模式匹配
 
+模式匹配: 检查输入值的值构造子, 解构参数
+
 `xs@pattern` as 模式对整体的引用
+
+**递归模式匹配**
+
+递归类型的值构造子通过**递归模式匹配**逐层解析
 
 $~$
 
@@ -174,7 +209,7 @@ $~$
 
 * 名称
 
-   变量名/函数名
+   名称表示绑定有表达式
 
 * 值构造
 
@@ -182,8 +217,46 @@ $~$
 
 * if case let do
 
+   * **if exp then exp1 else exp2**
    * **let bindings in expression**
    * **case expression of pattern -> expression**
+   * do 绑定多个 IO action 为一个 IO action, 返回类型为最后一个 IO action 的返回类型
+
+
+
+## 类型类
+
+### Functor
+
+可被 map over
+
+```haskell
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+```
+
+
+
+**instance**
+
+```haskell
+instance Functor [] where
+    fmap = map
+```
+
+```haskell
+instance Functor Maybe where
+    fmap f (Just x) = Just (f x)
+    fmap f Nothing = Nothing
+```
+
+```haskell
+instance Functor (Either a) where
+    fmap f (Right x) = Right (f x)
+    fmap f (Left x) = Left x
+```
+
+
 
 
 
@@ -194,12 +267,30 @@ $~$
 **前缀函数**
 
 * 前缀式调用 `()`
-* 10级, 左结合
+* default: 10级, 左结合
 
 **中缀函数**
 
 * 中缀式调用 ```  ``  ```
-* `[infixl/infixr/infix] [0-9] f`  0-9级, 左/右/无 结合
+* 优先级结合性: `[infixl/infixr/infix] [0-9] f`  0-9级, 左/右/无 结合
+
+优先级高先计算, 优先级低后计算
+
+例: 分析 `(map +)` 和 `(map (+))` 的类型
+
+```haskell
+ghci> :t (map +)  
+(map +) :: Num ((a -> b) -> [a] -> [b]) => ((a -> b) -> [a] -> [b]) -> (a -> b) -> [a] -> [b]
+
+ghci> :t (map (+))
+(map (+)) :: Num a => [a] -> [a -> a]
+```
+
+* map + 中 map 是前缀函数, + 是中缀函数, + 优先级低后计算, map 优先级高先计算, 从而将 map 作为整体视为 + 的第一个参数, 才会将 map 的类型 (a->b)->[a]->[b] 加上类型约束 Num 视为 + 的第一个参数, 然后 map + 就会期待 + 的另一个参数(map 类型), 返回同样的类型(map类型), 这也就是 map + 的类型为 (map +) :: Num ((a -> b) -> [a] -> [b]) => ((a -> b) -> [a] -> [b]) -> (a -> b) -> [a] -> [b] 的原因
+
+   > 当类型不匹配时，Haskell 会尝试通过假设存在类型类实例来统一类型，导致反直觉的推导结果。
+
+* map (+) 则不同, map 和 (+) 都是前缀函数, map 和 (+) 会被看作同一级存在, 然后就会以 map 函数作为要调用的函数, 将 (+) 作为参数, map 类型中的 a -> b 与 (+) 的 c->c->c 对应, a 就是 c, b 就是 c -> c, 最终的结果就是 [a] -> [a->a]
 
 **Guard**
 
@@ -248,7 +339,23 @@ f . g = \x -> f (g x)
 
 ### 重要函数
 
-**map 映射**
+**运算符**
+
+| operator | 优先级结合性 |            作用            |
+| :------: | :----------: | :------------------------: |
+|  **$**   | `infixr 0 $` |     相当于在右侧加括号     |
+| **`.`**  | `infixr 9 .` | 复合函数(point free style) |
+
+```haskell
+($) :: (a -> b) -> a -> b  
+f $ x = f x
+
+map ($ 3) [(4+),(10*),(^2),sqrt]  -- $ 可将值作为函数使用
+```
+
+**map**
+
+映射
 
 ```haskell
 map :: (a->b) -> [a] -> [b]
@@ -256,7 +363,9 @@ map _ [] = []
 map f (x:xs) = f x : map f xs
 ```
 
-**filter 过滤**
+**filter**
+
+过滤
 
 ```haskell
 filter :: (a->Bool) -> [a] -> [a]
@@ -286,6 +395,17 @@ filter f (x:xs)
 
 scanl scanl1 scanr scanr1 记录累加值的所有状态到 list
 
+**zip**
+
+打包
+
+```haskell
+zip :: [a] -> [b] -> [(a, b)]
+zip [] _ = []
+zip _ [] = []
+zip (x:xs) (y:ys) = (x, y) : zip xs ys
+```
+
 **zipWith 打包**
 
 ```haskell
@@ -302,48 +422,96 @@ flip' :: (a->b->c) -> b -> a -> c
 flip' f y x = f x y
 ```
 
-### 常用函数
-
-**运算符**
-
-| operator | 优先级结合性 |            作用            |
-| :------: | :----------: | :------------------------: |
-|  **$**   | `infixr 0 $` |     相当于在右侧加括号     |
-| **`.`**  | `infixr 9 .` | 复合函数(point free style) |
-
-```haskell
-($) :: (a -> b) -> a -> b  
-f $ x = f x
-
-map ($ 3) [(4+),(10*),(^2),sqrt]  -- $ 可将值作为函数使用
-```
+**compare** 返回 `GT LT EQ `
 
 
 
-**Num**
+$~$
+
+## 数学
+
+#### 函数
+
+$f(x,y...)=...$
+
+$f(x,y...)$
+
+#### List
+
+数列 ${a_1, a_2\ ...}$
+
+$\{x\in X|f(a,b...), a\in A,b\in B.. \}$ 列表推导式
+
+zip
+$$
+A = a1,a2\dots, B=b1,b2\dots 	\\
+\{(a_i,b_i)|a_i\in A,b_i\in B\}
+$$
+
+#### Curry
+
+$f(x,y,z) = g(x)*h(y)*j(z)$
+
+每次带入一个变量的值
+
+$f(a,y,z) = g(a)*h(y)*j(z)$
+
+$f(a,b,z) = g(a)*h(b)*j(z)$
+
+$f(a,b,c) = g(a)*h(b)*j(c)$
+
+
+
+fold f c0 x
+
+$c1 = f(x_0, c_0)$
+
+$c2 = f(x_1, c_1)$
+
+$...$
+
+$c_{n+1} = f(x_{n}, c_n)$
+
+$(f\circ g) = f(g(x))$
+
+## 表格
+
+### 类型
+
+#### 类型类
+
+| Typeclass   |    作用     |      抽像函数      |  示例  |
+| :---------- | :---------: | :----------------: | :----: |
+| **Eq**      |   相等性    |     `==` `/=`      |  Bool  |
+| **Ord**     |    比较     | `<=` `>` `compare` |  Char  |
+| **Show**    |  toString   |       `show`       | [Char] |
+| **Read**    | fromString  |       `read`       |  Bool  |
+| **Num**     |  数值运算   |   `+` `*` `abs`    | Double |
+| **Functor** | 可 map over |       `fmap`       | Maybe  |
+
+### 函数
+
+#### Num
 
 | **fromIntegral** | 整数换为通用数 |
 | :--------------: | :------------: |
 |                  |                |
-|                  |                |
-|                  |                |
-|                  |                |
 
-**List**
+#### List
 
-取元素
+**取元素**
 
-|   **!!**    | `[a] !! i` |
-| :---------: | :--------: |
-|  **take**   | 前n个元素  |
-|  **head**   |    头部    |
-|  **tail**   |    尾部    |
-|  **last**   |   尾元素   |
-|  **init**   |    非尾    |
-| **maximum** |  最大元素  |
-| **minimum** |  最小元素  |
+|   **!!**    | 第 i 个元素 |
+| :---------: | :---------: |
+|  **take**   |  前n个元素  |
+|  **head**   |    头部     |
+|  **tail**   |    尾部     |
+|  **last**   |   尾元素    |
+|  **init**   |    非尾     |
+| **maximum** |  最大元素   |
+| **minimum** |  最小元素   |
 
-查信息
+**查信息**
 
 |   length    |     长度      |
 | :---------: | :-----------: |
@@ -352,7 +520,7 @@ map ($ 3) [(4+),(10*),(^2),sqrt]  -- $ 可将值作为函数使用
 |   **sum**   |    元素和     |
 | **product** |    元素积     |
 
-变换
+**变换**
 
 |    **:**    |       前插        |
 | :---------: | :---------------: |
@@ -360,7 +528,7 @@ map ($ 3) [(4+),(10*),(^2),sqrt]  -- $ 可将值作为函数使用
 | **reverse** |       反转        |
 |  **drop**   |  删除前 n 个元素  |
 
-List 生成
+**List 生成**
 
 |   **cycle**   |   重复 List    |
 | :-----------: | :------------: |
@@ -368,6 +536,134 @@ List 生成
 | **replicate** | 重复元素 n 次  |
 |    **zip**    | 生成 pair list |
 |  **zipWith**  |  二元函数 zip  |
+
+#### IO
+
+**putStrLn :: String -> IO ()**
+
+**putStr :: String -> IO ()** 边界条件为空字串
+
+**putChar :: Char -> IO ()**
+
+**print :: Show a => a -> IO ()**
+
+**getChar :: IO Char**
+
+由于缓冲区, 只有按下 Enter 时才会触发读取字符的行为
+
+**when :: Applicative f => Bool -> f () -> f ()** 封装 `if something then do some I/O action else return () `
+
+**sequence :: [IO a] -> IO [a]**  [a] IO action 返回值的 List
+
+```haskell
+rs <- sequence [getLine, getLine, getLine]
+```
+
+**mapM mapM_** mapM 执行 IO action, 返回结果, mapM_ 只执行 IO action, 丢弃结果
+
+**forever** 无限循环 IO action
+
+**forM** 
+
+#### 文件与字节流
+
+**getContents :: IO String** 行读入, 读到 EOF, Lazy IO
+
+**interact :: (String -> String) -> IO ()**
+
+**openFile :: FilePath -> IOMode -> IO Handle** 
+
+```haskell
+type FilePath = String
+data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+```
+
+**hGetContents :: Handle -> IO String**
+
+**hClose :: Handle -> IO ()**
+
+**withFile :: FilePath -> IOMode -> (Handle -> IO a) -> IO a**
+
+**hGetLine**、**hPutStr**、**hPutStrLn**、**hGetChar**
+
+**readFile :: FilePath -> IO String**
+
+ **writefile :: FilePath -> String -> IO ()**
+
+**appendFile :: FilePath -> String -> IO ()** 
+
+> 默认情况下:
+>
+> 文本文件 line-buffering
+>
+> 二进制文件 block-buffering
+
+**hSetBuffering :: Handle -> BufferMode -> IO ()** 设置 buffer 模式
+
+```haskell
+data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
+```
+
+* NoBuffering: char
+* LineBuffering: line
+* BlockBuffering: Nothing(操作系统) Just Int byte
+
+**hFlush :: Handle -> IO ()**
+
+**openTempFile :: FilePath -> String -> IO (FilePath, Handle)**
+
+**removeFile :: FilePath -> IO ()**
+
+**renameFile :: String -> FilePath -> IO ()**
+
+#### 字节流
+
+**Strict bytestring**
+
+* Data.ByteString
+* 无惰性
+* 一次性计算整个 bytestring
+
+**Lazy bytestring**
+
+* Data.ByteString.Lazy
+* 惰性
+* 每 chunk 读
+
+**pack :: [Word8] -> ByteString**
+
+**unpack :: ByteString -> [Word8]**
+
+**fromChunks** strict bytestring 转 lazy bytestring
+
+**toChunks** lazy bytestring 转 strict bytestring
+
+**empty** 空 bytestring
+
+#### Exception
+
+* pure code 和 IO code 都能抛出 Exception
+* 只有 IO code 才能接收 Exception
+
+```haskell
+System.Directory
+doesFileExist :: FilePath -> IO Bool 
+```
+
+**System.IO.Error**
+
+**catch :: IO a -> (IOError -> IO a) -> IO a**
+
+* **IO a** try block
+* **(IOError -> IO a)** catch block
+
+**isDoesNotExistError :: IOError -> Bool**
+
+**ioError :: IOException -> IO a**
+
+#### Bounded
+
+**minBound maxBound** 
 
 ### 模块函数
 
@@ -571,50 +867,28 @@ ghci> groupBy ((==) `on` (> 0)) values
 
 **toList** Set->List
 
-$~$
+#### System.Environment
 
-## 数学
+**getArgs :: IO [String]** 获取命令行参数
 
-#### 函数
+**getProgName :: IO String** 获取程序名称
 
-$f(x,y...)=...$
+#### System.Random
 
-$f(x,y...)$
+**random :: (RandomGen g, Random a) => g -> (a, g)**
 
-#### List
+* RandomGen 随机数源类型类
+   * **StdGen**
+* Random 随机数类型类
 
-数列 ${a_1, a_2\ ...}$
+**mkStdGen :: Int -> StdGen** 
 
-$\{x\in X|f(a,b...), a\in A,b\in B.. \}$ 列表推导式
+```haskell
+random (mkStdGen 100) :: (Int, StdGen)
+```
 
-`zip :: [a] -> [b] -> [(a, b)]`
-$$
-A = a1,a2\dots, B=b1,b2\dots 	\\
-\{(a_i,b_i)|a_i\in A,b_i\in B\}
-$$
+**randomR :: (RandomGen g, Random a) :: (a, a) -> g -> (a, g)**
 
-#### Curry
+**randomRs** 
 
-$f(x,y,z) = g(x)*h(y)*j(z)$
-
-每次带入一个变量的值
-
-$f(a,y,z) = g(a)*h(y)*j(z)$
-
-$f(a,b,z) = g(a)*h(b)*j(z)$
-
-$f(a,b,c) = g(a)*h(b)*j(c)$
-
-
-
-fold f c0 x
-
-$c1 = f(x_0, c_0)$
-
-$c2 = f(x_1, c_1)$
-
-$...$
-
-$c_{n+1} = f(x_{n}, c_n)$
-
-$(f\circ g) = f(g(x))$
+**newStdGen** 
