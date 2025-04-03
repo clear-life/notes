@@ -1,27 +1,27 @@
 # Haskell 体系
 
-## 程序结构
+### 程序结构
 
 * module 模块
    * declaration 声明
       * expression 表达式
          * lexical structure 词法结构
 
-### 模块
+#### 模块
 
-#### 导入模块
+**导入模块**
 
-**import Data.List**
+import Data.List
 
-**import Data.List (f, g)**
+import Data.List (f, g)
 
-**import Data.List hiding (f)**
+import Data.List hiding (f)
 
-**import qualified Data.List**
+import qualified Data.List
 
-**import qualified Data.List as L**
+import qualified Data.List as L
 
-#### 自定义模块
+**自定义模块**
 
 ```haskell
 module MyModule
@@ -32,23 +32,25 @@ module MyModule
 ) where
 ```
 
-#### 类型导出
+**类型导出**
 
-* **TypeName** 只导出类型
-* **TypeName(..)** 导出类型及所有值构造子
-* **TypeName(Constructor1, Constructor2)** 导出类型及指定值构造子
+* TypeName 只导出类型
+* TypeName(..) 导出类型及所有值构造子
+* TypeName(Constructor1, Constructor2) 导出类型及指定值构造子
 
-## 基础概念
+### 基础概念
 
 side effect 改变函数外状态
 
 referential transparency引用透明: 同参数多次调用函数, 结果相同
 
+惰性计算 lazy: 真正需要时才计算
+
+* 无限 List 参与计算
+
 ## 核心
 
-### 概念
-
-**值 类型、名称 绑定、声明 表达式**
+### 值 类型  名称 绑定  声明 表达式
 
 $值 \xleftarrow{标签} 类型 \xleftarrow{标签} kind$ 
 
@@ -62,94 +64,86 @@ $~$
 
 #### 值构造子
 
-**data TypeName = Constructor Type1 Type2**
-
-值层的构造函数, 输入值, 返回值
+值构造子: 值层的构造函数, 输入值, 返回值
 
 * Record
   
 * 前面的值构造子小于后面的值构造子
 
-**List 生成**
+* 值构造子 `:`
 
-* Range 
+* `True` 零参值构造子, `Just` 一参值构造子
 
-   **`[a1, a2 .. n]` **
+#### 函数
 
-   * 默认步长为 1
-   * 避免使用浮点数
-
-* List Comprehension
-
-   本质是个函数 `-ddump-ds` 查看脱糖代码
-   
-   `[ 输出函数 | 限制条件 ]`
-   
-
-
+函数是一等公民, 函数(名/调用)是个值
 
 $~$
 
 ### 类型系统
 
-#### ADT
+#### 类型定义
+
+**ADT data**
 
 Algebraic Data Type
 
-**data TypeName = Value Constructor | ... [deriving (TypeClass)]**
+```haskell
+data TypeName = Value Constructor | ... [deriving (TypeClass)]
+```
 
 * deriving typeclass 要求类型构造子所有类型参数都为 typeclass 的 instance
-* 前面的值构造子小于后面的值构造子
+* 前面值构造子小于后面值构造子
 
 **类型别名 type**
 
-* 类型别名只能用在类型部分
+* 类型别名只能用在类型系统(定义新类型, 类型声明, 类型注释)
+* `type a :: * = b :: *`
+* `type a :: * -> * = b :: * -> *`
 
-#### 类型构造子
-
-类型层的构造函数, **输入类型, 返回类型**
-
-类型值 $\xleftarrow{构造}$ 类型构造子
-
-* `:k *` 零类型参数类型构造子
-* `:k * -> * -> ..` 有类型参数类型构造子 
-   * **`->`** 两参类型构造子  `infixr -1 ->` `*->*->*`
-
-      `Int1->Int2->Int3` 结合性为右, 优先级相同, 先 `Int3` 再 `->Int3` 后 `Int2->Int3`, 最后 `Int1->Int2->Int3`
+**类型声明**
 
 * 类型签名 type signature `::`
 
-* 类型约束 `=>`
+* 类型约束 type constraint `=>`
 
-   
+* 类型多态 polymorphism: `Nothing` 类型 `Maybe a`
 
-**Curry**
+#### 类型构造子
 
-类型构造子可部分应用类型参数
+类型构造子: 类型层的构造函数, **输入类型, 返回类型**
+
+* 零参类型构造子 `*`
+
+* 多参类型构造子 `* -> * -> ..`
+
+   * **`->`** **两参中缀类型构造子**  `infixr -1 ->`  `*->*->*`
+
+* **Curry**
+
+   类型构造子可部分应用类型参数
 
 #### 类型类
 
-通过函数接口定义类型行为, 对类型分类
-
-**class C c where**
+函数接口定义行为, 对类型分类
 
 * 最小完整定义: 最小实现函数数量
 
-**instance C TypeName where**
+**class C c where**
+
+**instance C T where**
 
 #### Kind
 
 类型的标签
 
- `零参类型构造子 :: *` 
+零参类型构造子 kind:  `*` 
 
-`有参类型构造子 :: * -> * -> ..` 
+有参类型构造子 kind:  `* -> * -> ..` 
 
 $~$
 
 ### 名称
-
-**六种名称**: 
 
 * 值命名空间
    * **变量**
@@ -164,7 +158,7 @@ $~$
 
 **限制**:
 
-* **变量名 类型变量名** 小写字母/_开头
+* **变量 类型变量** 小写字母/_开头
 
    **值构造子 类型构造子 类型类 模块** 大写字母开头
 
@@ -174,25 +168,34 @@ $~$
 
 ### 绑定
 
+**数学的 `=`**
+
 名称与表达式关联
 
-* 模式匹配解构传入值
-
-* let 绑定
-
+* 普通绑定 `=`
+* monad 绑定 `<-`
 * where 绑定
-
+* let 绑定
 * do 绑定
 
 #### 模式匹配
 
-模式匹配: 检查输入值的值构造子, 解构参数
+> 升级版绑定 
+
+数学: **值的构造**分情况讨论
+
+通过**值构造子**对输入值解构
+
+* 解构 `(x : xs) = [1, 2, 3]`
+* 分支 `f p0 = ;f p1 =`
+
+直接模式匹配 `(a, b) = (1, 2)`
+
+递归类型值构造子通过**递归模式匹配**逐层解析
 
 `xs@pattern` as 模式对整体的引用
 
-**递归模式匹配**
-
-递归类型的值构造子通过**递归模式匹配**逐层解析
+匹配失败转入下一模式, 否则崩溃
 
 $~$
 
@@ -209,26 +212,65 @@ $~$
 
 * 名称
 
-   名称表示绑定有表达式
-
-* 值构造
-
-   值构造子调用/记录/列表推导式/算术序列
+* 值构造子
 
 * if case let do
 
    * **if exp then exp1 else exp2**
-   * **let bindings in expression**
-   * **case expression of pattern -> expression**
-   * do 绑定多个 IO action 为一个 IO action, 返回类型为最后一个 IO action 的返回类型
+   * **let bind in exp**
+   * **case var of p -> exp**
+   * do 绑定多个 IO action 为一个 IO action
+   
+* **List 生成(语法糖)**
+
+   * Range  `[a1, a2 .. n]`
+   
+      * 默认步长为 1
+      * 避免使用浮点数
+   
+   * List Comprehension `[ 输出函数 | 限制条件 ]`
+   
+      * 本质是个函数 `-ddump-ds` 查看脱糖代码
+   
+      
 
 
 
-## 类型类
+## Functor Applicative Monad
+
+### Context
+
+#### 包裹
+
+context: 通过类型构造子为值附加计算逻辑, 将值包裹在上下文(情景/情况)中 
+
+Maybe 可能存在可能不存在
+
+IO 输入输出
+
+[] 非确定性
+
+Either 可能失败 携带错误信息
+
+#### 必要性
+
+保持纯函数的同时处理现实问题, 通过类型系统将现实问题的处理隔离在特定的上下文中
+
+#### 操作值
+
+`<-` 提取值
+
+`fmap` `<$>` `<*>` `>>=` `>>` 维护 context
 
 ### Functor
 
 可被 map over
+
+类型构造子 f
+
+f a 盒子f 包裹普通类型 a
+
+f b 盒子 f 包裹普通类型 b
 
 ```haskell
 class Functor f where
@@ -258,11 +300,15 @@ instance Functor (Either a) where
 
 
 
+### Monad
 
+`<-` 语法结构
 
 ## 函数
 
 ### 语法
+
+作用域分级: $函数 \rightarrow 模式 \rightarrow Guard$ 
 
 **前缀函数**
 
@@ -294,6 +340,8 @@ ghci> :t (map (+))
 
 **Guard**
 
+**分段函数**
+
 ```haskell
 f pattern
 	| exp1 = 
@@ -303,7 +351,9 @@ f pattern
 
 **Where**
 
-作用域: **函数或模式匹配分支**
+**局部绑定**
+
+作用域: **函数或模式**
 
 ```haskell
 f x = 
@@ -311,6 +361,8 @@ f x =
 ```
 
 **Lambda**
+
+**匿名函数调用**
 
 `\ x y .. -> ...`
 
@@ -327,15 +379,29 @@ f . g = \x -> f (g x)
 
 ### Curry
 
+数学: 部分带入
+
 允许函数部分调用
 
 * 前缀函数按参数顺序 curry, 中缀函数可不按顺序
 * 函数是一等公民, 像值一样传递
 
-* 部分调用, 复用函数
+* 复用函数
 * 类型系统支持 curry `a -> b -> c` $\Leftrightarrow$ `a -> (b -> c)`
 * 函数组合 `.`
 * 高阶函数抽像能力
+
+```haskell
+f x y z = x + y + z
+```
+
+等价于
+
+```haskell
+f = \x -> \y -> \z -> x + y + z
+```
+
+
 
 ### 重要函数
 
@@ -370,9 +436,9 @@ map f (x:xs) = f x : map f xs
 ```haskell
 filter :: (a->Bool) -> [a] -> [a]
 filter _ [] = []
-filter f (x:xs)
-	| f x = x : filter f xs 
-	| otherwise = filter f xs
+filter p (x:xs)
+	| p x = x : filter p xs 
+	| otherwise = filter p xs
 ```
 
 **fold**
@@ -539,6 +605,12 @@ $(f\circ g) = f(g(x))$
 
 #### IO
 
+长了脚的盒子, 包裹普通类型的值
+
+IO action 绑定到 main 时触发
+
+`return` 与 `<-` 作用相反
+
 **putStrLn :: String -> IO ()**
 
 **putStr :: String -> IO ()** 边界条件为空字串
@@ -559,13 +631,13 @@ $(f\circ g) = f(g(x))$
 rs <- sequence [getLine, getLine, getLine]
 ```
 
-**mapM mapM_** mapM 执行 IO action, 返回结果, mapM_ 只执行 IO action, 丢弃结果
+**mapM mapM_** mapM map 后 sequence, mapM_ map 后 sequence 并丢弃结果
 
 **forever** 无限循环 IO action
 
 **forM** 
 
-#### 文件与字节流
+#### 文件
 
 **getContents :: IO String** 行读入, 读到 EOF, Lazy IO
 
@@ -616,7 +688,15 @@ data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
 
 **renameFile :: String -> FilePath -> IO ()**
 
+#### System.Environment
+
+**getArgs :: IO [String]** 获取命令行参数
+
+**getProgName :: IO String** 获取程序名称
+
 #### 字节流
+
+单位 byte(8 bit)
 
 **Strict bytestring**
 
@@ -867,19 +947,13 @@ ghci> groupBy ((==) `on` (> 0)) values
 
 **toList** Set->List
 
-#### System.Environment
-
-**getArgs :: IO [String]** 获取命令行参数
-
-**getProgName :: IO String** 获取程序名称
-
 #### System.Random
 
 **random :: (RandomGen g, Random a) => g -> (a, g)**
 
-* RandomGen 随机数源类型类
+* RandomGen 随机数生成
    * **StdGen**
-* Random 随机数类型类
+* Random 随机数值
 
 **mkStdGen :: Int -> StdGen** 
 
@@ -887,8 +961,12 @@ ghci> groupBy ((==) `on` (> 0)) values
 random (mkStdGen 100) :: (Int, StdGen)
 ```
 
+**randoms**
+
 **randomR :: (RandomGen g, Random a) :: (a, a) -> g -> (a, g)**
 
 **randomRs** 
+
+**getStdGen**
 
 **newStdGen** 
