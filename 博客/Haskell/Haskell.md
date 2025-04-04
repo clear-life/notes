@@ -2,9 +2,19 @@
 
 ### Functor
 
+Functor: **纯函数**应用在 **context 包裹的值**, 得到**新 context **, 保持**context 语义不变**
+
+**本质: 函数 f 应用在 context1 中的值1, 维护 context 语义不变, 得到 context2 中的值2**
+
+functor(值系统) 看作输出具有 context 的值
+
+* `Just 3` 输出3, 带有可能无值的 context
+* `[1, 2, 3]` 输出 1, 2, 3, 带有可能多个或零个值的 context
+* `(+3)` 输出 x + 3, 带有依赖参数的 context
+
 #### Functor fmap
 
-可被 map over, list, Maybe, tree ...
+**fmap: 函数 f 应用在 context1 中的值1, 维护 context 语义不变, 得到 context2 中的值2**
 
 ```haskell
 Functor :: (* -> *) -> Constraint
@@ -13,104 +23,13 @@ class Functor f where
   fmap :: (a -> b) -> f a -> f b
 ```
 
-* 类型构造子 f
-* `fmap :: (a -> b) -> f a -> f b`
-* 用函数 `(a -> b)` 将 `(f a)` 映射为 `(f b)`
-* functor 类比为算法, f a 为算法1, f b 为算法2,  a->b 是map over 的函数, 用来映射算法1->算法2
-* 函数 fmap 接受一个函数, 并把函数 lift 到 functor 上
-* lift: 将函数"提升"到另一个上下文中 
+* 类型构造子 f 包裹 pure value
 
-#### Instance
+* 纯函数与 context 分离: fmap 把纯函数 lift 到 functor 上, 对functor 里的 pure value 应用纯函数, 保持 context 语义不变生成新 functor
 
-**Either a**
+   > lift: 将函数"提升"到另一个 context 中 
 
-```haskell
-instance Functor (Either a) where
-	fmap _ (Left x) = Left x
-	fmap f (Right y) = Right (f y)
-```
-
-> Either a 是类型构造子 f
->
-> Left x 和 Right y 是类型 f a 的模式(数学变量/形参)
->
-> f 是类型 a->b 的模式(数学变量)
-
-**IO**
-
-```haskell
-instance Functor IO where
-    fmap f action = do
-        result <- action
-        return (f result)
-```
-
-**`(->) r`**
-
-```haskell
-instance Functor ((->) r) where  
-    fmap f g = (\x -> f (g x))
-    fmap = (.)
-```
-
-* 类型构造子 `(->) r`
-* 类型 `(a->b)` 模式 f
-* 类型 `(r->a)` 模式 g
-* `fmap f g` 类型 `(r->b)`
-
-#### Functor laws
-
-函子定律
-
-**恒等律**
-
-**fmap id = id**
-
-恒等函数映射 = 恒等函数
-
-**组合律**
-
-**fmap (f . g) = fmap f . fmap g**
-
-组合映射 = 映射组合
-
-### Applicative functor
-
-#### 定义
-
-module **Control.Applicative**
-
-typeclass **Applicative**
-
-function **pure <*>**
-
-```haskell
-class (Functor f) => Applicative f where
-	pure :: a -> f a
-	(<*>) :: f (a -> b) -> f a -> f b
-```
-
-**pure**
-
-`pure :: a -> f a`
-
-* f 为 applicative functor instance
-* pure 接受值, 返回包含值的 applicative functor
-
-**<*>**
-
-`(<*>) :: f (a -> b) -> f a -> f b`
-
-**<*>** 接受一个包含函数的 functor 和另一个 functor, 取出 functor 中的函数对另一个 functor 中的值做 map
-
-```haskell
-instance Applicative Maybe where  
-    pure = Just  
-    Nothing <*> _ = Nothing  
-    (Just f) <*> something = fmap f something
-```
-
-**<$>**
+**<$>** 中缀版 fmap
 
 **pure f <*> x**  $\Leftrightarrow$  **fmap f x**  $\Leftrightarrow$  **f <\$> x**
 
@@ -121,7 +40,135 @@ f <$> x = fmap f x
 
 #### Instance
 
+**`[]`**
+
+* pure value: 所有可能的值
+* `[]`: 可能的多个或零个值
+
+`[]` 包裹可能的结果值
+
+fmap 将纯函数 f lift 到 `[]` functor 上, 对包裹的所有可能结果应用纯函数 f, 生成新 `[]` functor
+
+```haskell
+instance Functor [] where
+	fmap = map
+```
+
 **Maybe**
+
+* pure value: 成功值
+* `Maybe`: 可能失败的计算
+
+`Maybe` 包裹可能失败的值
+
+fmap 将纯函数 f lift 到 `Maybe` functor 上, 对包裹的可能失败值应用纯函数 f, 生成新 `Maybe` functor
+
+```haskell
+instance Functor Maybe where
+	fmap _ Nothing = Nothing
+	fmap f (Just a) = Just (f a)
+```
+
+**Either a**
+
+* pure value : 可能的成功值
+* Either a: 失败时的错误信息
+
+Either a 包裹可能的成功值
+
+fmap 将纯函数 f lift 到 Either a functor 上, 对包裹的 pure value 应用纯函数 f, 生成新 Either a functor
+
+```haskell
+instance Functor (Either a) where
+	fmap _ (Left x) = Left x
+	fmap f (Right y) = Right (f y)
+```
+
+**IO**
+
+IO a
+
+* pure value : 通过副作用获取的值
+* IO: 描述如何与外部世界交互(输入输出, 带有副作用)
+
+IO 包裹通过副作用获取的值
+
+fmap 将纯函数 f lift 到 IO functor 上, 对包裹的 pure value 应用纯函数 f, 生成新 IO functor
+
+```haskell
+instance Functor IO where
+    fmap f action = do
+        result <- action
+        return (f result)
+```
+
+**`(->) r`**
+
+`(->) r a`
+
+* pure value: 函数调用的结果值
+* `(->) r`: 函数输入类型为 r
+
+`(->) r` 包裹函数调用的结果值
+
+fmap 将纯函数 f lift 到 `(->) r` functor 上, 对包裹的函数调用结果值应用纯函数 f, 生成新 `(->) r` functor
+
+```haskell
+instance Functor ((->) r) where  
+    fmap f g = (\x -> f (g x))
+    fmap = (.)
+```
+
+* 类型构造子 `(->) r`
+* f 类型 `a -> b`
+* g 类型 `r -> a`
+* `fmap f g` 类型 `(r->b)`
+
+#### Functor laws
+
+**恒等律**
+
+**fmap id = id**
+
+fmap 恒等函数 = 恒等函数
+
+**组合律**
+
+**fmap (f . g) = fmap f . fmap g**
+
+fmap 组合函数 = fmap 函数后组合
+
+### Applicative functor
+
+Applicative functor: 包裹在 context 中的纯函数, 应用到包裹在 context 中的值, 生成新的 context
+
+* 应用 context 中的函数
+* 支持多参函数
+* **本质: context1 中的值1(函数), 与 context2 中的值2 作用, 维护 context 语义不变, 生成 context3 中的值3**
+
+#### 定义
+
+`module Control.Applicative`
+
+```haskell
+class (Functor f) => Applicative f where
+	pure :: a -> f a
+	(<*>) :: f (a -> b) -> f a -> f b
+```
+
+**pure**: 将值包裹进 context f 中
+
+**<*>**: 从 context1 中取出值1(函数 `a->b`), 应用在 context2 中的值2, 返回 context3 中的值3
+
+* <*> 加强版 fmap, 读作 apply
+
+
+
+#### Instance
+
+**Maybe**
+
+context: 可能失败的运算
 
 ```haskell
 instance Applicative Maybe where  
@@ -132,15 +179,19 @@ instance Applicative Maybe where
 
 **List**
 
+context: 所有可能结果
+
 ```haskell
 instance Applicative [] where  
     pure x = [x]  
     fs <*> xs = [f x | f <- fs, x <- xs]
 ```
 
-* List 是非确定性计算, 代表所有可能
-
 **IO**
+
+context: 输入输出, 副作用
+
+sequence: do 有先后顺序
 
 ```haskell
 instance Applicative IO where  
@@ -153,13 +204,40 @@ instance Applicative IO where
 
 **`(->) r`**
 
-装着结果的盒子 **`f a = (r->a)`**
+包裹函数调用结果
+
+context: 函数带有环境进行计算, `(->) r` 共享环境 `r`, 即共享同样的输入, 其类型为 `r` 
 
 ```haskell
 instance Applicative ((->) r) where
 	pure x = (\_ -> x)
 	f <*> g = \x -> f x (g x)
 ```
+
+```haskell
+f <*> g = \x -> f x (g x)
+
+r->a->b <*> r->a = r->b
+将 r->a->b 包裹的 a->b 函数应用在 r->a 包裹的 a 上, 得到 r->b 包裹的 b, 共享环境 r
+
+f <*> g = \x -> f x (g x)
+```
+
+理解 `(+) <$> (+3) <*> (*100)`
+
+`(+) <$> (+3)`  将 + 应用在 `r->a` 包裹的 `a` 上, 得到 `r->a->b` `\x -> (+) (x + 3)` 
+
+`*100 :: r->a`
+
+`(+) <$> (+3) <*> (*100)` 将 `r->a->b` 包裹的函数 `a->b` 应用在 `r->a` 包裹的 `a` 上, 得到 `r->b` 
+
+context: 共享环境 r
+
+设类型 r 的值为 x
+
+最终结果 `r->b` 为 `\x -> (x+3) + (x*100)`
+
+
 
 **ZipList**
 

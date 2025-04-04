@@ -48,9 +48,7 @@ referential transparency引用透明: 同参数多次调用函数, 结果相同
 
 * 无限 List 参与计算
 
-## 核心
-
-### 值 类型  名称 绑定  声明 表达式
+## 值 类型  名称 绑定  声明 表达式
 
 $值 \xleftarrow{标签} 类型 \xleftarrow{标签} kind$ 
 
@@ -94,6 +92,7 @@ data TypeName = Value Constructor | ... [deriving (TypeClass)]
 
 * deriving typeclass 要求类型构造子所有类型参数都为 typeclass 的 instance
 * 前面值构造子小于后面值构造子
+* 不要在 data 声明中加类型约束
 
 **类型别名 type**
 
@@ -218,6 +217,7 @@ $~$
 
    * **if exp then exp1 else exp2**
    * **let bind in exp**
+      * do 和 list comprehension 中不需要 in
    * **case var of p -> exp**
    * do 绑定多个 IO action 为一个 IO action
    
@@ -298,11 +298,7 @@ instance Functor (Either a) where
     fmap f (Left x) = Left x
 ```
 
-
-
 ### Monad
-
-`<-` 语法结构
 
 ## 函数
 
@@ -313,16 +309,15 @@ instance Functor (Either a) where
 **前缀函数**
 
 * 前缀式调用 `()`
-* default: 10级, 左结合
+* 10级, 左结合
 
 **中缀函数**
 
 * 中缀式调用 ```  ``  ```
-* 优先级结合性: `[infixl/infixr/infix] [0-9] f`  0-9级, 左/右/无 结合
+* `[infixl/infixr/infix] [0-9] op`  0-9级, 左/右/无 结合
+* 优先级高先计算, 优先级低后计算
 
-优先级高先计算, 优先级低后计算
-
-例: 分析 `(map +)` 和 `(map (+))` 的类型
+分析 `(map +)` 和 `(map (+))` 的类型
 
 ```haskell
 ghci> :t (map +)  
@@ -333,8 +328,6 @@ ghci> :t (map (+))
 ```
 
 * map + 中 map 是前缀函数, + 是中缀函数, + 优先级低后计算, map 优先级高先计算, 从而将 map 作为整体视为 + 的第一个参数, 才会将 map 的类型 (a->b)->[a]->[b] 加上类型约束 Num 视为 + 的第一个参数, 然后 map + 就会期待 + 的另一个参数(map 类型), 返回同样的类型(map类型), 这也就是 map + 的类型为 (map +) :: Num ((a -> b) -> [a] -> [b]) => ((a -> b) -> [a] -> [b]) -> (a -> b) -> [a] -> [b] 的原因
-
-   > 当类型不匹配时，Haskell 会尝试通过假设存在类型类实例来统一类型，导致反直觉的推导结果。
 
 * map (+) 则不同, map 和 (+) 都是前缀函数, map 和 (+) 会被看作同一级存在, 然后就会以 map 函数作为要调用的函数, 将 (+) 作为参数, map 类型中的 a -> b 与 (+) 的 c->c->c 对应, a 就是 c, b 就是 c -> c, 最终的结果就是 [a] -> [a->a]
 
@@ -350,8 +343,6 @@ f pattern
 ```
 
 **Where**
-
-**局部绑定**
 
 作用域: **函数或模式**
 
@@ -370,12 +361,12 @@ f x =
 
 **复合函数**
 
+`infixr 9 .`
+
 ```haskell
 (.) :: (b->c) -> (a->b) -> a -> c
 f . g = \x -> f (g x)
 ```
-
-
 
 ### Curry
 
@@ -383,21 +374,15 @@ f . g = \x -> f (g x)
 
 允许函数部分调用
 
-* 前缀函数按参数顺序 curry, 中缀函数可不按顺序
+* 前缀函数按顺序 curry, 中缀函数可不按顺序
 * 函数是一等公民, 像值一样传递
-
 * 复用函数
 * 类型系统支持 curry `a -> b -> c` $\Leftrightarrow$ `a -> (b -> c)`
-* 函数组合 `.`
 * 高阶函数抽像能力
 
 ```haskell
 f x y z = x + y + z
-```
 
-等价于
-
-```haskell
 f = \x -> \y -> \z -> x + y + z
 ```
 
@@ -407,16 +392,23 @@ f = \x -> \y -> \z -> x + y + z
 
 **运算符**
 
-| operator | 优先级结合性 |            作用            |
-| :------: | :----------: | :------------------------: |
-|  **$**   | `infixr 0 $` |     相当于在右侧加括号     |
-| **`.`**  | `infixr 9 .` | 复合函数(point free style) |
+| operator  |  优先级结合性  |            作用            |
+| :-------: | :------------: | :------------------------: |
+|   **$**   |  `infixr 0 $`  |     相当于在右侧加括号     |
+|  **`.`**  |  `infixr 9 .`  | 复合函数(point free style) |
+| **`<$>`** | `infixl 4 <$>` |        中缀版 fmap         |
+| **`<*>`** | `infixl 4 <*>` |        加强版 fmap         |
 
 ```haskell
 ($) :: (a -> b) -> a -> b  
 f $ x = f x
 
 map ($ 3) [(4+),(10*),(^2),sqrt]  -- $ 可将值作为函数使用
+```
+
+```haskell
+(.) :: (b->c) -> (a->b) -> a -> c
+f . g = \x -> f (g x)
 ```
 
 **map**
@@ -487,8 +479,6 @@ zipWith' f (x:xs) (y:ys) = f x y : zipWith' f xs ys
 flip' :: (a->b->c) -> b -> a -> c
 flip' f y x = f x y
 ```
-
-**compare** 返回 `GT LT EQ `
 
 
 
