@@ -2,9 +2,9 @@
 
 ### Functor
 
-Functor: **纯函数**应用在 **context 包裹的值**, 得到**新 context **, 保持**context 语义不变**
+Functor: 将**普通函数**应用在 **带有 context 值上**, 得到**新 context 值**
 
-**本质: 函数 f 应用在 context1 中的值1, 维护 context 语义不变, 得到 context2 中的值2**
+**本质: 函数 f 应用在 context1 中的值1, 得到 context2 中的值2**
 
 functor(值系统) 看作输出具有 context 的值
 
@@ -14,7 +14,11 @@ functor(值系统) 看作输出具有 context 的值
 
 #### Functor fmap
 
-**fmap: 函数 f 应用在 context1 中的值1, 维护 context 语义不变, 得到 context2 中的值2**
+**fmap: 将函数用在 context 值上**
+
+**fmap: 函数 f 应用在 context1 中的值1, 得到 context2 中的值2**
+
+**fmap: 普通函数 lift 到 context 上**
 
 ```haskell
 Functor :: (* -> *) -> Constraint
@@ -25,11 +29,7 @@ class Functor f where
 
 * 类型构造子 f 包裹 pure value
 
-* 纯函数与 context 分离: fmap 把纯函数 lift 到 functor 上, 对functor 里的 pure value 应用纯函数, 保持 context 语义不变生成新 functor
-
-   > lift: 将函数"提升"到另一个 context 中 
-
-**<$>** 中缀版 fmap
+**<$>** 中缀版 fmap, 将函数用在包裹的值上
 
 **pure f <*> x**  $\Leftrightarrow$  **fmap f x**  $\Leftrightarrow$  **f <\$> x**
 
@@ -37,6 +37,8 @@ class Functor f where
 (<$>) :: (Functor f) => (a -> b) -> f a -> f b  
 f <$> x = fmap f x
 ```
+
+
 
 #### Instance
 
@@ -138,13 +140,14 @@ fmap 恒等函数 = 恒等函数
 
 fmap 组合函数 = fmap 函数后组合
 
+$~$
+
 ### Applicative functor
 
-Applicative functor: 包裹在 context 中的纯函数, 应用到包裹在 context 中的值, 生成新的 context
+Applicative functor: 包裹在 context 中的普通函数, 应用到 context 中的值, 生成新 context
 
-* 应用 context 中的函数
-* 支持多参函数
-* **本质: context1 中的值1(函数), 与 context2 中的值2 作用, 维护 context 语义不变, 生成 context3 中的值3**
+* **将 context 中的函数用在 context 中的值上**
+* **本质: context1 中的值1(函数), 与 context2 中的值2 作用, 生成 context3 中的值3**
 
 #### 定义
 
@@ -158,9 +161,21 @@ class (Functor f) => Applicative f where
 
 **pure**: 将值包裹进 context f 中
 
+**<*>: 将包裹的函数用在包裹的值上**
+
 **<*>**: 从 context1 中取出值1(函数 `a->b`), 应用在 context2 中的值2, 返回 context3 中的值3
 
 * <*> 加强版 fmap, 读作 apply
+* <*> context 函数应用在 context 值上
+
+**<$>** 中缀版 fmap, 将函数用在包裹的值上
+
+**pure f <*> x**  $\Leftrightarrow$  **fmap f x**  $\Leftrightarrow$  **f <\$> x**
+
+```haskell
+(<$>) :: (Functor f) => (a -> b) -> f a -> f b  
+f <$> x = fmap f x
+```
 
 
 
@@ -223,13 +238,13 @@ r->a->b <*> r->a = r->b
 f <*> g = \x -> f x (g x)
 ```
 
-理解 `(+) <$> (+3) <*> (*100)`
+**理解 `(+) <$> (+3) <*> (*100)`**
 
 `(+) <$> (+3)`  将 + 应用在 `r->a` 包裹的 `a` 上, 得到 `r->a->b` `\x -> (+) (x + 3)` 
 
 `*100 :: r->a`
 
-`(+) <$> (+3) <*> (*100)` 将 `r->a->b` 包裹的函数 `a->b` 应用在 `r->a` 包裹的 `a` 上, 得到 `r->b` 
+`(+) <$> (+3) <*> (*100)` 将 `r->a->b` 包裹的函数 `a->b` 应用在 `r->a` 包裹的 `a` 上, 得到 `r->b` 包裹的 `b`
 
 context: 共享环境 r
 
@@ -237,7 +252,15 @@ context: 共享环境 r
 
 最终结果 `r->b` 为 `\x -> (x+3) + (x*100)`
 
+**练习**: `(\x y z -> [x,y,z]) <$> (+3) <*> (*2) <*> (/2) $ 5`
 
+lambda 函数类型为 `a -> b -> c -> d`
+
+<$> 第一个函数后 `r -> b -> c -> d`
+
+<*> 第二个函数后 `r -> c -> d`
+
+<*> 第三个函数后 `r -> d` 表达式 `[x+3, x*2, x/2]`
 
 **ZipList**
 
@@ -251,7 +274,15 @@ instance Applicative ZipList where
 
 **getZipList :: ZipList a -> [a]** 从 zip list 取出 list
 
+`(,,)` 函数与 `\x y z -> (x,y,z)` 等价 
+
+`(,)` 与 `\x y -> (x,y)` 等价
+
+**zipWith3** **zipWith4** .. **zipWith7**
+
 **liftA2**
+
+二元函数版 fmap
 
 ```haskell
 liftA2 :: (Applicative f) => (a -> b -> c) -> f a -> f b -> f c  
@@ -260,16 +291,80 @@ liftA2 f a b = f <$> a <*> b
 
 **sequenceA**
 
+**sequenceA: 将包裹的值串为 list**
+
+多个 applicative a 按序应用 `:` 函数绑为一个 applicative [a]
+
+`sequenceA f a1 : [f a] = f (x:) <*> f [xs]`
+
 ```haskell
-sequenceA :: (Applicative f) => [f a] -> f [a]  
+sequenceA :: (Applicative f) => [f a] -> f [a] 
 sequenceA [] = pure []  
 sequenceA (x:xs) = (:) <$> x <*> sequenceA xs
 ```
 
 ```haskell
-sequenceA :: (Applicative f) => [f a] -> f [a]  
+sequenceA :: (Applicative f) => [f a] -> f [a] 
 sequenceA = foldr (liftA2 (:)) (pure [])
 ```
+
+> 注意前缀函数调用优先级无限高, 下面练习时需注意这一点
+
+理解 `sequenceA [Just 1, Just 2]`
+
+`(:) <$> Just 1 <*> sequenceA [Just 2]`
+
+`(:) <$> Just 1 <*> ((:) <$> Just 2 <*> sequenceA [])`
+
+`(:) <$> Just 1 <*> ((:) <$> Just 2 <*> Just [])`
+
+`(:) <$> Just 1 <*> Just [2]`
+
+`Just (1:) <*> Just [2]`
+
+`Just [1, 2]`
+
+理解 `sequenceA [Just 1, Nothing, Just 2]`
+
+`Just (1:) <*> sequenceA [Nothing, Just 2]`
+
+`Just (1:) <*> ((:) <$> Nothing <*> sequenceA [Just 2])`
+
+`Just (1:) <*> (Nothing <*> Just [2])`
+
+`Just (1:) <*> Nothing`
+
+`Nothing`
+
+理解 `sequenceA [(+3), (*2), (/2)]`
+
+`Applicative (-> r)`
+
+`sequenceA [r->a, r->a, r->a]`
+
+`r->(a:) <*> sequenceA [r->a, r->a]`
+
+`r->(a:) <*> (r->(a:) <*> sequenceA [r->a])`
+
+`r->(a:) <*> (r->(a:) <*> r->[a])`
+
+`r->(a:) <*> r->[a,a]`
+
+`r->[a,a,a]`
+
+`\x -> [x+3, x*2, x/2]`
+
+理解 `sequenceA [[1,2], [3,4]`
+
+`Applicative []`
+
+`sequenceA [[1,2], [3,4]`
+
+`(:) <$> [1,2] <*> sequenceA [[3,4]]`
+
+`[(1:), (2:)] <*> [[3], [4]]`
+
+`[[1,3], [1,4], [2,3], [2,4]]` 外层 `[]` 为 `f`, 内层 `[]` 为 `[a]`
 
 #### 定律
 
@@ -281,18 +376,23 @@ pure f <*> pure x = pure (f x)
 u <*> pure y = pure ($ y) <*> u
 ```
 
+`pure (.) <*> u <*> v <*> w = u <*> (v <*> w)`
+
+`pure (.) <*> f a <*> f b <*> f c` = `f (a.b c)`
+
+`f a <*> (f b <*> f c)` = `f (a (b c))`
+
+即 `a.b c = a (b c)`
+
 ### 关键字 newtype
 
 #### 定义
 
-**newtype** 以现有类型定义新类型
+**newtype** 单参数单值构造子
 
 ```haskell
 newtype ZipList a = ZipList { getZipList :: [a] }
 ```
-
-* 轻量级封装, 成本低
-* 只能定义一个单字段值构造子
 
 **deriving**
 
@@ -302,13 +402,13 @@ newtype CharList = CharList { getCharList :: [Char] } deriving (Eq, Show)
 
 值构造子  `CharList :: [Char] -> CharList`
 
-函数 `getCharList :: CharList -> [Char]`
+record 函数 `getCharList :: CharList -> [Char]`
 
 #### newtype 定制 instance
 
-需求: tuple 为 Functor 的 instance, 用 fmap 来 map over tuple 时会使用二参数 tuple 的第一个元素
+`fmap (+3) (1,1)` 会将 tuple 的第二个元素当作被包裹的元素进行函数调用, 结果会是 `(1,4)`
 
-例: `fmap (+3) (1, 1)` 得到 `(4, 1)`
+若需要将 tuple 的第一个元素视为被包裹的元素就需要 newtype 定义新的类型参数顺序
 
 **newtype 定制 instance tuple**
 
@@ -370,7 +470,7 @@ newtype 只允许一个值构造子, 无需计算值构造子, 跳过 undefined 
 
 type 类型别名, 更易理解
 
-newtype 简单包装, 单字段单值构造子
+newtype 简单包装, 单参数单值构造子
 
 data 自定义类型, 任意数量字段和值构造子
 
@@ -378,10 +478,7 @@ data 自定义类型, 任意数量字段和值构造子
 
 #### 定义
 
-二元函数满足:
-
-* 结合律
-* identity
+对类型 m, 有二元函数满足**结合律**和有**幺元(单位元)**
 
 ```haskell
 class Monoid m where
@@ -394,7 +491,9 @@ class Monoid m where
 * mempty 即 1
 * mappend 即二元函数
 
-定律
+#### 定律
+
+幺元 结合律
 
 ```haskell
 mempty `mappend` x = x
@@ -402,7 +501,11 @@ x `mappend` mempty = x
 (x `mappend` y) `mappend` z = x `mappend` (y `mappend` z)
 ```
 
-#### List
+#### Instance
+
+**List**
+
+`++` `[]`
 
 ```haskell
 instance Monoid [a] where
@@ -410,27 +513,16 @@ instance Monoid [a] where
 	mappend = (++)
 ```
 
-#### Product 和 Sum
+数字是一种 Monoid
 
-Num 是一种 monoid:
-
-* 二元函数 `*`  identity `1`
-* 二元函数 `+`  identity `0`
-
-newtype 包装现有类型定义两种方式
+* 函数 `*` 幺元 `1`
+* 函数 `+`  幺元  `0`
 
 **Product**
 
 ```haskell
-newtype Product a =  Product { getProduct :: a }  
-    deriving (Eq, Ord, Read, Show, Bounded)
+newtype Product a =  Product { getProduct :: a } deriving (Eq, Ord, Read, Show, Bounded)
 ```
-
-包裹 **Product a**
-
-解开 **getProduct (Product a)**
-
-Monoid instance
 
 ```haskell
 instance Num a => Monoid (Product a) where
@@ -440,9 +532,8 @@ instance Num a => Monoid (Product a) where
 
 **Sum**
 
-```
-newtype Sum a =  Product { getProduct :: a }  
-    deriving (Eq, Ord, Read, Show, Bounded)
+```haskell
+newtype Sum a =  Product { getSum :: a } deriving (Eq, Ord, Read, Show, Bounded)
 ```
 
 ```haskell
@@ -451,18 +542,15 @@ instance Num a => Monoid (Sum a) where
     Sum x `mappend` Sum y = Sum (x + y)
 ```
 
-#### Any 和 All
+Bool 是一种 Monoid
 
-Bool 是一种 Monoid:
-
-* 二元函数 `||`  identity `False`
-* 二元函数 `||`  identity `False`
+* 函数 `||`  幺元 `False`
+* 函数 `&&`  幺元 `True`
 
 **Any**
 
 ```haskell
-newtype Any = Any { getAny :: Bool }  
-    deriving (Eq, Ord, Read, Show, Bounded)
+newtype Any = Any { getAny :: Bool } deriving (Eq, Ord, Read, Show, Bounded)
 ```
 
 ```haskell
@@ -474,17 +562,20 @@ instance Monoid Any where
 **All**
 
 ```haskell
-newtype All = All { getAll :: Bool }  
-        deriving (Eq, Ord, Read, Show, Bounded)
+newtype All = All { getAll :: Bool } deriving (Eq, Ord, Read, Show, Bounded)
 ```
 
 ```haskell
 instance Monoid All where  
-        mempty = All True  
-        All x `mappend` All y = All (x && y)
+	mempty = All True  
+	All x `mappend` All y = All (x && y)
 ```
 
-#### Ordering
+**Ordering**
+
+函数: 短路逻辑 幺元 `EQ`
+
+链式优先级比较
 
 ```haskell
 instance Monoid Ordering where  
@@ -494,9 +585,34 @@ instance Monoid Ordering where
     GT `mappend` _ = GT
 ```
 
-#### Maybe
+幺元: `EQ` 表示相等, 继续右侧比较
 
-Monoid a => Monoid (Maybe a)
+函数: 
+
+* 左侧为 EQ, 继续右侧比较
+* 左侧不为 EQ, 左侧为结果, 右侧短路
+
+结合律证明
+
+```haskell
+(x <> y) <> z = x <> (y <> z)
+```
+
+* 若 x 为 `EQ`, 两边均为 `y <> z`
+* 若 x 不为 `EQ`, 两边短路返回 `x`
+
+```haskell
+compare (a1, b1, c1) (a2, b2, c2) = 
+	compare a1 a2 <> compare b1 b2 <> compare c1 c2
+```
+
+**Maybe**
+
+Maybe a 中的 a 必须是 Monoid
+
+函数: Monoid a 的 mappend 函数
+
+幺元: Nothing
 
 ```haskell
 instance Monoid a => Monoid (Maybe a) where  
@@ -506,27 +622,26 @@ instance Monoid a => Monoid (Maybe a) where
     Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
 ```
 
-丢掉第二个值
+**First**
+
+确定一堆 Maybe 中是否有 Just
 
 ```haskell
-newtype First a = First { getFirst :: Maybe a }  
-    deriving (Eq, Ord, Read, Show)
+newtype First a = First { getFirst :: Maybe a } deriving (Eq, Ord, Read, Show)
 ```
 
 ```haskell
 instance Monoid (First a) where  
-    mempty = First Nothing  
-    First (Just x) `mappend` _ = First (Just x)  
-    First Nothing `mappend` x = x
+	mempty = First Nothing  
+	First (Just x) `mappend` _ = First (Just x)  
+	First Nothing `mappend` x = x
 ```
 
-保留第二个值 Last a
+**Last a** 保留最后一个非 Nothing 值
 
 ### Foldable
 
-使用 Monoid fold 数据结构
-
-Foldable typeclass 可 flod 结构
+可 flod
 
 ```haskell
 import qualified Foldable as F
@@ -534,10 +649,11 @@ import qualified Foldable as F
 
 ```haskell
 foldr :: (a -> b -> b) -> b -> [a] -> b
+
 F.foldr :: (F.Foldable t) => (a -> b -> b) -> b -> t a -> b
 ```
 
-实作 `flodr` 或 `foldMap`
+foldMap 应用函数对 foldable 中的元素进行应用, 结果为 monoid 类型
 
 ```haskell
 foldMap :: (Monoid m, Foldable t) => (a -> m) -> t a -> m
@@ -551,47 +667,33 @@ data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
 
 ```haskell
 instance F.Foldable Tree where  
-    foldMap f Empty = mempty  
-    foldMap f (Node x l r) = F.foldMap f l `mappend`  
-                                f x           `mappend`  
-                                F.foldMap f r
+	foldMap f Empty = mempty  
+	foldMap f (Node x l r) = F.foldMap f l `mappend` f x `mappend` F.foldMap f r
 ```
+
+理解 `F.foldMap (\x -> Any $ x == 3) testTree`
+
+monoid `Any `
+
+foldable `Tree`
+
+将 testTree 中元素带入 `(\x -> Any $ x == 3)` 得到 `Any True` 或 `Any False` 再用 `mappend` 运算为一个 `Any` 值, 只要树中有 3, 结果就是 `Any True`, 否则就是 `Any False`
 
 ## Monad
 
-### 引进
+### Monad
 
-#### 需求
+**context 间依赖**
 
-Functor 可被 map over 类型, 带有 context(包裹部分)
+需求: 将 context 的值用在普通函数上, 返回 context 值
 
-```haskell
-fmap :: (Functor f) => (a -> b) -> f a -> f b
-```
-
-Applicative Functor 函数带有 context 的 Functor
-
-```haskell
-(<*>) :: (Applicative f) => f (a -> b) -> f a -> f b
-```
-
-Monad 加强版的 Applicative Functor
-
-`Maybe a` 表示可能会失败的 computation
-
-`[a]` 表示非确定性 computation
-
-`IO a` 表示有 side-effect 的 computation
-
-需求: 对于具有 context 的值 `m a`, 将其带入 `a -> m b` 函数
-
-monad 是支持 `>>=` 的 applicative functor
-
-`>>=` 称为绑定
+monad: 支持 `>>=`(bind) 的 applicative functor
 
 ```haskell
 (>>=) :: (Monad m) => m a -> (a -> m b) -> m b
 ```
+
+
 
 #### Maybe Monad
 
