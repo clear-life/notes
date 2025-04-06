@@ -11,15 +11,15 @@
 
 **导入模块**
 
-import Data.List
+import Data.List 全部
 
-import Data.List (f, g)
+import Data.List (f, g) 限定
 
-import Data.List hiding (f)
+import Data.List hiding (f) 排除
 
-import qualified Data.List
+import qualified Data.List 全名
 
-import qualified Data.List as L
+import qualified Data.List as L 小名
 
 **自定义模块**
 
@@ -34,9 +34,9 @@ module MyModule
 
 **类型导出**
 
-* TypeName 只导出类型
-* TypeName(..) 导出类型及所有值构造子
-* TypeName(Constructor1, Constructor2) 导出类型及指定值构造子
+* TypeName 类型
+* TypeName(..) 类型及所有值构造子
+* TypeName(Constructor1, Constructor2) 类型及指定值构造子
 
 ### 基础概念
 
@@ -62,15 +62,11 @@ $~$
 
 #### 值构造子
 
-值构造子: 值层的构造函数, 输入值, 返回值
+值构造子: 值层构造函数, 输入值, 返回值
 
-* Record
-  
-* 前面的值构造子小于后面的值构造子
-
+* Record 自动生成取值函数
 * 值构造子 `:`
-
-* `True` 零参值构造子, `Just` 一参值构造子
+* 前值构造子小于后值构造子
 
 #### 函数
 
@@ -91,14 +87,11 @@ data TypeName = Value Constructor | ... [deriving (TypeClass)]
 ```
 
 * deriving typeclass 要求类型构造子所有类型参数都为 typeclass 的 instance
-* 前面值构造子小于后面值构造子
 * 不要在 data 声明中加类型约束
 
 **类型别名 type**
 
-* 类型别名只能用在类型系统(定义新类型, 类型声明, 类型注释)
-* `type a :: * = b :: *`
-* `type a :: * -> * = b :: * -> *`
+* 类型别名只能用在类型系统(定义新类型, 类型声明, 类型注释等)
 
 **类型声明**
 
@@ -106,11 +99,13 @@ data TypeName = Value Constructor | ... [deriving (TypeClass)]
 
 * 类型约束 type constraint `=>`
 
-* 类型多态 polymorphism: `Nothing` 类型 `Maybe a`
+* 类型多态 polymorphism
+   * `Nothing` 类型 `Maybe a`
+
 
 #### 类型构造子
 
-类型构造子: 类型层的构造函数, **输入类型, 返回类型**
+类型构造子: 类型层构造函数, **输入类型, 返回类型**
 
 * 零参类型构造子 `*`
 
@@ -134,7 +129,7 @@ data TypeName = Value Constructor | ... [deriving (TypeClass)]
 
 #### Kind
 
-类型的标签
+类型标签
 
 零参类型构造子 kind:  `*` 
 
@@ -146,7 +141,6 @@ $~$
 
 * 值命名空间
    * **变量**
-      * 函数
    * **值构造子**
 * 类型命名空间
    * **类型变量**
@@ -167,8 +161,6 @@ $~$
 
 ### 绑定
 
-**数学的 `=`**
-
 名称与表达式关联
 
 * 普通绑定 `=`
@@ -181,20 +173,16 @@ $~$
 
 > 升级版绑定 
 
-数学: **值的构造**分情况讨论
+数学: **值的结构**分情况讨论
 
-通过**值构造子**对输入值解构
+匹配**值构造子**对输入值解构
 
-* 解构 `(x : xs) = [1, 2, 3]`
-* 分支 `f p0 = ;f p1 =`
-
-直接模式匹配 `(a, b) = (1, 2)`
+* 值解构 `(x : xs) = [1, 2, 3]`
+* 多模式 `f p0 = ;f p1 =`
 
 递归类型值构造子通过**递归模式匹配**逐层解析
 
 `xs@pattern` as 模式对整体的引用
-
-匹配失败转入下一模式, 否则崩溃
 
 $~$
 
@@ -210,31 +198,16 @@ $~$
 ### 表达式
 
 * 名称
-
 * 值构造子
-
 * if case let do
 
-   * **if exp then exp1 else exp2**
-   * **let bind in exp**
+   * if-else 脱糖 case
+   * **let bind in exp** 脱糖 lambda
       * do 和 list comprehension 中不需要 in
    * **case var of p -> exp**
-   * do 绑定多个 IO action 为一个 IO action
-   
-* **List 生成(语法糖)**
+   * do 绑定多个 IO action 为一个 IO action 脱糖 `>>=`
 
-   * Range  `[a1, a2 .. n]`
-   
-      * 默认步长为 1
-      * 避免使用浮点数
-   
-   * List Comprehension `[ 输出函数 | 限制条件 ]`
-   
-      * 本质是个函数 `-ddump-ds` 查看脱糖代码
-   
-      
-
-
+$~$
 
 ## Functor Applicative Monad
 
@@ -518,7 +491,7 @@ $f(a,b,c) = g(a)*h(b)*j(c)$
 
 
 
-fold f c0 x
+`fold f c0 x`
 
 $c1 = f(x_0, c_0)$
 
@@ -592,6 +565,16 @@ $(f\circ g) = f(g(x))$
 | **replicate** | 重复元素 n 次  |
 |    **zip**    | 生成 pair list |
 |  **zipWith**  |  二元函数 zip  |
+
+语法糖
+
+* Range  `[a1, a2 .. an]`
+   * `enumFromTo a1 an`
+   * `enumFromThenTo a1 a2 an`
+
+* List Comprehension `[ 输出函数 | 限制条件 ]`
+
+   * `concatMap (\输入值 -> if 限制条件 then 输出函数 else []) 输入集合`
 
 #### IO
 

@@ -66,7 +66,7 @@ $~$
 
 ### List Comprehension
 
-concatMap
+`>>=`
 
 ```haskell
 [x^2 | x <- [1..10], even x]
@@ -75,7 +75,7 @@ concatMap
 脱糖
 
 ```haskell
-concatMap (\x -> if even x then [x^2] else []) [1..10]
+[1..10] >>= (\x -> guard (even x)) >> return (x^2)
 ```
 
 ### do
@@ -110,6 +110,8 @@ getLine >>= \name -> putStrLn ("Hello, " ++ name)
 
 ### 字符串
 
+[]
+
 ```haskell
 "Hello World"
 ```
@@ -122,6 +124,8 @@ getLine >>= \name -> putStrLn ("Hello, " ++ name)
 
 ### Let
 
+lambda
+
 ```haskell
 let a = 0; b = 1 in a + b
 ```
@@ -133,6 +137,8 @@ let a = 0; b = 1 in a + b
 ```
 
 ### If-else
+
+case
 
 ```haskell
 if x >= 0 then x else -x
