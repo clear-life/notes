@@ -51,7 +51,7 @@ fmap (组合) = (fmap) 组合
 
 ### <*>
 
-**<*>: context1 中的值1(函数), 与 context2 中的值2 作用, 生成 context3 中的值3**
+**<*>: 抽出 context1 中的值1(函数), 与 context2 中的值2 作用, 生成 context3 中的值3**
 
 ```haskell
 class (Functor f) => Applicative f where
@@ -82,7 +82,7 @@ pure f <*> pure x = pure (f x)		-- 同态律
 u <*> pure y = pure ($ y) <*> u		-- 交换律
 ```
 
-**组合率**
+**组合律**
 
 `pure (.) <*> u <*> v <*> w = u <*> (v <*> w)`
 
@@ -102,7 +102,7 @@ u <*> pure y = pure ($ y) <*> u		-- 交换律
 
 ### >>=
 
-**context1 中的值1 用在 `a->m b` 函数上, 生成 context2 中的值2**
+**抽出 context1 中的值1 用在 `a->m b` 函数上, 生成 context2 中的值2**
 
 ```haskell
 (>>=) :: (Monad m) => m a -> (a -> m b) -> m b
@@ -141,35 +141,48 @@ instance Monad Maybe where
 * 语法糖 将 `.. >>= .. >>= ..` 拆分为 `do .. <- .. <- ..`
 * 每行都是一个单子值
 * 最后一值是 do 动态组合的总结果
-* `>>` 没有用 `<-` 绑定值
+* `>>`:  没有用 `<-` 绑定值
+
+#### 脱糖
+
+```haskell
+do
+  x1 <- m1      ⇒   m1 >>= \x1 -> ...
+  x2 <- m2      ⇒   m2 >>= \x2 -> ...
+  x3 <- m3      ⇒   m3 >>= \x3 -> ...
+  ...
+  xn <- mn      ⇒   mn >>= \xn -> ...
+  return result ⇒   return result
+```
+
+例
+
+```haskell
+routine :: Maybe Pole  
+routine = do  
+    start <- return (0,0)		return (0,0) >>= \start ->
+    first <- landLeft 1 start  	landLeft 1 start >>= \first ->
+    Nothing  					Nothing >>= \_ -> 
+    second <- landRight 2 first landRight 2 first >>= \second ->
+    landLeft 3 second			landLeft 3 second
+```
 
 ```haskell
 routine :: Maybe Pole  
 routine = do  
     start <- return (0,0)
-    first <- landLeft 1 start  
-    Nothing  
-    second <- landRight 2 first  
+    first <- landLeft 1 start
+    Nothing
+    second <- landRight 2 first
     landLeft 3 second
 ```
 
 对比
 
 ```
-return (0,0) >>= landLeft 1 >> Nothing >>= landRight 2 >>= landLeft 3
+return (0,0) >>= landLeft 1 >>= \first -> Nothing
+>>= \_ -> landRight 2 first >>= landLeft 3
 ```
-
-do 中每一行都对应 `>>=` 的一个单子值
-
-|             do              |                >>=                 |
-| :-------------------------: | :--------------------------------: |
-|    start <- return (0,0)    |     return (0,0) >>= \start ->     |
-|  first <- landLeft 1 start  |  >>= (start -> landLeft 1 start)   |
-|           Nothing           |             >> Nothing             |
-| second <- landRight 2 first | >>= (\first -> landRight 2 first)  |
-|      landLeft 3 second      | >>= (\second -> landLeft 3 second) |
-
-
 
 ### List Monad
 
@@ -240,67 +253,65 @@ sevensOnly = do
     return x
 ```
 
-### 单子定律
-
-#### 同一律
+### 单子律
 
 **单位元 return**
 
-**Left identity** 
+**结合操作 `>>=`** 
 
-`return x >>= f` $\Leftrightarrow$ `f x` 
+```haskell
+return a >>= k = k a	-- left identity
+m >>= return = m		-- right identity
+m >>= (\x -> k x >>= h) = (m >>= k) >>= h	-- associativity
+```
 
-**Right identity**
-
-`m >>= return` $\Leftrightarrow$ `m` 
-
-#### 结合律
-
-`(m >>= f) >>= g`  $\Leftrightarrow$  `m >>= (\x -> f x >>= g)` 
-
-#### 单子函数组合
-
-**函数组合**
+**复合函数**
 
 ```haskell
 (.) :: (b -> c) -> (a -> b) -> (a -> c)  
 f . g = (\x -> f (g x))
 ```
 
+结合律相当于 `h.k m = h (k m) ` 
+
 **单子函数组合**
 
-`g :: a -> m b`
+**`<=<`**  **`f <=< g`**  
 
-`f :: b -> m c`
+g 的输出 >>= 到 f 的输入(管道)
 
-定义 `<=<`
+g 的输入 -> f 的输出 
 
 ```haskell
 (<=<) :: (Monad m) => (b -> m c) -> (a -> m b) -> (a -> m c)
 f <=< g = (\x -> g x >>= f)
 ```
 
-单子律
+**单子律**
 
-`f <=< return` $\Leftrightarrow$ `f`
+`k <=< return = k`
 
-`return <=< f` $\Leftrightarrow$ `f`
+`return <=< m = m`
 
-`(f <=< g) <=< h` $\Leftrightarrow$ `f <=< (g <=< h)`
+`f <=< (g <=< h) = (f <=< g) <=< h`
 
 普通函数
 
-`f . id` $\Leftrightarrow$ `f`
+`k . id = k`
 
-`id . f` $\Leftrightarrow$ `f`
+`id . m = m`
 
-`(f . g) . h` $\Leftrightarrow$ `f . (g . h)`
+`f . (g . h) = (f . g) . h`
 
-## Monad
+## Haskell 生态
 
-Package 是分发和依赖的单位, 控制模块可见性
+**Package 集合**
 
-Module 是代码组织单位, 控制名称(函数, 类型)可见性
+> Hackage, Stackage, GHC自带, Haskell Platform(废弃)
+
+* **Package** 分发和依赖单位
+   * **Library** 功能单位
+      * **Module** 代码组织单位
 
 ```shell
 my-package/
@@ -316,15 +327,6 @@ my-package/
 #### 引入
 
 context: 附加值(log)
-
-`applyLog`
-
-```haskell
-applyLog :: (a,String) -> (a -> (b,String)) -> (b,String)  
-applyLog (x,log) f = let (y,newLog) = f x in (y,log ++ newLog)
-```
-
-#### Monoid
 
 monoid 作为附加值
 
@@ -350,7 +352,20 @@ instance (Monoid w) => Monad (Writer w) where
 #### do
 
 ```haskell
-import Control.Monad.Writer  
+newtype Writer w a = Writer { runWriter :: (a, w) }
+
+instance Functor (Writer w) where
+    fmap f (Writer (x, log)) = Writer (f x, log) 
+
+instance (Monoid w) => Applicative (Writer w) where
+    pure x = Writer (x, mempty)
+    (<*>) :: Monoid w => Writer w (a -> b) -> Writer w a -> Writer w b
+    Writer (f, log1) <*> Writer (x, log2) = Writer (f x, log1 `mappend` log2)
+
+instance (Monoid w) => Monad (Writer w) where  
+    return = pure   
+    (Writer (x,v)) >>= f = let (Writer (y, v')) = f x in Writer (y, v `mappend` v')
+
 
 logNumber :: Int -> Writer [String] Int  
 logNumber x = Writer (x, ["Got number: " ++ show x])  
@@ -360,6 +375,173 @@ multWithLog = do
     a <- logNumber 3  
     b <- logNumber 5  
     return (a*b)
+```
+
+`a->m b` 函数 logNumber 处理 context 逻辑
+
+```haskell
+a <- logNumber 3	  logNumber 3 >>= \a ->
+b <- logNumber 5  	  logNumber 5 >>= \b ->
+return (a*b)		  return (a*b)
+```
+
+对应
+
+```haskell
+logNumber 3 >>= \a -> logNumber 5 >>= \b -> return (a*b)
+```
+
+### list
+
+#### right-associate
+
+++ right-associate 效率比 left-associate 高
+
+**difference list**
+
+**prepend 前插**
+
+`\xs -> [..] ++ xs` 输入 list 前插 list, 使其 right-associate 效率高
+
+```haskell
+f :: [a] -> [a]
+g :: [a] -> [a]
+f `append` g = \xs -> f (g xs)
+
+\xs -> "1" ++ ("2" ++ xs)
+```
+
+```haskell
+newtype DiffList a = DiffList { getDiffList :: [a] -> [a] }
+```
+
+```haskell
+toDiffList :: [a] -> DiffList a  
+toDiffList xs = DiffList (xs++)  
+
+fromDiffList :: DiffList a -> [a]  
+fromDiffList (DiffList f) = f []
+```
+
+```haskell
+instance Monoid (DiffList a) where  
+    mempty = DiffList (\xs -> [] ++ xs)  
+    (DiffList f) `mappend` (DiffList g) = DiffList (\xs -> f (g xs))
+```
+
+
+
+```haskell
+ghci> fromDiffList (toDiffList [1,2,3,4] `mappend` toDiffList [1,2,3])  
+[1,2,3,4,1,2,3]
+```
+
+```haskell
+import Control.Monad.Writer  
+
+gcd' :: Int -> Int -> Writer (DiffList String) Int  
+gcd' a b  
+  | b == 0 = do  
+      tell (toDiffList ["Finished with " ++ show a])  
+      return a  
+  | otherwise = do  
+      result <- gcd' b (a `mod` b)  
+      tell (toDiffList [show a ++ " mod " ++ show b ++ " = " ++ show (a `mod` b)])  
+      return result
+```
+
+```haskell
+ghci> mapM_ putStrLn . fromDiffList . snd . runWriter $ gcdReverse 110 34  
+Finished with 2  
+8 mod 2 = 0  
+34 mod 8 = 2  
+110 mod 34 = 8
+```
+
+测试性能
+
+```haskell
+finalCountDown :: Int -> Writer (DiffList String) ()  
+finalCountDown 0 = do  
+    tell (toDiffList ["0"])  
+finalCountDown x = do  
+    finalCountDown (x-1)  
+    tell (toDiffList [show x])
+```
+
+```haskell
+ghci> mapM_ putStrLn . fromDiffList . snd . runWriter $ finalCountDown 500000  
+0  
+1  
+2
+```
+
+```haskell
+finalCountDown :: Int -> Writer [String] ()  
+finalCountDown 0 = do  
+    tell ["0"]  
+finalCountDown x = do  
+    finalCountDown (x-1)  
+    tell [show x]
+```
+
+### Reader Monad
+
+```haskell
+instance Monad ((->) r) where  
+    return x = \_ -> x  
+    h >>= f = \w -> f (h w) w
+```
+
+```haskell
+import Control.Monad.Instances  
+
+addStuff :: Int -> Int  
+addStuff = do  
+  a <- (*2)  
+  b <- (+10)  
+  return (a+b)
+```
+
+```haskell
+ghci> addStuff 3  
+19
+```
+
+
+
+### State Monad
+
+```haskell
+newtype State s a = State { runState :: s -> (a,s) }
+```
+
+```haskell
+instance Monad (State s) where  
+    return x = State $ \s -> (x,s)  
+    (State h) >>= f = State $ \s -> let (a, newState) = h s  
+                                        (State g) = f a  
+                                    in  g newState
+```
+
+```haskell
+import Control.Monad.State  
+
+pop :: State Stack Int  
+pop = State $ \(x:xs) -> (x,xs)  
+
+push :: Int -> State Stack ()  
+push a = State $ \xs -> ((),a:xs)
+```
+
+### Error Monad
+
+```haskell
+instance (Error e) => Monad (Either e) where  
+    return x = Right x   
+    Right x >>= f = f x  
+    Left err >>= f = Left err  
+    fail msg = Left (strMsg msg)
 ```
 
 ### 单子函数
@@ -863,8 +1045,6 @@ instance Applicative ZipList where
 	pure x = ZipList (repeat x)
 	ZipList fs <*> ZipList xs = ZipList (zipWith (\f x -> fx) fs xs)
 ```
-
-#### 
 
 ## Monoid
 
