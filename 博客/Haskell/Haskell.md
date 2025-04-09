@@ -303,25 +303,6 @@ f <=< g = (\x -> g x >>= f)
 
 `f . (g . h) = (f . g) . h`
 
-## Haskell 生态
-
-**Package 集合**
-
-> Hackage, Stackage, GHC自带, Haskell Platform(废弃)
-
-* **Package** 分发和依赖单位
-   * **Library** 功能单位
-      * **Module** 代码组织单位
-
-```shell
-my-package/
-  ├── MyPackage.cabal    # 包配置文件
-  ├── src/
-  │   ├── Utils.hs       # 模块1: MyPackage.Utils
-  │   └── Main.hs        # 模块2: MyPackage.Main
-  └── test/              # 测试模块
-```
-
 ### Writer Monad
 
 #### 引入
@@ -1253,25 +1234,7 @@ foldable `Tree`
 
 
 
-## 关键字 newtype
 
-#### 定义
-
-**newtype** 单参数单值构造子
-
-```haskell
-newtype ZipList a = ZipList { getZipList :: [a] }
-```
-
-**deriving**
-
-```haskell
-newtype CharList = CharList { getCharList :: [Char] } deriving (Eq, Show)
-```
-
-值构造子  `CharList :: [Char] -> CharList`
-
-record 函数 `getCharList :: CharList -> [Char]`
 
 #### newtype 定制 instance
 
@@ -1290,55 +1253,3 @@ instance Functor (Pair c) where
 	fmap f (Pair (x, y)) = Pair (f x, y)
 ```
 
-#### lazy
-
-newtype 唯一一个单参数值构造子, 在模式匹配时编译器直接确定具体值构造子
-
-**data 定义 CoolBool**
-
-```haskell
-data CoolBool = CoolBool { getCoolBool :: Bool }
-```
-
-模式匹配
-
-```haskell
-helloMe :: CoolBool -> String  
-helloMe (CoolBool _) = "hello"
-```
-
-调用
-
-```haskell
-ghci> helloMe undefined
-"*** Exception: Prelude.undefined  "
-```
-
-出错
-
-data 允许多个值构造子, 所以需要通过传入值计算哪个值构造子被用到(即使只有一个), 计算 undefined 会抛出 Exception
-
-**newtype 定义 CoolBool**
-
-```haskell
-newtype CoolBool = CoolBool { getCoolBool :: Bool }
-```
-
-调用
-
-```haskell
-ghci> helloMe undefined  
-"hello"
-```
-
-正常
-
-newtype 只允许一个值构造子, 无需计算值构造子, 跳过 undefined 传入值
-
-#### type vs newtype vs data
-
-type 类型别名, 更易理解
-
-newtype 简单包装, 单参数单值构造子
-
-data 自定义类型, 任意数量字段和值构造子

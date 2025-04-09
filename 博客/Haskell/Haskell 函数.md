@@ -1,315 +1,61 @@
-# Haskell 体系
+# Haskell 函数
 
-### 程序结构
+## 语法
 
-* module 模块
-   * declaration 声明
-      * expression 表达式
-         * lexical structure 词法结构
+### 作用域
 
-#### 模块
+$函数 \rightarrow 模式 \rightarrow Guard$
 
-**导入模块**
+#### Where
 
-import Data.List 全部
-
-import Data.List (f, g) 限定
-
-import Data.List hiding (f) 排除
-
-import qualified Data.List 全名
-
-import qualified Data.List as L 小名
-
-**自定义模块**
+局部绑定, 作用域: **模式**
 
 ```haskell
-module MyModule
-( f1
-, f2
-, f3
-, ...
-) where
+f x = 
+	where
 ```
 
-**类型导出**
+### 函数分类
 
-* TypeName 类型
-* TypeName(..) 类型及所有值构造子
-* TypeName(Constructor1, Constructor2) 类型及指定值构造子
+#### 前缀函数
 
-### 基础概念
+前缀式调用 `()`
 
-side effect 改变函数外状态
+10级, 左结合
 
-referential transparency引用透明: 同参数多次调用函数, 结果相同
+#### 中缀函数
 
-惰性计算 lazy: 真正需要时才计算
+中缀式调用 ```  ``  ```
 
-* 无限 List 参与计算
+**优先级结合性**
 
-## 值 类型  名称 绑定  声明 表达式
+* `[infixl/infixr/infix] [0-9] op`  0-9级, 左/右/无 结合
+* **优先级**: 分组方式(隐式括号), 不代表计算顺序
 
-$值 \xleftarrow{标签} 类型 \xleftarrow{标签} kind$ 
+* **结合性**: 相同优先级的分组方向
 
-$名称 \xleftarrow{绑定} 表达式$
+#### Lambda
 
-$haskell 程序 = 声明 + 表达式$
+**匿名函数调用**
 
-$~$
-
-### 值系统
+`\ x y .. -> ...`
 
 #### 值构造子
 
-值构造子: 值层构造函数, 输入值, 返回值
+`ValueConstructor Type1 Type2 ..`
 
-* Record 自动生成取值函数
-* 值构造子 `:`
-* 前值构造子小于后值构造子
-
-#### 函数
-
-函数是一等公民, 函数(名/调用)是个值
-
-$~$
-
-### 类型系统
-
-#### 类型定义
-
-**ADT data**
-
-Algebraic Data Type
-
-```haskell
-data TypeName = Value Constructor | ... [deriving (TypeClass)]
-```
-
-* deriving typeclass 要求类型构造子所有类型参数都为 typeclass 的 instance
-* 不要在 data 声明中加类型约束
-
-**类型别名 type**
-
-* 类型别名只能用在类型系统(定义新类型, 类型声明, 类型注释等)
-
-**类型声明**
-
-* 类型签名 type signature `::`
-
-* 类型约束 type constraint `=>`
-
-* 类型多态 polymorphism
-   * `Nothing` 类型 `Maybe a`
-
-
-#### 类型构造子
-
-类型构造子: 类型层构造函数, **输入类型, 返回类型**
-
-* 零参类型构造子 `*`
-
-* 多参类型构造子 `* -> * -> ..`
-
-   * **`->`** **两参中缀类型构造子**  `infixr -1 ->`  `*->*->*`
-
-* **Curry**
-
-   类型构造子可部分应用类型参数
-
-#### 类型类
-
-函数接口定义行为, 对类型分类
-
-* 最小完整定义: 最小实现函数数量
-
-**class C c where**
-
-**instance C T where**
-
-#### Kind
-
-类型标签
-
-零参类型构造子 kind:  `*` 
-
-有参类型构造子 kind:  `* -> * -> ..` 
-
-$~$
-
-### 名称
-
-* 值命名空间
-   * **变量**
-   * **值构造子**
-* 类型命名空间
-   * **类型变量**
-   * **类型构造子**
-   * **类型类**
-* 模块命名空间
-   * **模块**
-
-**限制**:
-
-* **变量 类型变量** 小写字母/_开头
-
-   **值构造子 类型构造子 类型类 模块** 大写字母开头
-
-* 同作用域**类型构造子和类型类不能重名**
-
-$~$
-
-### 绑定
-
-名称与表达式关联
-
-* 普通绑定 `=`
-* monad 绑定 `<-`
-* where 绑定
-* let 绑定
-* do 绑定
+### 分段函数
 
 #### 模式匹配
 
-> 升级版绑定 
-
-数学: **值的结构**分情况讨论
-
-匹配**值构造子**对输入值解构
-
-* 值解构 `(x : xs) = [1, 2, 3]`
-* 多模式 `f p0 = ;f p1 =`
-
-递归类型值构造子通过**递归模式匹配**逐层解析
-
-`xs@pattern` as 模式对整体的引用
-
-$~$
-
-### 声明
-
-* 类型声明
-* 绑定声明
-
-* 模块/导入声明
-
-$~$
-
-### 表达式
-
-* 名称
-* 值构造子
-* if case let do
-
-   * if-else 脱糖 case
-   * **let bind in exp** 脱糖 lambda
-      * do 和 list comprehension 中不需要 in
-   * **case var of p -> exp**
-   * do 绑定多个 IO action 为一个 IO action 脱糖 `>>=`
-
-$~$
-
-## Functor Applicative Monad
-
-### Context
-
-#### 包裹
-
-context: 通过类型构造子为值附加计算逻辑, 将值包裹在上下文(情景/情况)中 
-
-Maybe 可能存在可能不存在
-
-IO 输入输出
-
-[] 非确定性
-
-Either 可能失败 携带错误信息
-
-#### 必要性
-
-保持纯函数的同时处理现实问题, 通过类型系统将现实问题的处理隔离在特定的上下文中
-
-#### 操作值
-
-`<-` 提取值
-
-`fmap` `<$>` `<*>` `>>=` `>>` 维护 context
-
-### Functor
-
-可被 map over
-
-类型构造子 f
-
-f a 盒子f 包裹普通类型 a
-
-f b 盒子 f 包裹普通类型 b
-
 ```haskell
-class Functor f where
-    fmap :: (a -> b) -> f a -> f b
+f pattern1 =
+f pattern2 =
+..
+f patternn =
 ```
 
-
-
-**instance**
-
-```haskell
-instance Functor [] where
-    fmap = map
-```
-
-```haskell
-instance Functor Maybe where
-    fmap f (Just x) = Just (f x)
-    fmap f Nothing = Nothing
-```
-
-```haskell
-instance Functor (Either a) where
-    fmap f (Right x) = Right (f x)
-    fmap f (Left x) = Left x
-```
-
-### Monad
-
-## 函数
-
-### 语法
-
-作用域分级: $函数 \rightarrow 模式 \rightarrow Guard$ 
-
-**前缀函数**
-
-* 前缀式调用 `()`
-* 10级, 左结合
-
-**中缀函数**
-
-* 中缀式调用 ```  ``  ```
-* `[infixl/infixr/infix] [0-9] op`  0-9级, 左/右/无 结合
-* **优先级代表分组方式**(隐式括号), 不代表计算顺序
-   * 优先级高的分在一块, 优先级低的分在一块
-
-* **结合性表示相同优先级的分组方向**
-
-分析 `(map +)` 和 `(map (+))` 的类型
-
-```haskell
-ghci> :t (map +)  
-(map +) :: Num ((a -> b) -> [a] -> [b]) => ((a -> b) -> [a] -> [b]) -> (a -> b) -> [a] -> [b]
-
-ghci> :t (map (+))
-(map (+)) :: Num a => [a] -> [a -> a]
-```
-
-* map + 中 map 是前缀函数, + 是中缀函数, + 优先级低后计算, map 优先级高先计算, 从而将 map 作为整体视为 + 的第一个参数, 才会将 map 的类型 (a->b)->[a]->[b] 加上类型约束 Num 视为 + 的第一个参数, 然后 map + 就会期待 + 的另一个参数(map 类型), 返回同样的类型(map类型), 这也就是 map + 的类型为 (map +) :: Num ((a -> b) -> [a] -> [b]) => ((a -> b) -> [a] -> [b]) -> (a -> b) -> [a] -> [b] 的原因
-
-* map (+) 则不同, map 和 (+) 都是前缀函数, map 和 (+) 会被看作同一级存在, 然后就会以 map 函数作为要调用的函数, 将 (+) 作为参数, map 类型中的 a -> b 与 (+) 的 c->c->c 对应, a 就是 c, b 就是 c -> c, 最终的结果就是 [a] -> [a->a]
-
-**Guard**
-
-**分段函数**
+#### Guard
 
 ```haskell
 f pattern
@@ -318,62 +64,42 @@ f pattern
     | otherwise = 
 ```
 
-**Where**
-
-作用域: **函数或模式**
-
-```haskell
-f x = 
-	where
-```
-
-**Lambda**
-
-**匿名函数调用**
-
-`\ x y .. -> ...`
-
-* 一种模式
-
-**复合函数**
+### 复合函数
 
 `infixr 9 .`
+
+* 右侧输出 $\Leftrightarrow$ 左侧输入
+* 右侧输入 `->` 左侧输出
 
 ```haskell
 (.) :: (b->c) -> (a->b) -> a -> c
 f . g = \x -> f (g x)
 ```
 
-### Curry
+### 高阶函数/Curry
 
-数学: 部分带入
+函数类型都是 **`a->b`**
 
-允许函数部分调用
-
+* 数学: 带入变量值, 编程: 函数部分调用
 * 前缀函数按顺序 curry, 中缀函数可不按顺序
-* 函数是一等公民, 像值一样传递
-* 复用函数
 * 类型系统支持 curry `a -> b -> c` $\Leftrightarrow$ `a -> (b -> c)`
-* 高阶函数抽像能力
 
 ```haskell
 f x y z = x + y + z
-
+等价于
 f = \x -> \y -> \z -> x + y + z
 ```
 
-
-
 ### 重要函数
 
-**运算符**
+#### 运算符
 
-| operator  |  优先级结合性  |            作用            |
-| :-------: | :------------: | :------------------------: |
-|   **$**   |  `infixr 0 $`  |     相当于在右侧加括号     |
-|  **`.`**  |  `infixr 9 .`  | 复合函数(point free style) |
-| **`<$>`** | `infixl 4 <$>` |        中缀版 fmap         |
-| **`<*>`** | `infixl 4 <*>` |        加强版 fmap         |
+| operator  |  优先级结合性  |           作用           |
+| :-------: | :------------: | :----------------------: |
+|   **$**   |  `infixr 0 $`  | 分组, 相当于在右侧加括号 |
+|  **`.`**  |  `infixr 9 .`  | 水管, 右侧输出接左侧输入 |
+| **`<$>`** | `infixl 4 <$>` |        中缀 fmap         |
+| **`<*>`** | `infixl 4 <*>` |    context 值相互作用    |
 
 ```haskell
 ($) :: (a -> b) -> a -> b  
@@ -387,9 +113,9 @@ map ($ 3) [(4+),(10*),(^2),sqrt]  -- $ 可将值作为函数使用
 f . g = \x -> f (g x)
 ```
 
-**map**
+#### map
 
-映射
+**映射元素**
 
 ```haskell
 map :: (a->b) -> [a] -> [b]
@@ -397,9 +123,9 @@ map _ [] = []
 map f (x:xs) = f x : map f xs
 ```
 
-**filter**
+#### filter
 
-过滤
+**过滤元素**
 
 ```haskell
 filter :: (a->Bool) -> [a] -> [a]
@@ -409,7 +135,9 @@ filter p (x:xs)
 	| otherwise = filter p xs
 ```
 
-**fold**
+#### fold
+
+**迭代**
 
 **fold f c list**
 
@@ -429,9 +157,9 @@ filter p (x:xs)
 
 scanl scanl1 scanr scanr1 记录累加值的所有状态到 list
 
-**zip**
+#### zip
 
-打包
+**组装**
 
 ```haskell
 zip :: [a] -> [b] -> [(a, b)]
@@ -440,7 +168,7 @@ zip _ [] = []
 zip (x:xs) (y:ys) = (x, y) : zip xs ys
 ```
 
-**zipWith 打包**
+**zipWith**
 
 ```haskell
 zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
@@ -449,7 +177,9 @@ zipWith' _ _ [] = []
 zipWith' f (x:xs) (y:ys) = f x y : zipWith' f xs ys
 ```
 
-**flip**
+#### flip
+
+调换参数位置
 
 ```haskell
 flip' :: (a->b->c) -> b -> a -> c
@@ -460,68 +190,9 @@ flip' f y x = f x y
 
 $~$
 
-## 数学
+## 函数库
 
-#### 函数
-
-$f(x,y...)=...$
-
-$f(x,y...)$
-
-#### List
-
-数列 ${a_1, a_2\ ...}$
-
-$\{x\in X|f(a,b...), a\in A,b\in B.. \}$ 列表推导式
-
-zip
-$$
-A = a1,a2\dots, B=b1,b2\dots 	\\
-\{(a_i,b_i)|a_i\in A,b_i\in B\}
-$$
-
-#### Curry
-
-$f(x,y,z) = g(x)*h(y)*j(z)$
-
-每次带入一个变量的值
-
-$f(a,y,z) = g(a)*h(y)*j(z)$
-
-$f(a,b,z) = g(a)*h(b)*j(z)$
-
-$f(a,b,c) = g(a)*h(b)*j(c)$
-
-
-
-`fold f c0 x`
-
-$c1 = f(x_0, c_0)$
-
-$c2 = f(x_1, c_1)$
-
-$...$
-
-$c_{n+1} = f(x_{n}, c_n)$
-
-$(f\circ g) = f(g(x))$
-
-## 表格
-
-### 类型
-
-#### 类型类
-
-| Typeclass   |    作用     |      抽像函数      |  示例  |
-| :---------- | :---------: | :----------------: | :----: |
-| **Eq**      |   相等性    |     `==` `/=`      |  Bool  |
-| **Ord**     |    比较     | `<=` `>` `compare` |  Char  |
-| **Show**    |  toString   |       `show`       | [Char] |
-| **Read**    | fromString  |       `read`       |  Bool  |
-| **Num**     |  数值运算   |   `+` `*` `abs`    | Double |
-| **Functor** | 可 map over |       `fmap`       | Maybe  |
-
-### 函数
+### 常用功能
 
 #### Num
 
@@ -579,6 +250,8 @@ $(f\circ g) = f(g(x))$
 
    * `concatMap (\输入值 -> if 限制条件 then 输出函数 else []) 输入集合`
 
+
+
 #### IO
 
 长了脚的盒子, 包裹普通类型的值
@@ -612,6 +285,8 @@ rs <- sequence [getLine, getLine, getLine]
 **forever** 无限循环 IO action
 
 **forM** 
+
+
 
 #### 文件
 
@@ -670,6 +345,8 @@ data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
 
 **getProgName :: IO String** 获取程序名称
 
+
+
 #### 字节流
 
 单位 byte(8 bit)
@@ -696,6 +373,8 @@ data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
 
 **empty** 空 bytestring
 
+
+
 #### Exception
 
 * pure code 和 IO code 都能抛出 Exception
@@ -721,13 +400,15 @@ doesFileExist :: FilePath -> IO Bool
 
 **minBound maxBound** 
 
+
+
 ### 模块函数
 
 #### Data.List
 
-**intersperse** 元素穿插 List
+**intersperse**  item 穿插 []
 
-**intercalate** List 穿插 List
+**intercalate** [] 穿插 [[]] 后 []
 
 **transpose** 翻转二维 List (矩阵)
 
@@ -817,6 +498,8 @@ ghci> groupBy ((==) `on` (> 0)) values
 
 **sortBy  insertBy  maximumBy**   **minimumBy**
 
+
+
 #### Data.Char
 
 **isControl** 控制字符
@@ -873,6 +556,8 @@ ghci> groupBy ((==) `on` (> 0)) values
 
 **ord char** char <-> num
 
+
+
 #### Data.Map
 
 **import qualified Data.Map as Map**
@@ -905,6 +590,8 @@ ghci> groupBy ((==) `on` (> 0)) values
 
 **insertWith** 处理已存在 k 的 value
 
+
+
 #### Data.Set
 
 **import qualified Data.Set as Set**
@@ -922,6 +609,8 @@ ghci> groupBy ((==) `on` (> 0)) values
 **map filter**
 
 **toList** Set->List
+
+
 
 #### System.Random
 
@@ -946,3 +635,17 @@ random (mkStdGen 100) :: (Int, StdGen)
 **getStdGen**
 
 **newStdGen** 
+
+
+
+### 类型类
+
+| Typeclass   |    作用     |      抽像函数      |  示例  |
+| :---------- | :---------: | :----------------: | :----: |
+| **Eq**      |   相等性    |     `==` `/=`      |  Bool  |
+| **Ord**     |    比较     | `<=` `>` `compare` |  Char  |
+| **Show**    |  toString   |       `show`       | [Char] |
+| **Read**    | fromString  |       `read`       |  Bool  |
+| **Num**     |  数值运算   |   `+` `*` `abs`    | Double |
+| **Functor** | 可 map over |       `fmap`       | Maybe  |
+

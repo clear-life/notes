@@ -94,6 +94,17 @@ do
 getLine >>= \name -> putStrLn ("Hello, " ++ name)
 ```
 
+脱糖规则
+
+```haskell
+do
+	x1 <- m1		m1 >>= \x1 ->
+	x2 <- m2		m2 >>= \x2 ->
+	..		
+	xn <- mn		mn >>= \xn ->
+	return result	return result
+```
+
 ### 中缀函数
 
 前缀函数
