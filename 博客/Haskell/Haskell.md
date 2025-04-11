@@ -1,56 +1,5 @@
 
 
-## Applicative functor
-
-**静态组合**
-
-**context 函数用在 context 值上**
-
-### <*>
-
-**<*>: 抽出 context1 中的值1(函数), 与 context2 中的值2 作用, 生成 context3 中的值3**
-
-```haskell
-class (Functor f) => Applicative f where
-	pure :: a -> f a
-	(<*>) :: f (a -> b) -> f a -> f b
-```
-
-**pure**: 用 context 包裹值
-
-**<*>:  context 函数用在 context 值上**
-
-**<$>**: 中缀版 fmap, 函数用在 context 值上
-
-**fmap f x**  $\Leftrightarrow$  **f <\$> x** $\Leftrightarrow$ **pure f <*> x**
-
-```haskell
-(<$>) :: (Functor f) => (a -> b) -> f a -> f b  
-	f <$> x = fmap f x
-```
-
-### 应用函子定律
-
-```haskell
-pure f <*> x = fmap f x				-- 与 Functor 行为一致
-pure id <*> v = v					-- 恒等律
-pure (.) <*> u <*> v <*> w = u <*> (v <*> w)	-- 组合律
-pure f <*> pure x = pure (f x)		-- 同态律
-u <*> pure y = pure ($ y) <*> u		-- 交换律
-```
-
-**组合律**
-
-`pure (.) <*> u <*> v <*> w = u <*> (v <*> w)`
-
-`pure (.) <*> f a <*> f b <*> f c = f a <*> (f b <*> f c)`
-
-`f (a.) <*> f b <*> f c`
-
-`f a <*> (f b <*> f c)` = `f (a (b c))`
-
-即 `a.b c = a (b c)`
-
 ## Monad
 
 **动态组合**
@@ -1190,23 +1139,4 @@ foldable `Tree`
 将 testTree 中元素带入 `(\x -> Any $ x == 3)` 得到 `Any True` 或 `Any False` 再用 `mappend` 运算为一个 `Any` 值, 只要树中有 3, 结果就是 `Any True`, 否则就是 `Any False`
 
 
-
-
-
-#### newtype 定制 instance
-
-`fmap (+3) (1,1)` 会将 tuple 的第二个元素当作被包裹的元素进行函数调用, 结果会是 `(1,4)`
-
-若需要将 tuple 的第一个元素视为被包裹的元素就需要 newtype 定义新的类型参数顺序
-
-**newtype 定制 instance tuple**
-
-```haskell
-newtype Pair b a = Pair { getPair :: (a, b) }
-```
-
-```haskell
-instance Functor (Pair c) where
-	fmap f (Pair (x, y)) = Pair (f x, y)
-```
 

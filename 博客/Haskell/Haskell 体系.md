@@ -39,8 +39,6 @@ my-package/
 
 **导入模块**
 
-`import [qualified] <模块名> [as <别名>] [(<函数/类型列表>)] [hiding (<排除项列表>)]`
-
 ```haskell
 import Data.List 
 import Data.List (f, g) 
@@ -137,6 +135,14 @@ newtype TypeName = Value Constructor { getType} [deriving (TypeClass)]
 ```
 
 * 模式匹配时直接确定要匹配的值构造子, 跳过可能的 undefined 传入值(配合惰性计算)
+
+* 定制类型适配类型类
+
+   ```haskell
+   newtype Pair b a = Pair { getPair :: (a, b) }
+   instance Functor (Pair c) where
+   	fmap f (Pair (x, y)) = Pair (f x, y)
+   ```
 
 **类型别名 type**
 
